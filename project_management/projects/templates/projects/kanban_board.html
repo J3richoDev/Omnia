@@ -1,0 +1,82 @@
+{% extends 'project_base.html' %}
+{% load kanban_filters %}
+
+{% block title %}Kanban Board - {{ project.name }}{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Kanban Board - {{ project.name }}</h1>
+<div id="kanban-board" class="grid grid-cols-4 gap-4">
+    {% for status, tasks in tasks_by_status.items %}
+        <div class="kanban-column bg-gray-100 p-4 rounded shadow" data-status="{{ status }}">
+            <h2 class="text-lg font-bold capitalize">{{ status|replace_underscore }}</h2>
+            <div class="kanban-tasks space-y-2">
+                {% for task in tasks %}
+                    <div class="kanban-task bg-white p-4 rounded shadow cursor-pointer"
+                         data-task-id="{{ task.id }}">
+                        <p class="font-bold">{{ task.name }}</p>
+                        <p class="text-sm">{{ task.description|truncatewords:10 }}</p>
+                    </div>
+                {% empty %}
+                    <p class="text-gray-500 italic">No tasks</p>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const kanbanColumns = document.querySelectorAll('.kanban-column');
+
+        // Add dragover and drop listeners to each column
+        kanbanColumns.forEach(column => {
+            column.addEventListener('dragover', (event) => {
+                event.preventDefault();
+                column.classList.add('bg-blue-100'); // Highlight column during drag
+            });
+
+            column.addEventListener('dragleave', () => {
+                column.classList.remove('bg-blue-100'); // Remove highlight
+            });
+
+            column.addEventListener('drop', async (event) => {
+                event.preventDefault();
+                column.classList.remove('bg-blue-100');
+
+                const taskId = event.dataTransfer.getData('task-id');
+                const newStatus = column.dataset.status;
+
+                if (taskId) {
+                    const response = await fetch("{% url 'update_task_status' %}", {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                        },
+                        body: new URLSearchParams({
+                            'task_id': taskId,
+                            'new_status': newStatus,
+                        }),
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        location.reload(); // Reload page to reflect the update
+                    } else {
+                        alert('Failed to update task status');
+                    }
+                }
+            });
+        });
+
+        // Make tasks draggable
+        const kanbanTasks = document.querySelectorAll('.kanban-task');
+        kanbanTasks.forEach(task => {
+            task.draggable = true;
+
+            task.addEventListener('dragstart', (event) => {
+                event.dataTransfer.setData('task-id', task.dataset.taskId);
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="pastel">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="flex">
+        <!-- Sidebar -->
+        <div class="w-64 bg-blue-800 text-white h-screen">
+            <div class="p-6">
+                <h1 class="text-2xl font-bold">Project Management</h1>
+            </div>
+            <nav class="mt-6">
+                <ul>
+                    <li>
+                        <a href="{% url 'dashboard' %}" class="block py-2 px-4 hover:bg-blue-700">Dashboard</a>
+                    </li>
+                    {% if request.user.role == 'manager' %}
+                        <li class="mb-4">
+                            <h3 class="text-sm font-bold text-gray-400 uppercase">Projects</h3>
+                            <ul>
+                                {% for project in user_projects %}
+                                    <li>
+                                        <a href="{% url 'set_current_project' project.id %}"
+                                           class="block py-2 px-4
+                                                  {% if project.id|stringformat:'d' == request.session.current_project_id|stringformat:'d' %}bg-blue-700 text-white{% else %}hover:bg-blue-700{% endif %}">
+                                           {{ project.name }}
+                                        </a>
+                                    </li>
+                                {% empty %}
+                                    <li class="block py-2 px-4 text-gray-500">No projects available</li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                        {% if request.session.current_project_id %}
+                        <h2 class="text-sm font-bold mt-4 mb-2">Manage Project</h2>
+                        <li>
+                            <a href="{% url 'project_tasks' request.session.current_project_id %}"
+                               class="block py-2 px-4 hover:bg-blue-700">
+                                Tasks
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'kanban_board' request.session.current_project_id %}"
+                               class="block py-2 px-4 hover:bg-blue-700">
+                                Kanban Board
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'gantt_chart' request.session.current_project_id %}"
+                               class="block py-2 px-4 hover:bg-blue-700">Gantt Chart</a>
+                        </li>
+                        <li>
+                            <a href="#" class="block py-2 px-4 hover:bg-blue-700">Reports</a>
+                        </li>
+                        <li>
+                            <a href="{% url 'create_member' %}" class="block py-2 px-4 hover:bg-blue-700">Members</a>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                        <li>
+                            <a href="{% url 'my_tasks' %}"
+                               class="block py-2 px-4 hover:bg-blue-700 {% if request.path == '/my-tasks/' %}bg-blue-700 text-white{% endif %}">
+                               My Tasks
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'my_kanban' %}"
+                               class="block py-2 px-4 hover:bg-blue-700 {% if request.path == '/my-kanban/' %}bg-blue-700 text-white{% endif %}">
+                               Kanban Board
+                            </a>
+                        </li>
+                    {% endif %}
+                    <li class="mb-4">
+                        <form method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                          <button class="block py-2 px-4 text-red-500 hover:bg-red-100 hover:text-red-700">
+                              Logout </button>
+                        </form>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-6">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{% extends 'project_base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Welcome, {{ request.user.first_name }}!</h1>
+
+{% if projects %}
+    {% if request.session.current_project_id %}
+        <p>Managing project: {{ request.session.current_project_id }}</p>
+    {% else %}
+        <p>No project selected. Please create or join a project.</p>
+    {% endif %}
+    <h2 class="text-xl font-bold">Your Projects:</h2>
+    <ul class="mt-4">
+        {% for project in projects %}
+            <li class="bg-white shadow p-4 rounded mb-2">
+                <h3 class="text-lg font-bold">{{ project.name }}</h3>
+                <p>{{ project.description }}</p>
+                <p><strong>Start Date:</strong> {{ project.start_date }}</p>
+                <p><strong>End Date:</strong> {{ project.end_date }}</p>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p class="text-gray-500">No projects found. Create a new project!</p>
+{% endif %}
+{% endblock %}

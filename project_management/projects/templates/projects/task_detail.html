@@ -1,0 +1,49 @@
+{% extends 'project_base.html' %}
+
+{% block title %}Task Detail: {{ task.name }}{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">{{ task.name }}</h1>
+<p><strong>Description:</strong> {{ task.description }}</p>
+<p><strong>Status:</strong> {{ task.get_status_display }}</p>
+<p><strong>Priority:</strong> {{ task.get_priority_display }}</p>
+<p><strong>Start Date:</strong> {{ task.start_date }}</p>
+<p><strong>End Date:</strong> {{ task.end_date }}</p>
+
+<h2 class="text-xl font-bold mt-6">Comments</h2>
+<ul>
+    {% for comment in comments %}
+        <li class="bg-white shadow p-4 rounded mb-2">
+            <p><strong>{{ comment.author.username }}</strong> said:</p>
+            <p>{{ comment.content }}</p>
+            <p class="text-sm text-gray-500">{{ comment.created_at }}</p>
+        </li>
+    {% endfor %}
+</ul>
+<form method="POST">
+    {% csrf_token %}
+    {{ comment_form.as_p }}
+    <button type="submit" name="comment" class="bg-blue-500 text-white py-2 px-4 rounded">Add Comment</button>
+</form>
+
+<h2 class="text-xl font-bold mt-6">Files</h2>
+<ul>
+    {% for file in files %}
+        <li class="bg-white shadow p-4 rounded mb-2">
+            <a href="{{ file.file.url }}" class="text-blue-600 underline">{{ file.file.name }}</a>
+            <p>Uploaded by {{ file.uploaded_by.username }} on {{ file.uploaded_at }}</p>
+            {% if request.user.role == 'manager' %}
+                <form method="POST" action="{% url 'delete_file' file.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="bg-red-500 text-white py-1 px-2 rounded">Delete</button>
+                </form>
+            {% endif %}
+        </li>
+    {% endfor %}
+</ul>
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ file_form.as_p }}
+    <button type="submit" name="file" class="bg-green-500 text-white py-2 px-4 rounded">Upload File</button>
+</form>
+{% endblock %}

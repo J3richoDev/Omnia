@@ -1,0 +1,25 @@
+{% extends 'project_base.html' %}
+
+{% block title %}Tasks for {{ project.name }}{% endblock %}
+
+{% block content %}
+
+{% if tasks %}
+    <ul>
+        {% for task in tasks %}
+            <li class="bg-white shadow p-4 rounded mb-2">
+                <a href="{% url 'task_detail' task.id %}" class="text-blue-600 underline">
+                    <h2 class="text-lg font-bold">{{ task.name }}</h2>
+                </a>
+                <p><strong>Status:</strong> {{ task.get_status_display }}</p>
+                <p><strong>Priority:</strong> {{ task.get_priority_display }}</p>
+                <p><strong>Start Date:</strong> {{ task.start_date }}</p>
+                <p><strong>End Date:</strong> {{ task.end_date }}</p>
+                <p>{{ task.description }}</p>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No tasks assigned for you.</p>
+{% endif %}
+{% endblock %}

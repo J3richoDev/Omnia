@@ -1,0 +1,163 @@
+{% extends 'project_base.html' %}
+{% block content %}
+<div class="container mx-auto py-6">
+    <h1 class="text-2xl font-bold mb-4">Gantt Chart - {{ project.name }}</h1>
+
+    <!-- Filters -->
+    <div class="mb-4">
+        <label for="filterStatus" class="block text-sm font-medium">Filter by Status:</label>
+        <select id="filterStatus" class="border rounded p-2">
+            <option value="all">All</option>
+            <option value="todo">To Do</option>
+            <option value="in_progress">In Progress</option>
+            <option value="review">Review</option>
+            <option value="completed">Completed</option>
+        </select>
+    </div>
+
+    <div class="mb-4">
+        <label class="block text-sm font-medium mb-2">Filter by Time:</label>
+        <button id="filterToday" class="bg-blue-500 text-white px-3 py-1 rounded mr-2">Today</button>
+        <button id="filterWeek" class="bg-blue-500 text-white px-3 py-1 rounded mr-2">This Week</button>
+        <button id="filterMonth" class="bg-blue-500 text-white px-3 py-1 rounded mr-2">This Month</button>
+        <button id="filterQuarter" class="bg-blue-500 text-white px-3 py-1 rounded">This Quarter</button>
+    </div>
+
+    <!-- Gantt Chart Container -->
+    <div id="ganttChartContainer" class="bg-white p-4 rounded shadow-lg"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const tasks = {{ tasks_json|safe }};
+
+        // Define colors for task statuses
+        const statusColors = {
+            todo: '#FF5733', // Red
+            in_progress: '#FFC300', // Yellow
+            review: '#3498DB', // Blue
+            completed: '#28B463', // Green
+        };
+
+        // Transform tasks into ApexCharts series format
+        const series = tasks.map(task => ({
+            name: task.name,
+            data: [
+                {
+                    x: task.name,
+                    y: [
+                        new Date(task.start).getTime(),
+                        new Date(task.end).getTime(),
+                    ],
+                    fillColor: statusColors[task.status], // Apply color by status
+                    description: task.description,
+                    priority: task.priority,
+                    status: task.status,
+                },
+            ],
+        }));
+
+        // ApexCharts options
+        const options = {
+            chart: {
+                height: 500,
+                type: 'rangeBar',
+                zoom: {
+                    enabled: true,
+                    type: 'x', // Enable horizontal zooming
+                },
+                toolbar: {
+                    tools: {
+                        zoom: true,
+                        zoomin: true,
+                        zoomout: true,
+                        pan: true,
+                        reset: true,
+                    },
+                },
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: true,
+                    barHeight: '50%',
+                },
+            },
+            series: series,
+            xaxis: {
+                type: 'datetime',
+            },
+            tooltip: {
+                x: {
+                    format: 'dd MMM yyyy',
+                },
+            },
+        };
+
+        const chart = new ApexCharts(
+            document.querySelector("#ganttChartContainer"),
+            options
+        );
+
+        chart.render();
+
+        // Filter functionality
+        const filterStatus = document.getElementById("filterStatus");
+        filterStatus.addEventListener("change", (event) => {
+            const selectedStatus = event.target.value;
+
+            const filteredSeries = selectedStatus === "all"
+                ? series
+                : series.filter(task => task.data[0].status === selectedStatus);
+
+            chart.updateSeries(filteredSeries);
+        });
+
+         // Time Filtering Logic
+        const filterTasksByTime = (range) => {
+            const now = new Date();
+            const startOfRange = new Date();
+            let endOfRange = new Date();
+
+            switch (range) {
+                case "today":
+                    startOfRange.setHours(0, 0, 0, 0);
+                    endOfRange.setHours(23, 59, 59, 999);
+                    break;
+                case "week":
+                    const dayOfWeek = now.getDay();
+                    startOfRange.setDate(now.getDate() - dayOfWeek);
+                    endOfRange.setDate(now.getDate() + (6 - dayOfWeek));
+                    break;
+                case "month":
+                    startOfRange.setDate(1);
+                    endOfRange = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                    break;
+                case "quarter":
+                    const currentMonth = now.getMonth();
+                    const quarterStart = Math.floor(currentMonth / 3) * 3;
+                    startOfRange.setMonth(quarterStart, 1);
+                    endOfRange = new Date(now.getFullYear(), quarterStart + 3, 0);
+                    break;
+                default:
+                    return;
+            }
+
+            const filteredSeries = series.filter(task => {
+                const taskStart = new Date(task.data[0].y[0]);
+                const taskEnd = new Date(task.data[0].y[1]);
+                return taskEnd >= startOfRange && taskStart <= endOfRange;
+            });
+
+            chart.updateSeries(filteredSeries);
+        };
+
+        // Attach Event Listeners for Time Filters
+        document.getElementById("filterToday").addEventListener("click", () => filterTasksByTime("today"));
+        document.getElementById("filterWeek").addEventListener("click", () => filterTasksByTime("week"));
+        document.getElementById("filterMonth").addEventListener("click", () => filterTasksByTime("month"));
+        document.getElementById("filterQuarter").addEventListener("click", () => filterTasksByTime("quarter"));
+
+    });
+</script>
+{% endblock %}
