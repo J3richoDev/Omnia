@@ -1,5 +1,4 @@
 {% extends 'project_base.html' %}
-
 {% block title %}Tasks for {{ project.name }}{% endblock %}
 {% block heading %}Task{% endblock %}
 
@@ -17,6 +16,7 @@
                 <p><strong>Start Date:</strong> {{ task.start_date }}</p>
                 <p><strong>End Date:</strong> {{ task.end_date }}</p>
                 <p>{{ task.description }}</p>
+                
             </li>
         {% endfor %}
     </ul>
