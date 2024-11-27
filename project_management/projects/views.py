@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.http import HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from .forms import ProjectForm
 from .models import Project
@@ -35,7 +36,10 @@ def dashboard(request):
     return render(request, 'projects/dashboard.html', {'projects': user_projects})
 
 @login_required
-def create_task(request, project_id):
+def create_task(request):
+    project_id = request.session.get('current_project_id')
+    if not project_id:
+        return HttpResponseForbidden("No project selected.")
     project = Project.objects.get(id=project_id, owner=request.user)
     if request.method == 'POST':
         form = TaskForm(request.POST)
@@ -50,7 +54,11 @@ def create_task(request, project_id):
     return render(request, 'projects/create_task.html', {'form': form, 'project': project})
 
 @login_required
-def project_tasks(request, project_id):
+def project_tasks(request):
+    project_id = request.session.get('current_project_id')
+    if not project_id:
+        return HttpResponseForbidden("No project selected.")
+
     project = Project.objects.get(id=project_id, owner=request.user)
     tasks = project.tasks.all()
     return render(request, 'projects/project_tasks.html', {'tasks': tasks, 'project': project})
@@ -112,7 +120,11 @@ def delete_file(request, file_id):
     return redirect('task_detail', task_id=task_file.task.id)
 
 @login_required
-def kanban_board(request, project_id):
+def kanban_board(request):
+    project_id = request.session.get('current_project_id')
+    if not project_id:
+        return HttpResponseForbidden("No project selected.")
+
     project = Project.objects.get(id=project_id)
     tasks = project.tasks.all()
     tasks_by_status = {
@@ -157,7 +169,11 @@ def update_task_status(request):
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
 @login_required
-def gantt_chart(request, project_id):
+def gantt_chart(request):
+    project_id = request.session.get('current_project_id')
+    if not project_id:
+        return HttpResponseForbidden("No project selected.")
+
     project = Project.objects.get(id=project_id, owner=request.user)
     tasks = Task.objects.filter(project=project)
 

@@ -11,3 +11,4 @@ class CustomUser(AbstractUser):
         (MANAGER, 'Manager'),
     ]
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default=MANAGER)
+    profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)

@@ -1,11 +1,12 @@
 {% extends 'project_base.html' %}
 
 {% block title %}Tasks for {{ project.name }}{% endblock %}
+{% block heading %}Projects{% endblock %}
 
 {% block content %}
 <div class="flex items-center justify-between mb-4">
     <h1 class="text-2xl font-bold mb-4">Tasks for {{ project.name }}</h1>
-    <a href="{% url 'create_task' project.id %}"
+    <a href="{% url 'create_task' %}"
        class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
         + Create Task
     </a>

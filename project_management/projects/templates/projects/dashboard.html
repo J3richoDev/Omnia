@@ -1,9 +1,16 @@
 {% extends 'project_base.html' %}
 
 {% block title %}Dashboard{% endblock %}
+{% block heading %}Dashboard{% endblock %}
 
 {% block content %}
-<h1 class="text-2xl font-bold mb-4">Welcome, {{ request.user.first_name }}!</h1>
+<div class="flex justify-between mb-4">
+    <h1 class="text-2xl font-bold mb-4">Welcome, {{ request.user.first_name }}!</h1>
+    <a href="{% url 'create_project' %}"
+       class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
+        + Create Project
+    </a>
+</div>
 
 {% if projects %}
     {% if request.session.current_project_id %}
