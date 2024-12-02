@@ -1,73 +1,35 @@
 {% extends 'project_base.html' %}
 
-{% block heading %}Projects{% endblock %}
-{% block title %}Project list{% endblock %}
+{% block title %}Dashboard{% endblock %}
+{% block heading %}Dashboard{% endblock %}
 
 {% block content %}
-
-<div class="card w-full p-6 bg-base-100 shadow-xl mt-2">
-   <div class="text-xl font-semibold inline-block">
-      Recent Transactions
-      <div class="inline-block float-right">
-         <div class="inline-block float-right">
-            <div class="inline-block mr-4">
-               <div class="input-group  relative flex flex-wrap items-stretch w-full "><input type="search" placeholder="Search" class="input input-sm input-bordered  w-full max-w-xs" value=""></div>
-            </div>
-            <div class="dropdown dropdown-bottom dropdown-end">
-               <label tabindex="0" class="btn btn-sm btn-outline">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="w-5 mr-2">
-                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z"></path>
-                  </svg>
-                  Filter
-               </label>
-               <ul tabindex="0" class="dropdown-content menu p-2 text-sm shadow bg-base-100 rounded-box w-52">
-                  <li><a>Paris</a></li>
-                  <li><a>London</a></li>
-                  <li><a>Canada</a></li>
-                  <li><a>Peru</a></li>
-                  <li><a>Tokyo</a></li>
-                  <div class="divider mt-0 mb-0"></div>
-                  <li><a>Remove Filter</a></li>
-               </ul>
-            </div>
-         </div>
-      </div>
-   </div>
-   <div class="divider mt-2"></div>
-   <div class="h-full w-full pb-6 bg-base-100">
-      <div class="overflow-x-auto w-full">
-         <table class="table w-full">
-            <thead>
-               <tr>
-                  <th>Name</th>
-                  <th>Description</th>
-                  <th>Start Date</th>
-                  <th>End Date</th>
-                  <th>Project Manager</th>
-                  <th>Actions</th>
-               </tr>
-            </thead>
-            <tbody>
-               <tr>
-                  <td>
-                     <div class="flex items-center space-x-3">
-                        <div class="avatar">
-                           <div class="mask mask-circle w-12 h-12"><img src="https://reqres.in/img/faces/1-image.jpg" alt="Avatar"></div>
-                        </div>
-                        <div>
-                           <div class="font-bold">Project Name</div>
-                        </div>
-                     </div>
-                  </td>
-                  <td>Lorem batangas</td>
-                  <td>Nov 1, 2024</td>
-                  <td>Dec 12, 2024</td>
-                   <td>Project Manager</td>
-                  <td>...</td>
-               </tr>
-            </tbody>
-         </table>
-      </div>
-   </div>
+<div class="flex justify-between mb-4">
+    <h1 class="text-2xl font-bold mb-4">Welcome, {{ request.user.first_name }}!</h1>
+    <a href="{% url 'create_project' %}"
+       class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
+        + Create Project
+    </a>
 </div>
+
+{% if projects %}
+    {% if request.session.current_project_id %}
+        <p>Managing project: {{ request.session.current_project_id }}</p>
+    {% else %}
+        <p>No project selected. Please create or join a project.</p>
+    {% endif %}
+    <h2 class="text-xl font-bold">Your Projects:</h2>
+    <ul class="mt-4">
+        {% for project in projects %}
+            <li class="bg-white shadow p-4 rounded mb-2">
+                <h3 class="text-lg font-bold">{{ project.name }}</h3>
+                <p>{{ project.description }}</p>
+                <p><strong>Start Date:</strong> {{ project.start_date }}</p>
+                <p><strong>End Date:</strong> {{ project.end_date }}</p>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p class="text-gray-500">No projects found. Create a new project!</p>
+{% endif %}
 {% endblock %}

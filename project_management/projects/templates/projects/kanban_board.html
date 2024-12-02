@@ -8,18 +8,20 @@
 <h1 class="text-2xl font-bold mb-4">Kanban Board - {{ project.name }}</h1>
 <div id="kanban-board" class="grid grid-cols-4 gap-4">
     {% for status, tasks in tasks_by_status.items %}
-        <div class="kanban-column bg-gray-100 p-4 rounded shadow" data-status="{{ status }}">
-            <h2 class="text-lg font-bold capitalize">{{ status|replace_underscore }}</h2>
-            <div class="kanban-tasks space-y-2">
-                {% for task in tasks %}
-                    <div class="kanban-task bg-white p-4 rounded shadow cursor-pointer"
-                         data-task-id="{{ task.id }}">
-                        <p class="font-bold">{{ task.name }}</p>
-                        <p class="text-sm">{{ task.description|truncatewords:10 }}</p>
-                    </div>
-                {% empty %}
-                    <p class="text-gray-500 italic">No tasks</p>
-                {% endfor %}
+        <div class="kanban-column bg-white p-4 rounded shadow min-h-[600px]" data-status="{{ status }}">
+            <h2 class="text-xl font-bold capitalize mb-2">{{ status|replace_underscore }}</h2>
+            <div class="bg-gray-100 p-2 h-full rounded-md">
+                <div class="kanban-tasks space-y-2">
+                    {% for task in tasks %}
+                        <div class="kanban-task bg-white p-4 rounded shadow cursor-pointer"
+                             data-task-id="{{ task.id }}">
+                            <p class="font-bold">{{ task.name }}</p>
+                            <p class="text-sm">{{ task.description|truncatewords:10 }}</p>
+                        </div>
+                    {% empty %}
+                        <p class="text-gray-500 italic">No tasks</p>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     {% endfor %}

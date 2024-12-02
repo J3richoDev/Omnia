@@ -6,30 +6,297 @@
 {% block content %}
 <div class="flex justify-between mb-4">
     <h1 class="text-2xl font-bold mb-4">Welcome, {{ request.user.first_name }}!</h1>
-    <a href="{% url 'create_project' %}"
-       class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
-        + Create Project
-    </a>
 </div>
 
-{% if projects %}
-    {% if request.session.current_project_id %}
-        <p>Managing project: {{ request.session.current_project_id }}</p>
-    {% else %}
-        <p>No project selected. Please create or join a project.</p>
-    {% endif %}
-    <h2 class="text-xl font-bold">Your Projects:</h2>
-    <ul class="mt-4">
-        {% for project in projects %}
-            <li class="bg-white shadow p-4 rounded mb-2">
-                <h3 class="text-lg font-bold">{{ project.name }}</h3>
-                <p>{{ project.description }}</p>
-                <p><strong>Start Date:</strong> {{ project.start_date }}</p>
-                <p><strong>End Date:</strong> {{ project.end_date }}</p>
-            </li>
-        {% endfor %}
-    </ul>
-{% else %}
-    <p class="text-gray-500">No projects found. Create a new project!</p>
-{% endif %}
+<div class="grid lg:grid-cols-4 mt-2 md:grid-cols-2 grid-cols-1 gap-6">
+   <div class="stats shadow">
+      <div class="stat">
+         <div class="stat-figure night:text-slate-300 text-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="w-8 h-8">
+               <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"></path>
+            </svg>
+         </div>
+         <div class="stat-title font-bold text-xl night:text-slate-300">Todo</div>
+         <div class="stat-value night:text-slate-300 text-primary">34.7k</div>
+         <div class="stat-desc  font-bold text-green-700 night:text-green-300">↗︎ 2300 (22%)</div>
+      </div>
+   </div>
+   <div class="stats shadow">
+      <div class="stat">
+         <div class="stat-figure night:text-slate-300 text-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="w-8 h-8">
+               <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"></path>
+            </svg>
+         </div>
+         <div class="stat-title font-bold text-xl night:text-slate-300">In Progress</div>
+         <div class="stat-value night:text-slate-300 text-primary">$34,545</div>
+         <div class="stat-desc  ">Current month</div>
+      </div>
+   </div>
+   <div class="stats shadow">
+      <div class="stat">
+         <div class="stat-figure night:text-slate-300 text-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="w-8 h-8">
+               <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"></path>
+            </svg>
+         </div>
+         <div class="stat-title font-bold text-xl night:text-slate-300">Under Review</div>
+         <div class="stat-value night:text-slate-300 text-primary">450</div>
+         <div class="stat-desc  ">50 in hot leads</div>
+      </div>
+   </div>
+   <div class="stats shadow">
+      <div class="stat">
+         <div class="stat-figure night:text-slate-300 text-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="w-8 h-8">
+               <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"></path>
+            </svg>
+         </div>
+         <div class="stat-title font-bold text-xl night:text-slate-300">Completed</div>
+         <div class="stat-value night:text-slate-300 text-primary">5.6k</div>
+         <div class="stat-desc  font-bold text-rose-500 night:text-red-400">↙ 300 (18%)</div>
+      </div>
+   </div>
+</div>
+
+<div class="grid lg:grid-cols-2 mt-4 grid-cols-1 gap-6">
+   <div class="card w-full p-6 bg-base-100 shadow-xl mt-6">
+      <div class="text-xl font-semibold ">Task to be done</div>
+      <div class="divider mt-2"></div>
+      <div class="h-full w-full pb-6 bg-base-100">
+         <div class="overflow-x-auto">
+            <table class="table w-full">
+               <thead>
+                  <tr>
+                     <th></th>
+                     <th class="normal-case">Source</th>
+                     <th class="normal-case">No of Users</th>
+                     <th class="normal-case">Conversion</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  <tr>
+                     <th>1</th>
+                     <td>Facebook Ads</td>
+                     <td>26,345</td>
+                     <td>10.2%</td>
+                  </tr>
+                  <tr>
+                     <th>2</th>
+                     <td>Google Ads</td>
+                     <td>21,341</td>
+                     <td>11.7%</td>
+                  </tr>
+                  <tr>
+                     <th>3</th>
+                     <td>Instagram Ads</td>
+                     <td>34,379</td>
+                     <td>12.4%</td>
+                  </tr>
+                  <tr>
+                     <th>4</th>
+                     <td>Affiliates</td>
+                     <td>12,359</td>
+                     <td>20.9%</td>
+                  </tr>
+                  <tr>
+                     <th>5</th>
+                     <td>Organic</td>
+                     <td>10,345</td>
+                     <td>10.3%</td>
+                  </tr>
+               </tbody>
+            </table>
+         </div>
+      </div>
+   </div>
+   <div class="card w-full p-6 bg-base-100 shadow-xl mt-6">
+      <div class="text-xl font-semibold ">Project Progress</div>
+      <div class="divider mt-2"></div>
+      <div class="h-full w-full pb-6 bg-base-100">
+         <div id="PieChartContainer" height="422" width="422" style="display: block; box-sizing: border-box; height: 422px; width: 422px;"></div>
+      </div>
+   </div>
+</div>
+
+<div class="grid lg:grid-cols-2 mt-4 grid-cols-1 gap-6">
+   <div class="card w-full p-6 bg-base-100 shadow-xl mt-6">
+      <div class="text-xl font-semibold ">Task Completed</div>
+      <div class="divider mt-2"></div>
+      <div class="h-full w-full pb-6 bg-base-100">
+         <div id="LineChartContainer" height="211" width="422" style="display: block; box-sizing: border-box; height: 211px; width: 422px;"></div>
+      </div>
+   </div>
+   <div class="card w-full p-6 bg-base-100 shadow-xl mt-6">
+      <div class="text-xl font-semibold ">Di ko rin alam</div>
+      <div class="divider mt-2"></div>
+      <div class="h-full w-full pb-6 bg-base-100">
+         <div id="BarChartContainer" height="211" width="422" style="display: block; box-sizing: border-box; height: 211px; width: 422px;"></div>
+      </div>
+   </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+        var pie_options = {
+          series: [44, 55, 41, 17, 15],
+          chart: {
+          type: 'donut',
+        },
+        responsive: [{
+          breakpoint: 480,
+          options: {
+            chart: {
+              width: 200
+            },
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }]
+        };
+
+        var line_options = {
+          series: [{
+          name: 'XYZ MOTORS',
+          data: [
+            [Date.parse('2020-01-01'), 10],
+            [Date.parse('2020-02-01'), 5],
+            [Date.parse('2020-03-01'), 6],
+            [Date.parse('2020-04-01'), 12],
+            [Date.parse('2020-05-01'), 4],
+        ]
+        }],
+          chart: {
+          type: 'area',
+          stacked: false,
+          height: 350,
+          zoom: {
+            type: 'x',
+            enabled: true,
+            autoScaleYaxis: true
+          },
+          toolbar: {
+            autoSelected: 'zoom'
+          }
+        },
+        dataLabels: {
+          enabled: false
+        },
+        markers: {
+          size: 0,
+        },
+        title: {
+          text: 'Stock Price Movement',
+          align: 'left'
+        },
+        fill: {
+          type: 'gradient',
+          gradient: {
+            shadeIntensity: 1,
+            inverseColors: false,
+            opacityFrom: 0.5,
+            opacityTo: 0,
+            stops: [0, 90, 100]
+          },
+        },
+        yaxis: {
+          labels: {
+            formatter: function (val) {
+              return (val / 1000000).toFixed(0);
+            },
+          },
+          title: {
+            text: 'Price'
+          },
+        },
+        xaxis: {
+          type: 'datetime',
+        },
+        tooltip: {
+          shared: false,
+          y: {
+            formatter: function (val) {
+              return (val / 1000000).toFixed(0)
+            }
+          }
+        }
+        };
+
+        var bar_options = {
+          series: [{
+          name: 'Net Profit',
+          data: [44, 55, 57, 56, 61, 58, 63, 60, 66]
+        }, {
+          name: 'Revenue',
+          data: [76, 85, 101, 98, 87, 105, 91, 114, 94]
+        }, {
+          name: 'Free Cash Flow',
+          data: [35, 41, 36, 26, 45, 48, 52, 53, 41]
+        }],
+          chart: {
+          type: 'bar',
+          height: 350
+        },
+        plotOptions: {
+          bar: {
+            horizontal: false,
+            columnWidth: '55%',
+            borderRadius: 5,
+            borderRadiusApplication: 'end'
+          },
+        },
+        dataLabels: {
+          enabled: false
+        },
+        stroke: {
+          show: true,
+          width: 2,
+          colors: ['transparent']
+        },
+        xaxis: {
+          categories: ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+        },
+        yaxis: {
+          title: {
+            text: '$ (thousands)'
+          }
+        },
+        fill: {
+          opacity: 1
+        },
+        tooltip: {
+          y: {
+            formatter: function (val) {
+              return "$ " + val + " thousands"
+            }
+          }
+        }
+        };
+
+        const PieChart = new ApexCharts(
+            document.querySelector("#PieChartContainer"),
+            pie_options
+        );
+
+        const LineChart = new ApexCharts(
+            document.querySelector("#LineChartContainer"),
+            line_options
+        );
+
+        const BarChart = new ApexCharts(
+            document.querySelector("#BarChartContainer"),
+            bar_options
+        );
+
+        PieChart.render();
+        LineChart.render();
+        BarChart.render();
+
+    });
+</script>
+
+
 {% endblock %}
