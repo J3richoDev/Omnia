@@ -3,11 +3,11 @@ const themeToggle = document.getElementById('theme-toggle');
 
         if (currentTheme) {
             document.documentElement.setAttribute('data-theme', currentTheme);
-            themeToggle.checked = currentTheme === 'night';
+            themeToggle.checked = currentTheme === 'light';
         }
 
         themeToggle.addEventListener('change', () => {
-            const newTheme = themeToggle.checked ? 'night' : 'light';
+            const newTheme = themeToggle.checked ? 'light' : 'night';
             document.documentElement.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
         });

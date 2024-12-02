@@ -1,0 +1,34 @@
+<div class="icon-selector">
+  {% for choice, label in widget.optgroups.0.1 %}
+    <label>
+      <input type="radio" name="{{ widget.name }}" value="{{ choice }}"
+             {% if choice in widget.value %}checked{% endif %}>
+      <span class="icon">
+        {% if icons.get(choice) %}
+          {{ icons.get(choice)|safe }}
+        {% endif %}
+      </span>
+    </label>
+  {% endfor %}
+</div>
+
+<style>
+  .icon-selector label {
+      display: inline-block;
+      cursor: pointer;
+      margin: 10px;
+      text-align: center;
+  }
+  .icon-selector input {
+      display: none;
+  }
+  .icon-selector .icon {
+      width: 50px;
+      height: 50px;
+      display: inline-block;
+  }
+  .icon-selector input:checked + .icon {
+      border: 2px solid blue;
+      border-radius: 5px;
+  }
+</style>

@@ -2,11 +2,11 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.http import HttpResponseForbidden
+from django.db import DatabaseError
+from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from .forms import ProjectForm
-from .models import Project
-from .models import Task, TaskFile, TaskComment
-from .forms import TaskForm, TaskCommentForm, TaskFileForm
+from .models import Project, Task, TaskFile, TaskComment, ProjectMember
+from .forms import ProjectForm, TaskForm, TaskCommentForm, TaskFileForm, AddMemberForm
 
 @login_required
 def create_project(request):
@@ -31,9 +31,39 @@ def set_current_project(request, project_id):
     return redirect('dashboard')
 
 @login_required
+def add_member(request):
+    current_project_id = request.session.get('current_project_id')
+
+    if not current_project_id:
+        return redirect('home')  # No project selected in session
+
+    project = Project.objects.get(id=current_project_id)
+
+    if request.method == 'POST':
+        form = AddMemberForm(request.POST)
+        if form.is_valid():
+            member = form.cleaned_data['member']
+
+            # Add member to the project
+            ProjectMember.objects.create(project=project, user=member)
+
+            # Optionally, redirect to task creation or project detail page
+            return redirect('projects:create_task')  # or whatever page you need after adding members
+
+    else:
+        form = AddMemberForm()
+
+    return render(request, 'projects/add_member.html', {'form': form, 'project': project})
+
+@login_required
 def dashboard(request):
     user_projects = Project.objects.filter(owner=request.user) if request.user.role == 'manager' else []
     return render(request, 'projects/dashboard.html', {'projects': user_projects})
+
+@login_required
+def project_list(request):
+    user_projects = Project.objects.filter(owner=request.user) if request.user.role == 'manager' else []
+    return render(request, 'projects/project_list.html', {'projects': user_projects})
 
 @login_required
 def create_task(request):
@@ -47,7 +77,12 @@ def create_task(request):
             task = form.save(commit=False)
             task.project = project
             task.save()
-            form.save_m2m()
+            try:
+                form.save_m2m()  # Save many-to-many relationships
+            except DatabaseError as e:
+                return HttpResponse(f"Database error during many-to-many save: {str(e)}")
+            except Exception as e:
+                return HttpResponse(f"An error occurred: {str(e)}")
             return redirect('dashboard')  # Replace with project-specific task list
     else:
         form = TaskForm()
@@ -196,3 +231,13 @@ def gantt_chart(request):
         "tasks_json": task_data,
     }
     return render(request, "projects/gantt_chart.html", context)
+
+@login_required
+def project_members(request):
+    project_id = request.session.get('current_project_id')
+    if not project_id:
+        return HttpResponseForbidden("No project selected.")
+
+    project = Project.objects.get(id=project_id, owner=request.user)
+    return render(request, 'projects/members.html', {'project': project})
+

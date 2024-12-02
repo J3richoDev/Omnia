@@ -1,10 +1,13 @@
 {% load static %}
+{% load custom_filters %}
+
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Dashboard{% endblock %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -16,7 +19,7 @@
             <!-- Navbar -->
             <div class="navbar sticky top-0 bg-base-100  z-10 shadow-md ">
                 <div class="flex-1">
-                    <label for="left-sidebar-drawer" class="btn btn-primary drawer-button lg:hidden">
+                    <label for="left-sidebar-drawer" class="btn drawer-button lg:hidden">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="h-5 inline-block w-5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path>
                         </svg>
@@ -26,10 +29,10 @@
                 <div class="flex-none ">
                     <label class="swap ">
                         <input id="theme-toggle" type="checkbox">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-set-theme="light" data-act-class="ACTIVECLASS" class="fill-current w-6 h-6 swap-on ACTIVECLASS">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-set-theme="night" data-act-class="ACTIVECLASS" class="fill-current w-6 h-6 swap-off">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"></path>
                         </svg>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-set-theme="dark" data-act-class="ACTIVECLASS" class="fill-current w-6 h-6 swap-off">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-set-theme="light" data-act-class="ACTIVECLASS" class="fill-current w-6 h-6 swap-on ACTIVECLASS">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"></path>
                         </svg>
                     </label>
@@ -166,72 +169,175 @@
         </div>
         <div class="drawer-side z-30">
             <label for="left-sidebar-drawer" class="drawer-overlay"></label>
-            <ul class="menu pt-2 w-80 bg-base-100 min-h-full text-base-content">
-                <button class="btn btn-ghost bg-base-300  btn-circle z-50 top-0 right-0 mt-4 mr-2 absolute lg:hidden"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="h-5 inline-block w-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            <ul class="menu pt-2 px-4 w-80 bg-base-100 min-h-full space-y-2 text-base-content">
                 <li class="mb-2 font-semibold text-3xl"><a href="/projects/dashboard"><img class="mask mask-squircle w-10" src="{% static 'logo/logo.png' %}" alt="Omnia Logo">omnia</a> </li>
-                <h2 class="text-sm font-bold mt-4 mb-2">Dashboard</h2>
-                <li>
-                    <a href="{% url 'dashboard' %}"
-                       class="{% if request.path == '/projects/dashboard/' %}active{% endif %}"
-                    >Dashboard
-                    </a>
-                </li>
+                    <span class="py-1"></span>
+
                 {% if request.user.role == 'manager' %}
                     <h2 class="text-sm font-bold mt-4 mb-2">Projects</h2>
-                    <li class="mb-4">
-                        <ul>
-                            {% for project in user_projects %}
-                                <li>
-                                    <a href="{% url 'set_current_project' project.id %}"
-                                       class="block py-2 px-4
-                                              {% if project.id|stringformat:'d' == request.session.current_project_id|stringformat:'d' %}bg-primary text-white{% else %}hover:bg-gray-200{% endif %}">
-                                       {{ project.name }}
-                                    </a>
-                                </li>
-                            {% empty %}
-                                <li class="block py-2 px-4 text-gray-500">No projects available</li>
-                            {% endfor %}
-                        </ul>
+                    <li tabindex="0" role="button" class="dropdown dropdown-bottom z-50">
+                            <span class="bg-blue-500 text-white flex items-center text-base font-medium rounded-lg transition duration-75 ">
+                                 <span class="truncate max-w-[200px]">
+                                    {% if request.session.current_project_id %}
+                                        {% with current_project=user_projects|get_item:request.session.current_project_id %}
+                                            {{ current_project.emoji_icon }}
+                                            {{ current_project.name }}
+                                        {% endwith %}
+                                    {% else %}
+                                        Project Name
+                                    {% endif %}
+                                </span>
+                                <svg class="w-6 h-6 text-white ml-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/>
+                                </svg>
+                            </span>
+                        <div tabindex="0" class="flex flex-col w-72 menu menu-compact dropdown-content mt-3 shadow-lg border border-gray-300 bg-base-100 divide-y divide-solid hover:bg-white">
+                            <div class="w-full text-left pl-3 my-2">
+                                <p class="text-base font-medium">
+                                    Select Project
+                                </p>
+                            </div>
+                            <div class="max-h-40 w-full overflow-y-auto">
+                                <ul class="">
+                                {% for project in user_projects %}
+                                    <li>
+                                        <a href="{% url 'set_current_project' project.id %}"
+                                           class="block py-2 px-4
+                                                  {% if project.id|stringformat:'d' == request.session.current_project_id|stringformat:'d' %}bg-blue-500 text-white{% else %}hover:bg-gray-200{% endif %}">
+                                           {{ project.name }}
+                                        </a>
+                                    </li>
+                                {% empty %}
+                                    <li class="block py-2 px-4 text-gray-500">No projects available</li>
+                                {% endfor %}
+                                </ul>
+                            </div>
+                            <div class="flex flex-row gap-5 border-b py-2 border-base-600 justify-between max-w-full">
+                                <a href="/projects/create" class="border border-gray-400 px-3 py-2 rounded-md">
+                                    Create new
+                                </a>
+                                <a href="/projects/projects" class="border border-gray-400 px-3 py-2 rounded-md">
+                                    Browse all
+                                </a>
+                            </div>
+                        </div>
                     </li>
+                    <span class="py-3"></span>
                     {% if request.session.current_project_id %}
-                    <h2 class="text-sm font-bold mt-4 mb-2">Manage Project</h2>
+                    <h2 class="text-sm font-bold mb-2">Manage Project</h2>
+                    <li>
+                        <a href="{% url 'dashboard' %}"
+                           class="flex items-center p-2 text-base font-medium rounded-lg transition duration-75 {% if request.path == '/projects/dashboard/' %}active{% endif %}"
+                        >
+                            <svg
+                                aria-hidden="true"
+                                class="w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path>
+                                <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path>
+                              </svg>
+                           <span class="ml-3">Dashboard</span>
+                        </a>
+                    </li>
                     <li>
                         <a href="{% url 'project_tasks' %} "
-                           class="block py-2 px-4 hover:bg-blue-700 {% if 'tasks' in request.path %}active{% endif %}">
-                            Tasks
+                           class="flex items-center p-2 text-base font-medium rounded-lg transition duration-75 {% if 'tasks' in request.path %}active{% endif %}">
+                            <svg class="w-6 h-6 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                              <path fill-rule="evenodd" d="M4 5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H4Zm0 6h16v6H4v-6Z" clip-rule="evenodd"/>
+                              <path fill-rule="evenodd" d="M5 14a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2H6a1 1 0 0 1-1-1Zm5 0a1 1 0 0 1 1-1h5a1 1 0 1 1 0 2h-5a1 1 0 0 1-1-1Z" clip-rule="evenodd"/>
+                            </svg>
+                           <span class="ml-3">Tasks</span>
                         </a>
                     </li>
                     <li>
                         <a href="{% url 'kanban_board' %}"
-                           class="block py-2 px-4 hover:bg-blue-700 {% if 'kanban' in request.path %}active{% endif %}">
-                            Kanban Board
+                           class="flex items-center p-2 text-base font-medium rounded-lg transition duration-75 {% if 'kanban' in request.path %}active{% endif %}">
+                            <svg class="w-6 h-6 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                              <path fill-rule="evenodd" d="M15 4H9v16h6V4Zm2 16h3a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3v16ZM4 4h3v16H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" clip-rule="evenodd"/>
+                            </svg>
+                           <span class="ml-3">Kanban Board</span>
                         </a>
                     </li>
                     <li>
                         <a href="{% url 'gantt_chart' %}"
-                           class="block py-2 px-4 hover:bg-blue-700 {% if 'gantt' in request.path %}active{% endif %}"
-                        >Gantt Chart</a>
+                           class="flex items-center p-2 text-base font-medium rounded-lg transition duration-75 {% if 'gantt' in request.path %}active{% endif %}"
+                        >
+                            <svg class="w-6 h-6 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                              <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h10"/>
+                            </svg>
+                           <span class="ml-3">Gantt Chart</span>
+                        </a>
                     </li>
                     <li>
-                        <a href="#" class="block py-2 px-4 hover:bg-blue-700 {% if 'reports' in request.path %}active{% endif %}"
-                        >Reports</a>
+                        <a href="#" class="flex items-center p-2 text-base font-medium rounded-lg transition duration-75 {% if 'reports' in request.path %}active{% endif %}"
+                        >
+                            <svg class="w-6 h-6 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                              <path fill-rule="evenodd" d="M9 2.221V7H4.221a2 2 0 0 1 .365-.5L8.5 2.586A2 2 0 0 1 9 2.22ZM11 2v5a2 2 0 0 1-2 2H4v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-7ZM8 16a1 1 0 0 1 1-1h6a1 1 0 1 1 0 2H9a1 1 0 0 1-1-1Zm1-5a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2H9Z" clip-rule="evenodd"/>
+                            </svg>
+                           <span class="ml-3">Reports</span>
+                        </a>
                     </li>
                     <li>
-                        <a href="{% url 'create_member' %}" class="block py-2 px-4 hover:bg-blue-700 {% if 'members' in request.path %}active{% endif %}"
-                        >Members</a>
+                        <a href="{% url 'members' %}" class="flex items-center p-2 text-base font-medium rounded-lg transition duration-75 {% if 'members' in request.path %}active{% endif %}"
+                        >
+                            <svg class="w-6 h-6 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                              <path fill-rule="evenodd" d="M8 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 9a4 4 0 0 0-4 4v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1a4 4 0 0 0-4-4H6Zm7.25-2.095c.478-.86.75-1.85.75-2.905a5.973 5.973 0 0 0-.75-2.906 4 4 0 1 1 0 5.811ZM15.466 20c.34-.588.535-1.271.535-2v-1a5.978 5.978 0 0 0-1.528-4H18a4 4 0 0 1 4 4v1a2 2 0 0 1-2 2h-4.535Z" clip-rule="evenodd"/>
+                            </svg>
+                           <span class="ml-3">Members</span>
+                        </a>
                     </li>
                     {% endif %}
                 {% else %}
                     <li>
+                        <a href="{% url 'dashboard' %}"
+                           class="flex items-center p-2 text-base font-medium rounded-lg transition duration-75 {% if request.path == '/projects/dashboard/' %}active{% endif %}"
+                        >
+                            <svg
+                                aria-hidden="true"
+                                class="w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path>
+                                <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path>
+                              </svg>
+                           <span class="ml-3">Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{% url 'my_tasks' %}"
                            class="block py-2 px-4 hover:bg-blue-700 {% if request.path == '/my-tasks/' %}active{% endif %}">
-                           My Tasks
+                           <svg
+                                aria-hidden="true"
+                                class="w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path>
+                                <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path>
+                              </svg>
+                           <span class="ml-3">My Tasks</span>
                         </a>
                     </li>
                     <li>
                         <a href="{% url 'my_kanban' %}"
                            class="block py-2 px-4 hover:bg-blue-700 {% if request.path == '/my-kanban/' %}active{% endif %}">
-                           Kanban Board
+                           <svg
+                                aria-hidden="true"
+                                class="w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path>
+                                <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path>
+                              </svg>
+                           <span class="ml-3">Kanban Board</span>
                         </a>
                     </li>
                 {% endif %}

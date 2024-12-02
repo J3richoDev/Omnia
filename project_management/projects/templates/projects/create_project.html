@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load crispy_forms_tags %}
 {% block title %}Create Project{% endblock %}
 {% block heading %}Project{% endblock %}
 
@@ -8,7 +8,15 @@
     <h1 class="text-2xl font-bold mb-4">Create Your First Project</h1>
     <form method="POST">
         {% csrf_token %}
-        {{ form.as_p }}
+        {{ form|crispy }}
+        <div class="icon-picker">
+            {% for icon, label in form.fields.emoji_icon.choices %}
+            <label>
+                <input type="radio" name="emoji_icon" value="{{ icon }}">
+                <i class="fa {{ icon }}"></i> {{ label }}
+            </label>
+            {% endfor %}
+        </div>
         <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded">Create Project</button>
     </form>
 </div>

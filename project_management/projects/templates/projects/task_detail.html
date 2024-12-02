@@ -1,4 +1,5 @@
 {% extends 'project_base.html' %}
+{% load crispy_forms_tags %}
 
 {% block title %}Task Detail: {{ task.name }}{% endblock %}
 {% block heading %}Task Detail{% endblock %}
@@ -23,7 +24,7 @@
 </ul>
 <form method="POST">
     {% csrf_token %}
-    {{ comment_form.as_p }}
+    {{ comment_form|crispy }}
     <button type="submit" name="comment" class="bg-blue-500 text-white py-2 px-4 rounded">Add Comment</button>
 </form>
 
@@ -44,7 +45,7 @@
 </ul>
 <form method="POST" enctype="multipart/form-data">
     {% csrf_token %}
-    {{ file_form.as_p }}
+    {{ file_form|crispy }}
     <button type="submit" name="file" class="bg-green-500 text-white py-2 px-4 rounded">Upload File</button>
 </form>
 {% endblock %}

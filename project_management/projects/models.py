@@ -3,9 +3,26 @@ from django.conf import settings
 from django.core.validators import FileExtensionValidator
 
 class Project(models.Model):
+    COLOR_CHOICES = [
+        ('purple', 'Purple'),
+        ('blue', 'Blue'),
+        ('green', 'Green'),
+        ('teal', 'Teal'),
+        ('yellow', 'Yellow'),
+        ('orange', 'Orange'),
+        ('grey', 'Grey'),
+        ('dark_purple', 'Dark Purple'),
+        ('dark_blue', 'Dark Blue'),
+        ('dark_green', 'Dark Green'),
+        ('dark_teal', 'Dark Teal'),
+        ('dark_yellow', 'Dark Yellow'),
+        ('dark_orange', 'Dark Orange'),
+        ('dark_grey', 'Dark Grey'),
+    ]
     name = models.CharField(max_length=100)
-    emoji_icon = models.CharField(max_length=10, blank=True, null=True)
+    emoji_icon = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
+    color = models.CharField(max_length=20, choices=COLOR_CHOICES, default='blue')
     start_date = models.DateField()
     end_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -13,6 +30,14 @@ class Project(models.Model):
 
     def __str__(self):
         return self.name
+
+class ProjectMember(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    invited_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.user.username} - {self.project.name}'
 
 class Task(models.Model):
     STATUS_CHOICES = [
