@@ -1,9 +1,30 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import update_session_auth_hash, logout, authenticate, login
 from django.contrib import messages
-from .forms import CustomUserCreationForm, MemberCreationForm, MemberProfileForm, UserUpdateForm, PasswordChangeForm
+from .forms import CustomUserCreationForm, MemberCreationForm, MemberProfileForm, UserUpdateForm, PasswordChangeForm, CustomAuthenticationForm
 from .models import CustomUser
+
+def login_view(request):
+    if request.method == 'POST':
+        form = CustomAuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = request.POST.get('password')
+
+            user = authenticate(request, username=form.cleaned_data['username'], password=form.cleaned_data['password'])
+
+            if user is not None:
+                login(request, user)
+                return redirect('dashboard')
+            else:
+                messages.error(request, "Invalid username/email or password.")
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = CustomAuthenticationForm()
+
+    return render(request, 'users/login.html', {'form': form})
 
 def register(request):
     if request.method == 'POST':
@@ -93,3 +114,7 @@ def my_profile(request):
     context["user_form"] = user_form
     context["password_form"] = password_form
     return render(request, "users/my_profile.html", context)
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')

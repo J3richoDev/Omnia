@@ -30,7 +30,7 @@ ALLOWED_HOSTS = []
 AUTH_USER_MODEL = 'users.CustomUser'
 
 LOGIN_REDIRECT_URL = '/projects/dashboard/'
-LOGIN_URL = '/login/'
+LOGIN_URL = 'users/login/'
 
 
 # Application definition

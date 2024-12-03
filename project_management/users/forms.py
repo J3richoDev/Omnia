@@ -1,6 +1,23 @@
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models import CustomUser
 from django import forms
+
+class CustomAuthenticationForm(AuthenticationForm):
+    username = forms.CharField(label="Username or Email")
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+
+        if '@' in username:  # Check if input is an email
+            try:
+                user = CustomUser.objects.get(email=username)
+                if not user.is_active:
+                    raise forms.ValidationError("This account is inactive.")
+                return user.username  # Ensure it returns a string (correct)
+            except CustomUser.DoesNotExist:
+                raise forms.ValidationError("No user found with this email address.")
+        return username
+
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
