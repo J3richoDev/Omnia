@@ -1,11 +1,30 @@
-from django.contrib.auth.forms import UserCreationForm
-from .models import CustomUser
 from django import forms
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from .models import CustomUser
+
+
+class CustomAuthenticationForm(AuthenticationForm):
+    username = forms.CharField(label="Username or Email")
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+
+        if '@' in username:  # Check if input is an email
+            try:
+                user = CustomUser.objects.get(email=username)
+                if not user.is_active:
+                    raise forms.ValidationError("This account is inactive.")
+                return user.username  # Ensure it returns a string (correct)
+            except CustomUser.DoesNotExist:
+                raise forms.ValidationError("No user found with this email address.")
+        return username
+
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
         model = CustomUser
         fields = ['email', 'username', 'first_name', 'last_name', 'password1', 'password2']
+
 
 class MemberCreationForm(forms.ModelForm):
     class Meta:
@@ -15,6 +34,7 @@ class MemberCreationForm(forms.ModelForm):
             'password': forms.PasswordInput(),
         }
 
+
 class MemberProfileForm(forms.ModelForm):
     class Meta:
         model = CustomUser
@@ -23,10 +43,17 @@ class MemberProfileForm(forms.ModelForm):
             'password': forms.PasswordInput(),
         }
 
+
 class UserUpdateForm(forms.ModelForm):
     class Meta:
         model = CustomUser
-        fields = ['username', 'email', 'first_name', 'last_name', 'profile_picture']
+        fields = ['profile_picture', 'username', 'email', 'first_name', 'last_name']
+        widgets = {
+            'profile_picture': forms.ClearableFileInput(),  # Removed 'multiple' attribute
+        }
+
+    profile_picture = forms.ImageField(required=False)
+
 
 class PasswordChangeForm(forms.Form):
     old_password = forms.CharField(widget=forms.PasswordInput, required=True)

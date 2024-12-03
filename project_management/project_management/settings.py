@@ -9,8 +9,9 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+import os
 from pathlib import Path
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,7 +32,13 @@ AUTH_USER_MODEL = 'users.CustomUser'
 
 LOGIN_REDIRECT_URL = '/projects/dashboard/'
 LOGIN_URL = '/login/'
+LOGOUT_REDIRECT_URL = '/login/'  # Redirect to login page after logout
 
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  # Keep default backend
+    'users.email.EmailOrUsernameBackend',    # Add your custom backend
+]
 
 # Application definition
 
@@ -129,12 +136,22 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
-
+# Static files (CSS, JavaScript, Images)
+# URL for static files (like CSS, JavaScript, and images)
 STATIC_URL = '/static/'
+
+# Directory for additional static files, e.g., if you want to add custom stylesheets
 STATICFILES_DIRS = [BASE_DIR / 'static']
-MEDIA_URL = '/media/'
+
+# Directory where static files will be collected to
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Add this line
+
+# Media files (uploads from users like profile pictures, documents)
+MEDIA_URL = '/media/'  # URL where media files are served
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Set the maximum size for uploads (set it to None for no limit during debugging)
+DATA_UPLOAD_MAX_MEMORY_SIZE = None
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

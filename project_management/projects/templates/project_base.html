@@ -150,8 +150,7 @@
                             <li>
                                 <form method="post" action="{% url 'logout' %}">
                                     {% csrf_token %}
-                                  <button class="hover:text-black-20">
-                                      Logout </button>
+                                    <button type="submit" class="hover:text-black-20">Logout</button>
                                 </form>
                             </li>
                         </ul>
