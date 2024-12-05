@@ -10,7 +10,7 @@ class FirstTimeLoginMiddleware:
                 if not request.path.startswith('/users/complete-profile/'):
                     return redirect('complete_profile')
             if request.user.role == 'manager' and request.user.is_first_login:
-                if not request.path.startswith('/projects/create/'):
-                    return redirect('create_project')
+                if not request.path.startswith('/projects/setup/'):
+                    return redirect('initial_setup')
         return self.get_response(request)
 
