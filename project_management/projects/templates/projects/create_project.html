@@ -29,11 +29,11 @@
                     <label class="block text-sm font-medium text-gray-700">Select Color</label>
                     <div class="flex space-x-2 mt-2">
                         {% for color, label in form.color.field.choices %}
-                            <button type="button" class="w-8 h-8 rounded-full border-2 focus:ring-2 focus:ring-offset-2" style="background-color: {{ color }};"
+                            <button type="button" class="w-8 h-8 rounded-full border-2 focus:ring-2 focus:ring-offset-2 bg-{{ color }}-500"
                                     data-color="{{ color }}" onclick="selectColor('{{ color }}')"></button>
                         {% endfor %}
                     </div>
-                    {{ form.color }}
+                    <div class="hidden">{{ form.color }}</div>
                 </div>
 
                 <!-- Icon Selection -->
@@ -50,7 +50,7 @@
                             </button>
                         {% endfor %}
                     </div>
-                    {{ form.emoji_icon }}
+                    <div class="hidden">{{ form.emoji_icon }}</div>
                 </div>
 
                 <!-- Start and End Dates -->

@@ -176,22 +176,22 @@
                 {% if request.user.role == 'manager' %}
                     <h2 class="text-sm font-bold mt-4 mb-2">Projects</h2>
                     <li tabindex="0" role="button" class="dropdown dropdown-bottom z-50">
-                            <span class="bg-blue-500 text-white flex items-center text-base font-medium rounded-lg transition duration-75 ">
-                                 <span class="truncate max-w-[200px]">
-                                    {% if request.session.current_project_id %}
-                                        {% with current_project=user_projects|get_item:request.session.current_project_id %}
-                                     <i class="fas {{ current_project.emoji_icon }} text-xl text-gray-200 mr-3"></i>
+                        {% if request.session.current_project_id %}
+                            {% with current_project=user_projects|get_item:request.session.current_project_id %}
+                            <span class="text-white flex items-center text-base font-medium rounded-lg transition duration-75 bg-{{ current_project.color }}-500">
+                                 <span class="truncate max-w-[200px] min-w-[200px]">
+                                        <i class="fas {{ current_project.emoji_icon }} text-lg text-gray-700 bg-white py-0.5 px-2 rounded-md mr-2"></i>
                                             {{ current_project.name }}
                                         {% endwith %}
                                     {% else %}
                                         Project Name
-                                    {% endif %}
                                 </span>
                                 <svg class="w-6 h-6 text-white ml-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                                   <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/>
                                 </svg>
                             </span>
-                        <div tabindex="0" class="flex flex-col w-72 menu menu-compact dropdown-content mt-3 shadow-lg border border-gray-300 bg-base-100 divide-y divide-solid hover:bg-white">
+                        {% endif %}
+                        <div tabindex="0" class="flex flex-col w-72 text-gray-700 menu menu-compact dropdown-content mt-3 shadow-lg border border-gray-300 bg-base-100 divide-y divide-solid hover:bg-white">
                             <div class="w-full text-left pl-3 my-2">
                                 <p class="text-base font-medium">
                                     Select Project
@@ -203,8 +203,9 @@
                                     <li>
                                         <a href="{% url 'set_current_project' project.id %}"
                                            class="block py-2 px-4
-                                                  {% if project.id|stringformat:'d' == request.session.current_project_id|stringformat:'d' %}bg-blue-500 text-white{% else %}hover:bg-gray-200{% endif %}">
-                                           {{ project.name }}
+                                                  {% if project.id|stringformat:'d' == request.session.current_project_id|stringformat:'d' %}bg-{{project.color}}-500 text-white{% else %}hover:bg-gray-200{% endif %}">
+                                           <i class="fas {{ project.emoji_icon }} text-lg text-{{project.color}}-700 py-0.5 px-2 rounded-md mr-2"></i>
+                                            {{ project.name }}
                                         </a>
                                     </li>
                                 {% empty %}

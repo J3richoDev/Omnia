@@ -5,12 +5,15 @@ from django.core.validators import FileExtensionValidator
 class Project(models.Model):
     COLOR_CHOICES = [
         ('purple', 'Purple'),
+        ('red', 'Red'),
+        ('amber', 'Amber'),
         ('blue', 'Blue'),
         ('green', 'Green'),
         ('teal', 'Teal'),
         ('yellow', 'Yellow'),
         ('orange', 'Orange'),
-        ('grey', 'Grey'),
+        ('pink', 'Pink'),
+        ('gray', 'Grey'),
     ]
     name = models.CharField(max_length=100)
     emoji_icon = models.CharField(max_length=255, blank=True, null=True)
