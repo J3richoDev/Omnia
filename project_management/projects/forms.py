@@ -11,11 +11,9 @@ ICON_CHOICES = [
 ]
 
 class ProjectForm(forms.ModelForm):
-    emoji_icon = forms.ChoiceField(choices=ICON_CHOICES, required=False,
-                                   widget=forms.Select(attrs={'class': 'form-control'}))
     class Meta:
         model = Project
-        fields = ['name', 'emoji_icon', 'description', 'start_date', 'end_date']
+        fields = ['name', 'emoji_icon', 'description', 'color', 'start_date', 'end_date']
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'}),
             'end_date': forms.DateInput(attrs={'type': 'date'}),

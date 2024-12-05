@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load widget_tweaks %}
+{% block title %}Create Project{% endblock %}
+{% block heading %}Project{% endblock %}
+
+{% block content %}
+<body class="bg-gray-100 text-gray-800 font-sans">
+    <div class="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md mt-10">
+        <h1 class="text-2xl font-bold mb-4">Create Your First Project</h1>
+        <form method="POST" novalidate class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Project Name -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700" for="name">Project Name</label>
+                {{ form.name|add_class:"block w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700" for="description">Description</label>
+                {{ form.description|add_class:"block w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+            </div>
+
+            <!-- Color Selection -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Select Color</label>
+                <div class="flex space-x-2 mt-2">
+                    {% for color, label in form.color.field.choices %}
+                        <button type="button" class="w-8 h-8 rounded-full border-2 focus:ring-2 focus:ring-offset-2" style="background-color: {{ color }};"
+                                data-color="{{ color }}" onclick="selectColor('{{ color }}')"></button>
+                    {% endfor %}
+                </div>
+                {{ form.color }}
+            </div>
+
+            <!-- Icon Selection -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Select Icon</label>
+                <button type="button" onclick="toggleIconPicker()" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-300">
+                    Select Icon
+                </button>
+                <div id="icon-picker" class="grid grid-cols-7 gap-4 mt-4 max-h-48 overflow-y-auto hidden bg-gray-50 p-4 rounded-lg shadow-md">
+                    {% for icon in icons %}
+                        <button type="button" class="flex items-center justify-center p-2 rounded-lg border border-gray-300 hover:bg-gray-100"
+                                data-icon="{{ icon }}" onclick="selectIcon(this)">
+                           <div class="px-3 py-1 bg-white rounded-lg"><i class="fas {{ icon }} text-xl text-gray-700"></i></div>
+                        </button>
+                    {% endfor %}
+                </div>
+                {{ form.emoji_icon }}
+            </div>
+
+            <!-- Start and End Dates -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700" for="start_date">Start Date</label>
+                    {{ form.start_date|add_class:"block w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700" for="end_date">End Date</label>
+                    {{ form.end_date|add_class:"block w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div>
+                <button type="submit" class="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:ring-2 focus:ring-green-300">
+                    Create Project
+                </button>
+            </div>
+        </form>
+    </div>
+
+       <script>
+        let selectedColor = 'blue';
+        let selectedIconButton = null; // Track the currently selected icon button
+
+        function selectColor(color) {
+            selectedColor = color;
+            document.querySelector('select[name="color"]').value = color;
+
+            // If an icon is already selected, update its background color
+            if (selectedIconButton) {
+                selectedIconButton.style.backgroundColor = selectedColor;
+            }
+        }
+
+        function toggleIconPicker() {
+            const picker = document.getElementById('icon-picker');
+            picker.classList.toggle('hidden');
+        }
+
+        function selectIcon(button) {
+            // Remove styling from the previously selected icon
+            if (selectedIconButton) {
+                selectedIconButton.style.backgroundColor = '';
+                selectedIconButton.classList.remove('ring', 'ring-blue-500');
+                // selectedIconButton.querySelector('i').classList.remove('text-gray-200');
+            }
+
+            // Highlight the newly selected icon
+            button.style.backgroundColor = selectedColor;
+            button.classList.add('ring', 'ring-blue-500');
+            // button.querySelector('i').classList.add('text-gray-200');
+
+            // Update the currently selected button
+            selectedIconButton = button;
+
+            // Update the hidden input field with the selected icon
+            const iconField = document.querySelector('input[name="emoji_icon"]');
+            iconField.value = button.dataset.icon;
+        }
+    </script>
+</body>
+{% endblock %}

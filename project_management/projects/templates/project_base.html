@@ -180,7 +180,7 @@
                                  <span class="truncate max-w-[200px]">
                                     {% if request.session.current_project_id %}
                                         {% with current_project=user_projects|get_item:request.session.current_project_id %}
-                                            {{ current_project.emoji_icon }}
+                                     <i class="fas {{ current_project.emoji_icon }} text-xl text-gray-200 mr-3"></i>
                                             {{ current_project.name }}
                                         {% endwith %}
                                     {% else %}

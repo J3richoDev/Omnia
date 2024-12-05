@@ -11,13 +11,6 @@ class Project(models.Model):
         ('yellow', 'Yellow'),
         ('orange', 'Orange'),
         ('grey', 'Grey'),
-        ('dark_purple', 'Dark Purple'),
-        ('dark_blue', 'Dark Blue'),
-        ('dark_green', 'Dark Green'),
-        ('dark_teal', 'Dark Teal'),
-        ('dark_yellow', 'Dark Yellow'),
-        ('dark_orange', 'Dark Orange'),
-        ('dark_grey', 'Dark Grey'),
     ]
     name = models.CharField(max_length=100)
     emoji_icon = models.CharField(max_length=255, blank=True, null=True)
