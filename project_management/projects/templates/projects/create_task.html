@@ -1,13 +1,48 @@
 {% extends 'project_base.html' %}
 {% load crispy_forms_tags %}
-{% block title %}Create Task{% endblock %}
+{% block title %}Create Task - {{ project.name }}{% endblock %}
 {% block heading %}Task{% endblock %}
 
 {% block content %}
+<div class="max-w-8xl mx-auto p-6 bg-white shadow-lg rounded-lg">
 <h1 class="text-2xl font-bold mb-4">Create a Task for {{ project.name }}</h1>
 <form method="POST">
     {% csrf_token %}
-    {{form|crispy}}   
-     <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded">Save Task</button>
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            {{ form.name }}
+        </div>
+        <div>
+            {{ form.priority }}
+        </div>
+    </div>
+    
+    <div class="mt-4">
+        {{ form.description }}
+    </div>
+    
+    <div class="grid grid-cols-2 gap-4 mt-4">
+        <div>
+            {{ form.start_date }}
+        </div>
+        <div>
+            {{ form.end_date }}
+        </div>
+    </div>
+    
+    <div class="mt-4">
+        {{ form.status }}
+    </div>
+    
+    <div class="mt-4">
+        {{ form.assigned_members }}
+    </div>
+    
+    <div class="mt-6">
+        <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
+            Save Task
+        </button>
+    </div>  
 </form>
+</div>
 {% endblock %}

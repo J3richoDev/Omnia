@@ -21,7 +21,7 @@ class Task(models.Model):
         ('review', 'Review'),
         ('completed', 'Completed'),
     ]
-
+#
     PRIORITY_CHOICES = [
         ('high', 'High'),
         ('medium', 'Medium'),

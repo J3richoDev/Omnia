@@ -3,6 +3,7 @@
 {% block heading %}Dashboard{% endblock %}
 
 {% block content %}
+
 <div class="flex justify-between mb-4">
     <h1 class="text-2xl font-bold mb-4">Welcome, {{ request.user.first_name }}!</h1>
     <a href="{% url 'create_project' %}"

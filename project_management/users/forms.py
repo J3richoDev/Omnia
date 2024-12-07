@@ -14,6 +14,11 @@ class MemberCreationForm(forms.ModelForm):
         widgets = {
             'password': forms.PasswordInput(),
         }
+        def clean_email(self):
+            email = self.cleaned_data.get('email')
+            if CustomUser.objects.filter(email=email).exists():
+                raise forms.ValidationError("A user with this email already exists.")
+            return email
 
 class MemberProfileForm(forms.ModelForm):
     class Meta:

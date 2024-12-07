@@ -10,17 +10,21 @@ class ProjectForm(forms.ModelForm):
     start_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
     end_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
 
+
 class TaskForm(forms.ModelForm):
     class Meta:
         model = Task
         fields = ['name', 'description', 'status', 'priority', 'start_date', 'end_date', 'assigned_members']
         widgets = {
-            'start_date': forms.DateInput(attrs={'type': 'date'}),
-            'end_date': forms.DateInput(attrs={'type': 'date'}),
-            'assigned_members': forms.CheckboxSelectMultiple(),
+            'name': forms.TextInput(attrs={'class': 'border border-gray-300 rounded-md p-2 w-full', 'placeholder': 'Task name'}),
+            'description': forms.Textarea(attrs={'class': 'border border-gray-300 rounded-md p-2 w-full h-32', 'placeholder': 'Task description'}),
+            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'border border-gray-300 rounded-md p-2 w-full'}),
+            'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'border border-gray-300 rounded-md p-2 w-full'}),
+            'status': forms.Select(attrs={'class': 'border border-gray-300 rounded-md p-2 w-full'}),
+            'priority': forms.Select(attrs={'class': 'border border-gray-300 rounded-md p-2 w-full'}),
+            'assigned_members': forms.CheckboxSelectMultiple(attrs={'class': 'form-checkbox'}),
         }
-    start_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
-    end_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
+
 
 class TaskCommentForm(forms.ModelForm):
     class Meta:

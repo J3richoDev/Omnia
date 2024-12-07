@@ -213,13 +213,14 @@
                         >Gantt Chart</a>
                     </li>
                     <li>
-                        <a href="#" class="block py-2 px-4 hover:bg-blue-700 {% if 'reports' in request.path %}active{% endif %}"
+                        <a href="{% url 'reports' %}" class="block py-2 px-4 hover:bg-blue-700 {% if 'reports' in request.path %}active{% endif %}"
                         >Reports</a>
                     </li>
                     <li>
                         <a href="{% url 'create_member' %}" class="block py-2 px-4 hover:bg-blue-700 {% if 'members' in request.path %}active{% endif %}"
                         >Members</a>
                     </li>
+                    
                     {% endif %}
                 {% else %}
                     <li>

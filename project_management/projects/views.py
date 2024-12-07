@@ -196,3 +196,21 @@ def gantt_chart(request):
         "tasks_json": task_data,
     }
     return render(request, "projects/gantt_chart.html", context)
+
+
+
+@login_required
+def reports_view(request):
+    project_id = request.session.get('current_project_id')
+    if not project_id:
+        return HttpResponseForbidden("No project selected.")
+
+    project = Project.objects.get(id=project_id, owner=request.user)
+
+    context = {
+        'title': 'Reports',
+        'project': project,
+        'reports': ['Report 1', 'Report 2', 'Report 3'],  # Example data
+    }
+    return render(request, 'projects/reports.html', context)
+
