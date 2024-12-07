@@ -1,3 +1,4 @@
+
 {% load static %}
 {% load custom_filters %}
 
@@ -141,24 +142,48 @@
                       </ul>
                     </div>
                     <div class="dropdown dropdown-end ml-4">
-                        <label tabindex="0" class="btn btn-ghost btn-circle avatar">
-                            <div class="w-10 rounded-full"><img src="https://placeimg.com/80/80/people" alt="profile"></div>
-                        </label>
-                        <ul tabindex="0" class="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-52">
-                            <li class="justify-between">
-                                <a href="/users/my-profile">My Profile
-                                </a>
-                            </li>
-                                <div class="divider mt-0 mb-0"></div>
-                            <li>
-                                <form method="post" action="{% url 'logout' %}">
-                                    {% csrf_token %}
-                                  <button class="hover:text-black-20">
-                                      Logout </button>
-                                </form>
-                            </li>
-                        </ul>
-                    </div>
+                      <label tabindex="0" class="btn btn-ghost btn-circle avatar">
+                          <div class="w-10 rounded-full">
+                              <img src="https://placeimg.com/80/80/people" alt="profile">
+                          </div>
+                      </label>
+                      <ul tabindex="0" class="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-52">
+                          <li class="justify-between">
+                              <a href="/users/my-profile">My Profile</a>
+                          </li>
+                          <div class="divider mt-0 mb-0"></div>
+                          <li>
+                           
+                              <button class="hover:text-black-20" onclick="logout_modal.showModal()">
+                                  Logout
+                              </button>
+                          </li>
+                      </ul>
+                  </div>
+                  
+                  <!-- Logout confirmation modal -->
+                  <dialog id="logout_modal" class="modal">
+                      <div class="modal-box">
+                          
+                          <form method="dialog">
+                              <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+                          </form>
+                          
+                          <h3 class="text-lg font-bold">Confirm Logout</h3>
+                          <p class="py-4">Are you sure you want to log out?</p>
+                  
+                          <div class="modal-action">
+                              
+                              <form method="post" action="{% url 'logout' %}">
+                                  {% csrf_token %}
+                                  <button type="submit" class="btn btn-error">Yes</button>
+                              </form>
+                             
+                              <button class="btn" onclick="logout_modal.close()">Cancel</button>
+                          </div>
+                      </div>
+                  </dialog>
+                  
                 </div>
             </div>
             <!-- Main Content -->
