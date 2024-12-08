@@ -3,190 +3,151 @@
 {% block heading %}Projects{% endblock %}
 
 {% block content %}
-<div class="flex items-center justify-between mb-4">
-    <h1 class="text-2xl font-bold mb-4">Tasks for {{ project.name }}</h1>
-    <a href="{% url 'create_task' %}"
-       class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
-        + Create Task
-    </a>
+<div class="card w-full p-6 bg-base-100 shadow-xl mt-2 max-h-screen overflow-y-auto">
+
+  <div class="flex items-center justify-between mb-4">
+      <h1 class="text-2xl font-bold mb-4">Tasks for {{ project.name }}</h1>
+      <a href="{% url 'create_task' %}"
+         class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
+          + Create Task
+      </a>
+  </div>
+
+  {% if tasks %}
+      <div class="relative overflow-x-auto bg-white text-gray-800">
+        <table class="table w-full whitespace-no-wrap">
+          <!-- head -->
+          <thead class="">
+            <tr>
+              <th>
+                <label>
+                  <input type="checkbox" class="checkbox" />
+                </label>
+              </th>
+              <th>Name</th>
+              <th>Summary</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Sprint</th>
+              <th>Assignee</th>
+              <th>Due Date</th>
+              <th>Start Date</th>
+              <th>Created</th>
+              <th>Manager</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for task in tasks %}
+            <tr class="border-b border-gray-200 hover:bg-gray-100 whitespace-nowrap night:bg-gray-800 night:text-gray-100"
+                data-task-id="{{ task.id }}">
+              <th>
+                <label>
+                  <input type="checkbox" class="checkbox" />
+                </label>
+              </th>
+              <td contenteditable="true" data-field="name" class="editable">{{ task.name }}</td>
+              <td
+                  class="editable truncate max-w-[300px] whitespace-nowrap overflow-hidden text-ellipsis description-cell focus:whitespace-normal focus:overflow-visible focus:max-w-none"
+                  data-field="description"
+                  contenteditable="true"
+                  onfocus="this.textContent = this.dataset.fullDescription"
+                  onblur="this.dataset.fullDescription = this.textContent.trim(); this.updateTaskDescription(this);"
+                  data-full-description="{{ task.description }}"
+              >
+                  {{ task.description|truncatechars:50 }}
+              </td>
+              <td>
+                <select class="editable-select" data-field="status">
+                  {% for key, value in task.STATUS_CHOICES %}
+                  <option value="{{ key }}" {% if task.status == key %}selected{% endif %}>{{ value }}</option>
+                  {% endfor %}
+                </select>
+              </td>
+              <td>
+                <select class="editable-select" data-field="priority">
+                  {% for key, value in task.PRIORITY_CHOICES %}
+                  <option value="{{ key }}" {% if task.priority == key %}selected{% endif %}>{{ value }}</option>
+                  {% endfor %}
+                </select>
+              </td>
+              <td contenteditable="true" data-field="sprint" class="editable">{{ task.sprint }}</td>
+              <td contenteditable="true" data-field="assigned_members" class="editable">{{ task.assigned_members }}</td>
+              <td contenteditable="true" data-field="end_date" class="editable">{{ task.end_date }}</td>
+              <td contenteditable="true" data-field="start_date" class="editable">{{ task.start_date }}</td>
+              <td>{{ task.created_at }}</td>
+              <td>Manager</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+  {% else %}
+      <p>No tasks found for this project.</p>
+  {% endif %}
 </div>
 
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const csrfToken = '{{ csrf_token }}';
 
-{% if tasks %}
-    <ul>
-        {% for task in tasks %}
-            <li class="bg-white shadow p-4 rounded mb-2">
-                <a href="{% url 'task_detail' task.id %}" class="text-blue-600 underline">
-                    <h2 class="text-lg font-bold">{{ task.name }}</h2>
-                </a>
-                <p><strong>Status:</strong> {{ task.get_status_display }}</p>
-                <p><strong>Priority:</strong> {{ task.get_priority_display }}</p>
-                <p><strong>Start Date:</strong> {{ task.start_date }}</p>
-                <p><strong>End Date:</strong> {{ task.end_date }}</p>
-                <p>{{ task.description }}</p>
-            </li>
-        {% endfor %}
-    </ul>
+        // Function to send an update request to the server
+        async function updateTaskField(taskId, field, value) {
+            try {
+                const response = await fetch("{% url 'update_task_field' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        task_id: taskId,
+                        field: field,
+                        value: value,
+                    }),
+                });
 
-    <div class="overflow-x-auto">
-      <table class="table">
-        <!-- head -->
-        <thead>
-          <tr>
-            <th>
-              <label>
-                <input type="checkbox" class="checkbox" />
-              </label>
-            </th>
-            <th>Name</th>
-            <th>Job</th>
-            <th>Favorite Color</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- row 1 -->
-          <tr>
-            <th>
-              <label>
-                <input type="checkbox" class="checkbox" />
-              </label>
-            </th>
-            <td>
-              <div class="flex items-center gap-3">
-                <div class="avatar">
-                  <div class="mask mask-squircle h-12 w-12">
-                    <img
-                      src="https://img.daisyui.com/images/profile/demo/2@94.webp"
-                      alt="Avatar Tailwind CSS Component" />
-                  </div>
-                </div>
-                <div>
-                  <div class="font-bold">Hart Hagerty</div>
-                  <div class="text-sm opacity-50">United States</div>
-                </div>
-              </div>
-            </td>
-            <td>
-              Zemlak, Daniel and Leannon
-              <br />
-              <span class="badge badge-ghost badge-sm">Desktop Support Technician</span>
-            </td>
-            <td>Purple</td>
-            <th>
-              <button class="btn btn-ghost btn-xs">details</button>
-            </th>
-          </tr>
-          <!-- row 2 -->
-          <tr>
-            <th>
-              <label>
-                <input type="checkbox" class="checkbox" />
-              </label>
-            </th>
-            <td>
-              <div class="flex items-center gap-3">
-                <div class="avatar">
-                  <div class="mask mask-squircle h-12 w-12">
-                    <img
-                      src="https://img.daisyui.com/images/profile/demo/3@94.webp"
-                      alt="Avatar Tailwind CSS Component" />
-                  </div>
-                </div>
-                <div>
-                  <div class="font-bold">Brice Swyre</div>
-                  <div class="text-sm opacity-50">China</div>
-                </div>
-              </div>
-            </td>
-            <td>
-              Carroll Group
-              <br />
-              <span class="badge badge-ghost badge-sm">Tax Accountant</span>
-            </td>
-            <td>Red</td>
-            <th>
-              <button class="btn btn-ghost btn-xs">details</button>
-            </th>
-          </tr>
-          <!-- row 3 -->
-          <tr>
-            <th>
-              <label>
-                <input type="checkbox" class="checkbox" />
-              </label>
-            </th>
-            <td>
-              <div class="flex items-center gap-3">
-                <div class="avatar">
-                  <div class="mask mask-squircle h-12 w-12">
-                    <img
-                      src="https://img.daisyui.com/images/profile/demo/4@94.webp"
-                      alt="Avatar Tailwind CSS Component" />
-                  </div>
-                </div>
-                <div>
-                  <div class="font-bold">Marjy Ferencz</div>
-                  <div class="text-sm opacity-50">Russia</div>
-                </div>
-              </div>
-            </td>
-            <td>
-              Rowe-Schoen
-              <br />
-              <span class="badge badge-ghost badge-sm">Office Assistant I</span>
-            </td>
-            <td>Crimson</td>
-            <th>
-              <button class="btn btn-ghost btn-xs">details</button>
-            </th>
-          </tr>
-          <!-- row 4 -->
-          <tr>
-            <th>
-              <label>
-                <input type="checkbox" class="checkbox" />
-              </label>
-            </th>
-            <td>
-              <div class="flex items-center gap-3">
-                <div class="avatar">
-                  <div class="mask mask-squircle h-12 w-12">
-                    <img
-                      src="https://img.daisyui.com/images/profile/demo/5@94.webp"
-                      alt="Avatar Tailwind CSS Component" />
-                  </div>
-                </div>
-                <div>
-                  <div class="font-bold">Yancy Tear</div>
-                  <div class="text-sm opacity-50">Brazil</div>
-                </div>
-              </div>
-            </td>
-            <td>
-              Wyman-Ledner
-              <br />
-              <span class="badge badge-ghost badge-sm">Community Outreach Specialist</span>
-            </td>
-            <td>Indigo</td>
-            <th>
-              <button class="btn btn-ghost btn-xs">details</button>
-            </th>
-          </tr>
-        </tbody>
-        <!-- foot -->
-        <tfoot>
-          <tr>
-            <th></th>
-            <th>Name</th>
-            <th>Job</th>
-            <th>Favorite Color</th>
-            <th></th>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-{% else %}
-    <p>No tasks found for this project.</p>
-{% endif %}
+                const result = await response.json();
+                if (!result.success) {
+                    alert('Failed to update task: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error updating task:', error);
+                alert('An error occurred while updating the task.');
+            }
+        }
+
+        // Handle inline editing for text fields
+        document.querySelectorAll('.editable').forEach((cell) => {
+            cell.addEventListener('blur', () => {
+                const taskId = cell.closest('tr').dataset.taskId;
+                const field = cell.dataset.field;
+                const value = cell.textContent.trim();
+
+                updateTaskField(taskId, field, value);
+            });
+        });
+
+        // Handle inline editing for dropdown fields
+        document.querySelectorAll('.editable-select').forEach((select) => {
+            select.addEventListener('change', () => {
+                const taskId = select.closest('tr').dataset.taskId;
+                const field = select.dataset.field;
+                const value = select.value;
+
+                updateTaskField(taskId, field, value);
+            });
+        });
+
+        document.querySelectorAll(".description-cell").forEach((cell) => {
+            cell.addEventListener("focus", () => {
+                cell.textContent = cell.dataset.fullDescription; // Show full description
+            });
+
+            cell.addEventListener("blur", () => {
+                updateTaskDescription(cell); // Update task on blur
+            });
+        });
+    });
+</script>
+
 {% endblock %}

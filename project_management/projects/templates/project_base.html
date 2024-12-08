@@ -9,9 +9,13 @@
     <title>{% block title %}Dashboard{% endblock %}</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/theme-change@2.0.2/index.js"></script>
 </head>
-<body class="bg-gray-100">
+<body style="font-family: 'Poppins', sans-serif;">
     <div class="drawer lg:drawer-open">
         <input id="left-sidebar-drawer" type="checkbox" class="drawer-toggle">
 
@@ -26,15 +30,15 @@
                     </label>
                     <h1 class="text-2xl font-semibold ml-2">{% block heading %}Dashboard{% endblock %}</h1>
                 </div>
-                <div class="flex-none ">
-                    <label class="swap ">
-                        <input id="theme-toggle" type="checkbox">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-set-theme="night" data-act-class="ACTIVECLASS" class="fill-current w-6 h-6 swap-off">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"></path>
-                        </svg>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-set-theme="light" data-act-class="ACTIVECLASS" class="fill-current w-6 h-6 swap-on ACTIVECLASS">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"></path>
-                        </svg>
+                <div class="flex-none">
+                    <label class="swap">
+                        <select data-choose-theme>
+                          <option value="light">Light</option>
+                          <option value="acid">Acid</option>
+                          <option value="lofi">Lofi</option>
+                          <option value="dark">Dark</option>
+                          <option value="night">Night</option>
+                        </select>
                     </label>
                     <div class="dropdown dropdown-bottom dropdown-end">
                       <button class="btn ml-4 btn-circle btn-ghost btn-sm">
@@ -176,21 +180,22 @@
                 {% if request.user.role == 'manager' %}
                     <h2 class="text-sm font-bold mt-4 mb-2">Projects</h2>
                     <li tabindex="0" role="button" class="dropdown dropdown-bottom z-50">
-                        {% if request.session.current_project_id %}
-                            {% with current_project=user_projects|get_item:request.session.current_project_id %}
-                            <span class="text-white flex items-center text-base font-medium rounded-lg transition duration-75 bg-{{ current_project.color }}-500">
-                                 <span class="truncate max-w-[200px] min-w-[200px]">
-                                        <i class="fas {{ current_project.emoji_icon }} text-lg text-gray-700 bg-white py-0.5 px-2 rounded-md mr-2"></i>
-                                            {{ current_project.name }}
-                                        {% endwith %}
-                                    {% else %}
-                                        Project Name
-                                </span>
-                                <svg class="w-6 h-6 text-white ml-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/>
-                                </svg>
-                            </span>
-                        {% endif %}
+                        <span class="flex items-center text-base font-medium rounded-lg transition duration-75 border">
+                            {% if request.session.current_project_id %}
+                                {% with current_project=user_projects|get_item:request.session.current_project_id %}
+                                    <i class="fas {{ current_project.emoji_icon }} text-lg text-gray-100 bg-{{ current_project.color }}-500 w-8 h-8 flex items-center justify-center rounded-md mr-2"></i>
+                                    <span class="truncate max-w-[150px] min-w-[150px] flex items-center">
+                                        {{ current_project.name }}
+                                    </span>
+                                {% endwith %}
+                            {% else %}
+                                Project Name
+                            {% endif %}
+
+                            <svg class="w-6 h-6 text-gray-800 ml-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/>
+                            </svg>
+                        </span>
                         <div tabindex="0" class="flex flex-col w-72 text-gray-700 menu menu-compact dropdown-content mt-3 shadow-lg border border-gray-300 bg-base-100 divide-y divide-solid hover:bg-white">
                             <div class="w-full text-left pl-3 my-2">
                                 <p class="text-base font-medium">
@@ -198,13 +203,14 @@
                                 </p>
                             </div>
                             <div class="max-h-40 w-full overflow-y-auto">
-                                <ul class="">
+                                <ul class="m-0 p-0">
                                 {% for project in user_projects %}
                                     <li>
                                         <a href="{% url 'set_current_project' project.id %}"
-                                           class="block py-2 px-4
-                                                  {% if project.id|stringformat:'d' == request.session.current_project_id|stringformat:'d' %}bg-{{project.color}}-500 text-white{% else %}hover:bg-gray-200{% endif %}">
-                                           <i class="fas {{ project.emoji_icon }} text-lg text-{{project.color}}-700 py-0.5 px-2 rounded-md mr-2"></i>
+                                           class="block py-2 px-4 truncate max-w-[230px] min-w-[230px]
+                                                  {% if project.id|stringformat:'d' == request.session.current_project_id|stringformat:'d' %}bg-{{project.color}}-500 hover:bg-{{project.color}}-300 text-white{% else %}hover:bg-gray-200{% endif %}">
+                                           <i class="fas {{ project.emoji_icon }} text-lg py-0.5 px-2 rounded-md mr-2
+                                                    {% if project.id|stringformat:'d' == request.session.current_project_id|stringformat:'d' %}text-white{% else %}text-{{project.color}}-700{% endif %}"></i>
                                             {{ project.name }}
                                         </a>
                                     </li>
@@ -346,6 +352,6 @@
         </div>
 
     </div>
-<script src="{% static 'js/theme-selector.js' %}"></script>
+<!--<script src="{% static 'js/theme-selector.js' %}"></script>-->
 </body>
 </html>

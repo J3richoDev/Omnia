@@ -5,6 +5,8 @@ from django.http import HttpResponseForbidden
 from django.db import DatabaseError
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+import json
 from .models import Project, Task, TaskFile, TaskComment, ProjectMember
 from .forms import ProjectForm, TaskForm, TaskCommentForm, TaskFileForm, AddMemberForm
 
@@ -118,6 +120,34 @@ def create_task(request):
         form = TaskForm()
     return render(request, 'projects/create_task.html', {'form': form, 'project': project})
 
+
+@csrf_exempt
+@login_required
+@require_POST
+def update_task_field(request):
+    try:
+        data = json.loads(request.body)
+        task_id = data.get("task_id")
+        field = data.get("field")
+        value = data.get("value")
+
+        task = Task.objects.get(id=task_id)
+
+        # Ensure the field exists on the model
+        if not hasattr(task, field):
+            return JsonResponse({'success': False, 'error': 'Invalid field'})
+
+        # Set the field value and save
+        setattr(task, field, value)
+        task.save()
+
+        return JsonResponse({'success': True})
+    except Task.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Task not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
 @login_required
 def project_tasks(request):
     project_id = request.session.get('current_project_id')
@@ -126,6 +156,7 @@ def project_tasks(request):
 
     project = Project.objects.get(id=project_id, owner=request.user)
     tasks = project.tasks.all()
+
     return render(request, 'projects/project_tasks.html', {'tasks': tasks, 'project': project})
 
 @login_required
