@@ -16,6 +16,8 @@ urlpatterns = [
     path('tasks/create/', views.create_task, name='create_task'),
     path('tasks/update-field/', views.update_task_field, name='update_task_field'),
 
+    path('sprint/', views.project_sprints, name='project_sprints'),
+
     path('my-tasks/', views.my_tasks, name='my_tasks'),
     path('tasks/<int:task_id>/', views.task_detail, name='task_detail'),
     path('files/<int:file_id>/delete/', views.delete_file, name='delete_file'),

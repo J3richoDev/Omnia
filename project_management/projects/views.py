@@ -216,6 +216,17 @@ def delete_file(request, file_id):
     return redirect('task_detail', task_id=task_file.task.id)
 
 @login_required
+def project_sprints(request):
+    project_id = request.session.get('current_project_id')
+    if not project_id:
+        return HttpResponseForbidden("No project selected.")
+
+    project = Project.objects.get(id=project_id, owner=request.user)
+    tasks = project.tasks.all()
+
+    return render(request, 'projects/project_sprints.html', {'tasks': tasks, 'project': project})
+
+@login_required
 def kanban_board(request):
     project_id = request.session.get('current_project_id')
     if not project_id:

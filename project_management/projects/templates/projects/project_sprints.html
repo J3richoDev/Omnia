@@ -1,0 +1,126 @@
+{% extends 'project_base.html' %}
+{% block title %}Tasks for {{ project.name }}{% endblock %}
+{% block heading %}Projects{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-bold mb-4">Tasks for {{ project.name }}</h1>
+    <a href="{% url 'create_task' %}"
+       class="btn btn-primary text-white py-2 px-4 rounded hover:bg-blue-600">
+        + Create Sprint
+    </a>
+</div>
+
+<div class="card w-full p-5 bg-base-100 shadow-md rounded-md mt-2 mb-10">
+    <div>
+        <div class="flex flex-row justify-between">
+            <div class="flex flex-row justify-between gap-4">
+                <label>
+                    <input type="checkbox" class="checkbox" />
+                </label>
+                <div class="text-lg font-medium mb-3">Sprint 1</div>
+            </div>
+        </div>
+    </div>
+    <table class="table w-full whitespace-no-wrap">
+        <tbody>
+            <tr class="border border-gray-200 hover:bg-gray-200 whitespace-nowrap">
+                <td>
+                    <div class="flex flex-row justify-between">
+                        <a href="">
+                            <div class="flex flex-row justify-between gap-4">
+                                <label>
+                                    <input type="checkbox" class="checkbox" />
+                                </label>
+                                Task name
+                            </div>
+                        </a>
+                        <div class="flex flex-row justify-between gap-4">
+                            <div>
+                                Todo
+                            </div>
+                            <div>
+                                Jericho Nomat
+                            </div>
+                            <div>
+                                <div class="dropdown dropdown-end">
+                                  <div tabindex="0" role="button" class="btn btn-xs">
+                                      <svg class="w-[30px] h-[30px]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                          <path stroke="currentColor" stroke-linecap="round" stroke-width="3" d="M6 12h.01m6 0h.01m5.99 0h.01"/>
+                                      </svg>
+                                  </div>
+                                  <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                                    <li><a>Move to</a></li>
+                                    <li><a>Assignee</a></li>
+                                    <li><a>Delete</a></li>
+                                  </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+{% if tasks %}
+<div class="card w-full p-5 bg-base-100 shadow-md rounded-md mt-2">
+    <div>
+        <div class="flex flex-row justify-between">
+            <div class="flex flex-row justify-between gap-4">
+                <label>
+                    <input type="checkbox" class="checkbox" />
+                </label>
+                <div class="text-lg font-medium mb-3">Backlogs</div>
+            </div>
+        </div>
+    </div>
+    <table class="table w-full whitespace-no-wrap">
+        <tbody>
+        {% for task in tasks %}
+            <tr class="border border-gray-200 hover:bg-gray-200 whitespace-nowrap">
+                <td>
+                    <div class="flex flex-row justify-between">
+                        <a href="{% url 'task_detail' task.id %}">
+                            <div class="flex flex-row justify-between gap-4">
+                                <label>
+                                    <input type="checkbox" class="checkbox" />
+                                </label>
+                                {{task.name}}
+                            </div>
+                        </a>
+                        <div class="flex flex-row justify-between gap-4">
+                            <div>
+                                {{ task.get_status_display }}
+                            </div>
+                            <div>
+                                {{ task.assigned_member }}
+                            </div>
+                            <div>
+                                <div class="dropdown dropdown-end">
+                                  <div tabindex="0" role="button" class="btn btn-xs">
+                                      <svg class="w-[30px] h-[30px]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                          <path stroke="currentColor" stroke-linecap="round" stroke-width="3" d="M6 12h.01m6 0h.01m5.99 0h.01"/>
+                                      </svg>
+                                  </div>
+                                  <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                                    <li><a>Move to</a></li>
+                                    <li><a>Assignee</a></li>
+                                    <li><a>Delete</a></li>
+                                  </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% else %}
+    <p>No tasks found for this project.</p>
+{% endif %}
+{% endblock %}

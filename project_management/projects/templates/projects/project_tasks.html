@@ -3,21 +3,31 @@
 {% block heading %}Projects{% endblock %}
 
 {% block content %}
+<style>
+    .status-todo { background-color: #434343; }      /* Yellow */
+    .status-in_progress { background-color: rgb(59 130 246); } /* Blue */
+    .status-review { background-color: #f4bd3d; }    /* Orange */
+    .status-completed { background-color: #4CAF50; }  /* Green */
+
+    .priority-high { background-color: #e14040; }     /* Red */
+    .priority-medium { background-color: #f4bd3d; }   /* Amber */
+    .priority-low { background-color: rgb(59 130 246); }      /* Lime */
+</style>
 <div class="card w-full p-6 bg-base-100 shadow-xl mt-2 max-h-screen overflow-y-auto">
 
   <div class="flex items-center justify-between mb-4">
       <h1 class="text-2xl font-bold mb-4">Tasks for {{ project.name }}</h1>
       <a href="{% url 'create_task' %}"
-         class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
+         class="btn btn-primary text-white py-2 px-4 rounded hover:bg-blue-600">
           + Create Task
       </a>
   </div>
 
   {% if tasks %}
-      <div class="relative overflow-x-auto bg-white text-gray-800">
-        <table class="table w-full whitespace-no-wrap">
+      <div class="relative overflow-x-auto rounded-lg">
+        <table class="table w-full whitespace-no-wrap table-pin-rows table-pin-cols">
           <!-- head -->
-          <thead class="">
+          <thead>
             <tr>
               <th>
                 <label>
@@ -25,15 +35,15 @@
                 </label>
               </th>
               <th>Name</th>
-              <th>Summary</th>
-              <th>Status</th>
-              <th>Priority</th>
-              <th>Sprint</th>
-              <th>Assignee</th>
-              <th>Due Date</th>
-              <th>Start Date</th>
-              <th>Created</th>
-              <th>Manager</th>
+              <td>Summary</td>
+              <td>Status</td>
+              <td>Priority</td>
+              <td>Sprint</td>
+              <td>Assignee</td>
+              <td>Due Date</td>
+              <td>Start Date</td>
+              <td>Created</td>
+              <td>Manager</td>
             </tr>
           </thead>
           <tbody>
@@ -45,7 +55,7 @@
                   <input type="checkbox" class="checkbox" />
                 </label>
               </th>
-              <td contenteditable="true" data-field="name" class="editable">{{ task.name }}</td>
+              <th contenteditable="true" data-field="name" class="editable">{{ task.name }}</th>
               <td
                   class="editable truncate max-w-[300px] whitespace-nowrap overflow-hidden text-ellipsis description-cell focus:whitespace-normal focus:overflow-visible focus:max-w-none"
                   data-field="description"
@@ -57,23 +67,42 @@
                   {{ task.description|truncatechars:50 }}
               </td>
               <td>
-                <select class="editable-select" data-field="status">
+                <select class="editable-select {% if task.status == 'todo' %}status-todo{% elif task.status == 'in_progress' %}status-in_progress{% elif task.status == 'review' %}status-review{% elif task.status == 'completed' %}status-completed{% endif %} text-white py-1 px-2 rounded" data-field="status">
                   {% for key, value in task.STATUS_CHOICES %}
-                  <option value="{{ key }}" {% if task.status == key %}selected{% endif %}>{{ value }}</option>
+                  <option
+                    value="{{ key }}"
+                    {% if task.status == key %}selected{% endif %}
+                    class="py-2 font-medium bg-white text-gray-800">
+                    {{ value }}
+                  </option>
                   {% endfor %}
                 </select>
               </td>
               <td>
-                <select class="editable-select" data-field="priority">
+                <select class="editable-select {% if task.priority == 'high' %}priority-high{% elif task.priority == 'medium' %}priority-medium{% elif task.priority == 'low' %}priority-low{% endif %} text-white py-1 px-2 rounded" data-field="priority">
                   {% for key, value in task.PRIORITY_CHOICES %}
-                  <option value="{{ key }}" {% if task.priority == key %}selected{% endif %}>{{ value }}</option>
+                  <option value="{{ key }}" {% if task.priority == key %}selected{% endif %}
+                  class="py-2 font-medium bg-white text-gray-800">{{ value }}
+                  </option>
                   {% endfor %}
                 </select>
               </td>
               <td contenteditable="true" data-field="sprint" class="editable">{{ task.sprint }}</td>
               <td contenteditable="true" data-field="assigned_members" class="editable">{{ task.assigned_members }}</td>
-              <td contenteditable="true" data-field="end_date" class="editable">{{ task.end_date }}</td>
-              <td contenteditable="true" data-field="start_date" class="editable">{{ task.start_date }}</td>
+              <td>
+                <input
+                  type="date"
+                  class="editable-date border border-gray-300 rounded p-1"
+                  data-field="end_date"
+                  value="{{ task.end_date|date:'Y-m-d' }}" />
+              </td>
+              <td>
+                <input
+                  type="date"
+                  class="editable-date border border-gray-300 rounded p-1"
+                  data-field="start_date"
+                  value="{{ task.start_date|date:'Y-m-d' }}" />
+              </td>
               <td>{{ task.created_at }}</td>
               <td>Manager</td>
             </tr>
@@ -127,6 +156,19 @@
             });
         });
 
+        function updateSelectClass(select, field, value) {
+            // Remove existing status or priority-related classes
+            select.classList.remove('status-todo', 'status-in_progress', 'status-review', 'status-completed');
+            select.classList.remove('priority-high', 'priority-medium', 'priority-low');
+
+            // Add the new class based on the selected value
+            if (field === 'status') {
+                select.classList.add(`status-${value}`);
+            } else if (field === 'priority') {
+                select.classList.add(`priority-${value}`);
+            }
+        }
+
         // Handle inline editing for dropdown fields
         document.querySelectorAll('.editable-select').forEach((select) => {
             select.addEventListener('change', () => {
@@ -134,8 +176,17 @@
                 const field = select.dataset.field;
                 const value = select.value;
 
+                // Update the select's class dynamically
+                updateSelectClass(select, field, value);
+
+                // Update the task field on the server
                 updateTaskField(taskId, field, value);
             });
+
+            // Initialize the correct class on page load
+            const field = select.dataset.field;
+            const value = select.value;
+            updateSelectClass(select, field, value);
         });
 
         document.querySelectorAll(".description-cell").forEach((cell) => {
@@ -145,6 +196,16 @@
 
             cell.addEventListener("blur", () => {
                 updateTaskDescription(cell); // Update task on blur
+            });
+        });
+
+        document.querySelectorAll('.editable-date').forEach((dateInput) => {
+            dateInput.addEventListener('change', () => {
+                const taskId = dateInput.closest('tr').dataset.taskId;
+                const field = dateInput.dataset.field;
+                const value = dateInput.value;
+
+                updateTaskField(taskId, field, value);
             });
         });
     });
