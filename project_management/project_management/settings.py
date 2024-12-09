@@ -149,14 +149,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Email settings for development (using the console backend)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# settings.py
-
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 # Gmail SMTP server settings (for real email sending)
 EMAIL_HOST = 'smtp.gmail.com'  # Gmail SMTP server
 EMAIL_PORT = 587  # TLS port
 EMAIL_USE_TLS = True  # Enable TLS encryption
-EMAIL_HOST_USER = 'mckylafaith.valenzuela'  # Your Gmail address
-EMAIL_HOST_PASSWORD = 'mckylacampang05'  # Your Gmail password or App password
+EMAIL_HOST_USER = 'youremail@email.com'  # Your Gmail address
+EMAIL_HOST_PASSWORD = 'pass'  # Your Gmail password or App password
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER  
