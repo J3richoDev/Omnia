@@ -270,4 +270,3 @@ def project_members(request):
 
     project = Project.objects.get(id=project_id, owner=request.user)
     return render(request, 'projects/members.html', {'project': project})
-

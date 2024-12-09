@@ -1,6 +1,11 @@
+
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models import CustomUser
 from django import forms
+
+#new
+from django.contrib.auth.forms import SetPasswordForm
+
 
 class CustomAuthenticationForm(AuthenticationForm):
     username = forms.CharField(label="Username or Email")
@@ -56,3 +61,30 @@ class PasswordChangeForm(forms.Form):
         confirm_password = cleaned_data.get("confirm_password")
         if new_password != confirm_password:
             raise forms.ValidationError("The new passwords do not match.")
+        
+#new
+
+class ForgotPasswordForm(forms.Form):
+    email = forms.EmailField(label="Enter your registered email address", widget=forms.EmailInput(attrs={'class': 'input input-bordered w-full'}))
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        try:
+            user = CustomUser.objects.get(email=email)
+            if not user.is_active:
+                raise forms.ValidationError("This account is inactive.")
+        except CustomUser.DoesNotExist:
+            raise forms.ValidationError("No user found with this email address.")
+        return email
+    
+class ResetPasswordForm(SetPasswordForm):
+    new_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'input input-bordered w-full'}), label="New Password", required=True)
+    confirm_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'input input-bordered w-full'}), label="Confirm New Password", required=True)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        new_password = cleaned_data.get("new_password")
+        confirm_password = cleaned_data.get("confirm_password")
+        if new_password != confirm_password:
+            raise forms.ValidationError("The new passwords do not match.")
+        return cleaned_data

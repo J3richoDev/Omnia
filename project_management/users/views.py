@@ -5,6 +5,17 @@ from django.contrib import messages
 from .forms import CustomUserCreationForm, MemberCreationForm, MemberProfileForm, UserUpdateForm, PasswordChangeForm, CustomAuthenticationForm
 from .models import CustomUser
 
+# Password reset related imports
+# from django.contrib.auth.forms import SetPasswordForm, PasswordResetForm
+from .forms import ForgotPasswordForm, ResetPasswordForm
+from django.core.mail import send_mail
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.sites.shortcuts import get_current_site
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+
+
+
+
 def login_view(request):
     if request.method == 'POST':
         form = CustomAuthenticationForm(request, data=request.POST)
@@ -118,3 +129,114 @@ def my_profile(request):
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+#new added view
+
+# def forgot_password(request):
+#     if request.method == 'POST':
+#         email = request.POST.get('email')
+        
+#         if email:
+#             try:
+#                 user = CustomUser.objects.get(email=email)
+                
+#                 token = default_token_generator.make_token(user)
+#                 uid = urlsafe_base64_encode(str(user.pk).encode())
+                
+#                 reset_url = f"http://{get_current_site(request).domain}/reset-password/{uid}/{token}/"
+                
+#                 send_mail(
+#                     "Password Reset Request",
+#                     f"Click the link to reset your password: {reset_url}",
+#                     "no-reply@omnia.com",  
+#                     [email],
+#                 )
+                
+#                 messages.success(request, "A password reset link has been sent to your email address.")
+#                 return redirect('login')
+#             except CustomUser.DoesNotExist:
+#                 messages.error(request, "No user found with that email address.")
+#         else:
+#             messages.error(request, "Please provide a valid email address.")
+    
+#     return render(request, 'users/forgotpass.html')
+
+def forgot_password(request):
+    if request.method == 'POST':
+        form = ForgotPasswordForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            try:
+                user = CustomUser.objects.get(email=email)
+                
+                # Generate token and URL for password reset
+                token = default_token_generator.make_token(user)
+                uid = urlsafe_base64_encode(str(user.pk).encode())
+
+                # Generate the password reset URL
+                reset_url = f"http://{get_current_site(request).domain}/reset-password/{uid}/{token}/"
+
+                # Send email
+                send_mail(
+                    subject="Password Reset Request",
+                    message=f"Click the link to reset your password: {reset_url}",
+                    from_email="no-reply@omnia.com",  # Replace with your email address
+                    recipient_list=[email],
+                )
+
+                messages.success(request, "A password reset link has been sent to your email address.")
+                return redirect('login')
+            except CustomUser.DoesNotExist:
+                messages.error(request, "No user found with that email address.")
+        else:
+            messages.error(request, "Please provide a valid email address.")
+    else:
+        form = ForgotPasswordForm()
+
+    return render(request, 'users/forgotpass.html', {'form': form})
+
+
+def reset_password(request, uidb64, token):
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = CustomUser.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+        user = None
+    
+    if user and default_token_generator.check_token(user, token):
+        if request.method == 'POST':
+            form = ResetPasswordForm(user, request.POST)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Your password has been reset successfully!")
+                return redirect('login')
+        else:
+            form = ResetPasswordForm(user)
+    else:
+        messages.error(request, "The reset link is invalid or has expired.")
+        return redirect('login')
+    
+    return render(request, 'users/reset_password.html', {'form': form})
+
+
+# def reset_password(request, uidb64, token):
+#     try:
+#         uid = urlsafe_base64_decode(uidb64).decode()
+#         user = CustomUser.objects.get(pk=uid)
+#     except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+#         user = None
+    
+#     if user and default_token_generator.check_token(user, token):
+#         if request.method == 'POST':
+#             form = SetPasswordForm(user, request.POST)
+#             if form.is_valid():
+#                 form.save()
+#                 messages.success(request, "Your password has been reset successfully!")
+#                 return redirect('login')
+#         else:
+#             form = SetPasswordForm(user)
+#     else:
+#         messages.error(request, "The reset link is invalid or has expired.")
+#         return redirect('login')
+    
+#     return render(request, 'users/reset_password.html', {'form': form})

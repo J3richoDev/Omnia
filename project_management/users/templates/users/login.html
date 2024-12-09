@@ -32,7 +32,7 @@
                 </p>
               </div>
               <div>
-                <!-- Slider indicators -->
+              
                 <div class="flex justify-center gap-5">
                     <button type="button" class="w-2 h-2 rounded-full bg-black" ></button>
                     <button type="button" class="w-2 h-2 rounded-full bg-gray-500" ></button>
@@ -53,11 +53,13 @@
             {% csrf_token %}
              {{ form|crispy }}
           <div class="text-right text-primary">
-            <a href="/forgot-password">
-              <span class="text-sm  inline-block  hover:text-primary hover:underline hover:cursor-pointer transition duration-200">
+            <a href="/users/forgot-password/">
+            <!-- <a href="/users/reset-password/"> -->
+              <span class="text-sm inline-block hover:text-primary hover:underline hover:cursor-pointer transition duration-200">
                 Forgot Password?
               </span>
             </a>
+            
           </div>
           <p class="text-center  text-error mt-8">
           </p>
@@ -77,4 +79,4 @@
     </div>
   </div>
 </div>
-{% endblock %}
+{% endblock %} 
