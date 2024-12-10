@@ -10,7 +10,18 @@ class ProjectForm(forms.ModelForm):
     start_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
     end_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
 
+<<<<<<< Updated upstream
 
+=======
+class MemberCreationForm(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'email','password']
+        widgets = {
+            'password': forms.PasswordInput(),
+        }
+        
+>>>>>>> Stashed changes
 class TaskForm(forms.ModelForm):
     class Meta:
         model = Task
@@ -24,6 +35,8 @@ class TaskForm(forms.ModelForm):
             'priority': forms.Select(attrs={'class': 'border border-gray-300 rounded-md p-2 w-full'}),
             'assigned_members': forms.CheckboxSelectMultiple(attrs={'class': 'form-checkbox'}),
         }
+    start_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
+    end_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
 
 
 class TaskCommentForm(forms.ModelForm):

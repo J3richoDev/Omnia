@@ -10,7 +10,7 @@ class CustomUserCreationForm(UserCreationForm):
 class MemberCreationForm(forms.ModelForm):
     class Meta:
         model = CustomUser
-        fields = ['username', 'password']
+        fields = ['username', 'email', 'password']
         widgets = {
             'password': forms.PasswordInput(),
         }

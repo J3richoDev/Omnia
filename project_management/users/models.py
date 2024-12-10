@@ -12,3 +12,10 @@ class CustomUser(AbstractUser):
     ]
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default=MANAGER)
     profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
+class Member(models.Model):
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    # other fields...
+
+    def __str__(self):
+        return self.name

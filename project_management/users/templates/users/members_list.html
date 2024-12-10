@@ -1,0 +1,24 @@
+{% extends 'project_base.html' %}
+{% block heading %}Members{% endblock %}
+{% block title %}Members{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto mt-10">
+    <h1 class="text-2xl font-bold mb-4">Members List</h1>
+    <table class="min-w-full table-auto border-collapse">
+        <thead>
+            <tr>
+                <th class="px-4 py-2 border">Name</th>
+                <th class="px-4 py-2 border">Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for member in members %}
+                <tr>
+                    <td class="px-4 py-2 border">{{ member.name }}</td>
+                    <td class="px-4 py-2 border">{{ member.email }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

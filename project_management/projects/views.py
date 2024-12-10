@@ -196,6 +196,7 @@ def gantt_chart(request):
         "tasks_json": task_data,
     }
     return render(request, "projects/gantt_chart.html", context)
+<<<<<<< Updated upstream
 
 
 
@@ -214,3 +215,5 @@ def reports_view(request):
     }
     return render(request, 'projects/reports.html', context)
 
+=======
+>>>>>>> Stashed changes

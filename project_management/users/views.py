@@ -4,7 +4,12 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib import messages
 from .forms import CustomUserCreationForm, MemberCreationForm, MemberProfileForm, UserUpdateForm, PasswordChangeForm
 from .models import CustomUser
+from .models import Member
 
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
@@ -31,6 +36,12 @@ def create_member(request):
     else:
         form = MemberCreationForm()
     return render(request, 'users/create_member.html', {'form': form})
+
+def members_list(request):
+    if request.user.role != CustomUser.MANAGER:
+        return redirect('dashboard')  # Restrict access to managers
+    members = Member.objects.all()
+    return render(request, 'users/members_list.html', {'members': members})
 
 @login_required
 def complete_profile(request):
@@ -93,3 +104,14 @@ def my_profile(request):
     context["user_form"] = user_form
     context["password_form"] = password_form
     return render(request, "users/my_profile.html", context)
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+=======
+    
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
