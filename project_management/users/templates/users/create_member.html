@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'project_base.html' %}
 {% load crispy_forms_tags %}
 {% block content %}
 <div class="max-w-lg mx-auto mt-10">
@@ -8,5 +8,10 @@
         {{form|crispy}}
         <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded">Create Member</button>
     </form>
+    {% for field in form %}
+    {% for error in field.errors %}
+        <p style="color: red;">{{ error }}</p>
+    {% endfor %}
+{% endfor %}
 </div>
 {% endblock %}

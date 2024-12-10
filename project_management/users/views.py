@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.db import IntegrityError
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import update_session_auth_hash, logout, authenticate, login
 from django.contrib import messages
@@ -47,8 +48,11 @@ def create_member(request):
             member = form.save(commit=False)
             member.role = CustomUser.MEMBER
             member.set_password(form.cleaned_data['password'])
-            member.save()
-            return redirect('members_list')  # Replace with your members list URL
+            try:
+                member.save()
+                return redirect('members_list')  # Replace with your members list URL
+            except IntegrityError:
+                form.add_error('email', "A user with this email already exists.")
     else:
         form = MemberCreationForm()
     return render(request, 'users/create_member.html', {'form': form})
@@ -114,6 +118,12 @@ def my_profile(request):
     context["user_form"] = user_form
     context["password_form"] = password_form
     return render(request, "users/my_profile.html", context)
+
+@login_required
+def members_list(request):
+    members = CustomUser.objects.filter(role=CustomUser.MEMBER)  # Fetch members with a specific role
+    return render(request, 'users/members_list.html', {'members': members})
+
 
 def logout_view(request):
     logout(request)
