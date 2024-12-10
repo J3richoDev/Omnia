@@ -5,22 +5,30 @@
 {% block heading %}Kanban Board{% endblock %}
 
 {% block content %}
-<h1 class="text-2xl font-bold mb-4">Kanban Board - {{ project.name }}</h1>
-<div id="kanban-board" class="grid grid-cols-4 gap-4">
+<div class="flex flex-row justify-between mb-4">
+    <h1 class="text-2xl font-bold">{{ project.name }}</h1>
+    <h2 class="text-lg font-medium">Sprint : {{ project.current_sprint }}</h2>
+</div>
+<div id="kanban-board" class="grid grid-cols-4 gap-2">
     {% for status, tasks in tasks_by_status.items %}
-        <div class="kanban-column bg-white p-4 rounded shadow min-h-[600px]" data-status="{{ status }}">
-            <h2 class="text-xl font-bold capitalize mb-2">{{ status|replace_underscore }}</h2>
-            <div class="bg-gray-100 p-2 h-full rounded-md">
-                <div class="kanban-tasks space-y-2">
-                    {% for task in tasks %}
-                        <div class="kanban-task bg-white p-4 rounded shadow cursor-pointer"
-                             data-task-id="{{ task.id }}">
-                            <p class="font-bold">{{ task.name }}</p>
-                            <p class="text-sm">{{ task.description|truncatewords:10 }}</p>
-                        </div>
-                    {% empty %}
-                        <p class="text-gray-500 italic">No tasks</p>
-                    {% endfor %}
+        <div class="card w-full p-3 bg-base-100 shadow-sm border min-h-screen ">
+            <div class="kanban-column flex flex-col h-full" data-status="{{ status }}">
+                <h2 class="text-xl font-bold capitalize text-center mt-1 {% if status == 'todo' %}text-base{% elif status == 'in_progress' %}text-sky-600{% elif status == 'review' %}text-amber-600{% elif status == 'completed' %}text-green-600{% endif %}">
+                    {{ status|replace_underscore }}
+                </h2>
+                <div class="border my-4 {% if status == 'todo' %}border-gray-500{% elif status == 'in_progress' %}border-sky-600{% elif status == 'review' %}border-amber-600{% elif status == 'completed' %}border-green-600{% endif %}"></div>
+                <div class="h-full">
+                    <div class="kanban-tasks space-y-2">
+                        {% for task in tasks %}
+                            <div class="kanban-task card w-full p-5 bg-base-100 shadow-sm border cursor-pointer"
+                                 data-task-id="{{ task.id }}">
+                                <p class="font-medium">{{ task.name }}</p>
+                                <p class="text-sm">{{ task.description|truncatewords:10 }}</p>
+                            </div>
+                        {% empty %}
+                            <p class="text-gray-500 italic">No tasks</p>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </div>

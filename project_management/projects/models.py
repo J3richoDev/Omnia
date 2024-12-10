@@ -6,7 +6,6 @@ class Project(models.Model):
     COLOR_CHOICES = [
         ('purple', 'Purple'),
         ('red', 'Red'),
-        ('amber', 'Amber'),
         ('blue', 'Blue'),
         ('green', 'Green'),
         ('teal', 'Teal'),
@@ -16,11 +15,9 @@ class Project(models.Model):
         ('gray', 'Grey'),
     ]
     name = models.CharField(max_length=100)
-    emoji_icon = models.CharField(max_length=255, blank=True, null=True)
+    emoji_icon = models.CharField(max_length=255, default='fa-star')
     description = models.TextField(blank=True, null=True)
     color = models.CharField(max_length=20, choices=COLOR_CHOICES, default='blue')
-    start_date = models.DateField()
-    end_date = models.DateField()
     current_sprint = models.ForeignKey('Sprint', on_delete=models.CASCADE, related_name='current_sprint', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='owned_projects')

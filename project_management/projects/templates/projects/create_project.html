@@ -5,28 +5,38 @@
 {% block heading %}Project{% endblock %}
 
 {% block content %}
-<form method="POST" novalidate>
-            {% csrf_token %}
-    <div class="mx-auto p-6 bg-white rounded-lg shadow-md mt-2">
-            <h1 class="text-2xl font-bold mb-6">Create New Project</h1>
+<div class="card w-full bg-base-100 p-7 shadow-md border mb-2">
+    <form method="POST" novalidate>
+        {% csrf_token %}
+        <h1 class="text-2xl font-bold mb-6">Create New Project</h1>
         <div class="grid grid-cols-2 gap-6">
             <div class="">
                 <!-- Project Name -->
                 <div class="mb-3">
-                    <label class="block text-sm font-medium text-gray-700" for="name">Project Name</label>
+                    <label class="block text-sm font-medium" for="name">Project Name</label>
                     {{ form.name|add_class:"block w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+                    {% if form.name.errors %}
+                        <p class="text-sm text-red-500 mt-1">
+                            {{ form.name.errors|striptags }}
+                        </p>
+                    {% endif %}
                 </div>
 
                 <!-- Description -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700" for="description">Description</label>
+                    <label class="block text-sm font-medium" for="description">Description</label>
                     {{ form.description|add_class:"block w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+                    {% if form.description.errors %}
+                        <p class="text-sm text-red-500 mt-1">
+                            {{ form.description.errors|striptags }}
+                        </p>
+                    {% endif %}
                 </div>
             </div>
             <div class="">
                 <!-- Color Selection -->
                 <div class="mb-3">
-                    <label class="block text-sm font-medium text-gray-700">Select Color</label>
+                    <label class="block text-sm font-medium">Select Color</label>
                     <div class="flex space-x-2 mt-2">
                         {% for color, label in form.color.field.choices %}
                             <button type="button" class="w-8 h-8 rounded-full border-2 focus:ring-2 focus:ring-offset-2 bg-{{ color }}-500"
@@ -34,77 +44,88 @@
                         {% endfor %}
                     </div>
                     <div class="hidden">{{ form.color }}</div>
+                     {% if form.color.errors %}
+                        <p class="text-sm text-red-500 mt-1">
+                            {{ form.color.errors|striptags }}
+                        </p>
+                    {% endif %}
                 </div>
 
                 <!-- Icon Selection -->
                 <div class="mb-3">
-                    <label class="block text-sm font-medium text-gray-700">Select Icon</label>
-                    <button type="button" onclick="toggleIconPicker()" class="mt-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-300">
-                        Select Icon
-                    </button>
-                    <div id="icon-picker" class="grid grid-cols-7 gap-4 mt-4 max-h-48 overflow-y-auto hidden bg-gray-50 p-4 rounded-lg shadow-md">
+                    <label class="block text-sm font-medium">Select Icon</label>
+                    <div id="icon-picker" class="grid grid-cols-7 gap-4 mt-3 max-h-[250px] overflow-y-auto p-4 border rounded-lg">
                         {% for icon in icons %}
                             <button type="button" class="flex items-center justify-center p-2 rounded-lg border border-gray-300 hover:bg-gray-100"
                                     data-icon="{{ icon }}" onclick="selectIcon(this)">
-                               <div class="px-2 py-1 bg-white rounded-lg"><i class="fas {{ icon }} text-xl text-gray-700"></i></div>
+                               <div class="px-2 py-1 rounded-lg"><i class="fas {{ icon }} text-xl"></i></div>
                             </button>
                         {% endfor %}
                     </div>
                     <div class="hidden">{{ form.emoji_icon }}</div>
+                    {% if form.emoji_icon.errors %}
+                        <p class="text-sm text-red-500 mt-1">
+                            {{ form.emoji_icon.errors|striptags }}
+                        </p>
+                    {% endif %}
                 </div>
 
-                <!-- Start and End Dates -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-1 mb-3">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700" for="start_date">Start Date</label>
-                        {{ form.start_date|add_class:"block w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700" for="end_date">End Date</label>
-                        {{ form.end_date|add_class:"block w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
-                    </div>
-                </div>
             </div>
         </div>
-            <!-- Submit Button -->
-            <div class="flex mt-4 justify-end">
-                <button type="submit" class="px-8 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:ring-2 focus:ring-green-300">
-                    Create Project
-                </button>
-            </div>
-    </div>
-</form>
+        <!-- Submit Button -->
+        <div class="flex mt-4 justify-end">
+            <button type="submit" class="btn btn-primary text-white">
+                Create Project
+            </button>
+        </div>
+    </form>
+</div>
        <script>
         let selectedColor = 'blue';
-        let selectedIconButton = null; // Track the currently selected icon button
+        let selectedColorButton = null; // Track the currently selected color button
+        let selectedIconButton = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set default color and icon
+            selectColor('blue');
+            const defaultIconButton = document.querySelector(`button[data-icon="fa-star"]`);
+            if (defaultIconButton) {
+                selectIcon(defaultIconButton);
+            }
+        });
 
         function selectColor(color) {
             selectedColor = color;
+
+            // Update the form field
             document.querySelector('select[name="color"]').value = color;
 
-            // If an icon is already selected, update its background color
+            // Clear active state from previously selected color
+            if (selectedColorButton) {
+                selectedColorButton.classList.remove('ring', 'ring-offset-1', 'ring-blue-500');
+            }
+
+            // Set active state for the new color
+            const colorButton = document.querySelector(`button[data-color="${color}"]`);
+            colorButton.classList.add('ring', 'ring-offset-1', 'ring-blue-500');
+            selectedColorButton = colorButton;
+
+            // Update the background color of the selected icon (if any)
             if (selectedIconButton) {
                 selectedIconButton.style.backgroundColor = selectedColor;
             }
-        }
-
-        function toggleIconPicker() {
-            const picker = document.getElementById('icon-picker');
-            picker.classList.toggle('hidden');
         }
 
         function selectIcon(button) {
             // Remove styling from the previously selected icon
             if (selectedIconButton) {
                 selectedIconButton.style.backgroundColor = '';
-                selectedIconButton.classList.remove('ring', 'ring-blue-500');
-                // selectedIconButton.querySelector('i').classList.remove('text-gray-200');
+                selectedIconButton.querySelector('i').classList.remove('text-white');
             }
 
             // Highlight the newly selected icon
             button.style.backgroundColor = selectedColor;
-            button.classList.add('ring', 'ring-blue-500');
-            // button.querySelector('i').classList.add('text-gray-200');
+            button.querySelector('i').classList.add('text-white');
 
             // Update the currently selected button
             selectedIconButton = button;

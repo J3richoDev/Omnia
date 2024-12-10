@@ -3,20 +3,11 @@ from .models import Project
 from .models import Task, TaskFile, TaskComment
 from users.models import CustomUser
 
-ICON_CHOICES = [
-    ('fa-address-book', 'Address Book'),
-    ('fa-calendar', 'Calendar'),
-    ('fa-check-circle', 'Check Circle'),
-    ('fa-heart', 'Heart'),
-]
-
 class ProjectForm(forms.ModelForm):
     class Meta:
         model = Project
-        fields = ['name', 'emoji_icon', 'description', 'color', 'start_date', 'end_date']
+        fields = ['name', 'emoji_icon', 'description', 'color']
         widgets = {
-            'start_date': forms.DateInput(attrs={'type': 'date'}),
-            'end_date': forms.DateInput(attrs={'type': 'date'}),
         }
 
 class AddMemberForm(forms.Form):

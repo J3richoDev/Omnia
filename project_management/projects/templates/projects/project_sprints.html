@@ -1,85 +1,165 @@
 {% extends 'project_base.html' %}
 {% block title %}Tasks for {{ project.name }}{% endblock %}
-{% block heading %}Projects{% endblock %}
+{% block heading %}Sprints{% endblock %}
 
 {% block content %}
+<style>
+    .status-todo { background-color: rgb(75 85 99); }      /* Yellow */
+    .status-in_progress { background-color: rgb(2 132 199); } /* Blue */
+    .status-review { background-color: rgb(217 119 6); }    /* Orange */
+    .status-completed { background-color: rgb(22 163 74); }  /* Green */
+</style>
 <div class="flex items-center justify-between mb-4">
     <h1 class="text-2xl font-bold mb-4">Tasks for {{ project.name }}</h1>
-    <a href="{% url 'create_task' %}"
-       class="btn btn-primary text-white py-2 px-4 rounded hover:bg-blue-600">
+    <button onclick="create_sprint_modal.showModal()"
+       class="btn btn-primary text-white">
         + Create Sprint
-    </a>
+    </button>
 </div>
 
-<div class="card w-full p-5 bg-base-100 shadow-md rounded-md mt-2 mb-10">
+<dialog id="create_sprint_modal" class="modal">
+  <div class="modal-box p-8">
+      <div class="modal-action mt-0 flex items-center justify-between mb-5">
+          <h3 class="text-xl font-semibold text-gray-900 ">
+              Create New Sprint
+          </h3>
+          <form method="dialog">
+              <button class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center">
+                  <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                  </svg>
+              </button>
+          </form>
+      </div>
+      <form id="createSprintForm">
+          <div class="grid gap-4 mb-4 grid-cols-2">
+              <div class="col-span-2">
+                  <label for="sprint_name" class="block mb-2 text-sm font-medium text-gray-900">Sprint Name</label>
+                  <input type="text" name="sprint_name" id="sprint_name" class="input input-bordered w-full max-w-xs" placeholder="Type sprint name" required="">
+              </div>
+              <div class="col-span-2">
+                  <label for="duration" class="block mb-2 text-sm font-medium text-gray-900">Duration</label>
+                  <select id="duration" class="select input-bordered w-full max-w-xs">
+                      <option value="1" selected>1 week</option>
+                      <option value="2">2 weeks</option>
+                      <option value="3">3 weeks</option>
+                      <option value="4">4 weeks</option>
+                      <option value="custom">Custom</option>
+                  </select>
+              </div>
+              <div class="col-span-2 sm:col-span-1">
+                  <label for="start_date" class="block mb-2 text-sm font-medium text-gray-900">Start Date</label>
+                  <input type="date" id="start_date" class="input input-bordered" data-field="start_date" required />
+              </div>
+              <div class="col-span-2 sm:col-span-1">
+                  <label for="end_date" class="block mb-2 text-sm font-medium text-gray-900">End Date</label>
+                  <input type="date" id="end_date" class="input input-bordered" data-field="end_date" required />
+              </div>
+          </div>
+          <div class="flex justify-end mt-8">
+              <button type="submit" class="btn btn-primary text-white">
+                  <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                      <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path>
+                  </svg>
+                  Add Sprint
+              </button>
+          </div>
+      </form>
+  </div>
+</dialog>
+
+
+{% for sprint, tasks in sprints_with_tasks.items %}
+<div class="sprint-column card w-full p-5 bg-base-100 shadow-sm border mt-2 mb-6" data-sprint-id="{{ sprint.id }}">
     <div>
         <div class="flex flex-row justify-between">
-            <div class="flex flex-row justify-between gap-4">
+            <div class="sprint-header flex flex-row items-center justify-center gap-4 mb-2">
                 <label>
                     <input type="checkbox" class="checkbox" />
                 </label>
-                <div class="text-lg font-medium mb-3">Sprint 1</div>
+                <div class="text-xl h-full font-medium">{{ sprint.name }}</div>
+                <span>{{ sprint.start_date }} - {{ sprint.end_date }}</span>
             </div>
         </div>
     </div>
     <table class="table w-full whitespace-no-wrap">
         <tbody>
-            <tr class="border border-gray-200 hover:bg-gray-200 whitespace-nowrap">
-                <td>
-                    <div class="flex flex-row justify-between">
-                        <a href="">
+        {% if tasks %}
+            {% for task in tasks %}
+                <tr class="border hover:bg-gray-200 whitespace-nowrap" data-task-id="{{ task.id }}" draggable="true">
+                    <td>
+                        <div class="flex flex-row justify-between">
+                            <a href="{% url 'task_detail' task.id %}">
+                                <div class="flex flex-row justify-between gap-4">
+                                    <label>
+                                        <input type="checkbox" class="checkbox" />
+                                    </label>
+                                    {{task.name}}
+                                </div>
+                            </a>
                             <div class="flex flex-row justify-between gap-4">
-                                <label>
-                                    <input type="checkbox" class="checkbox" />
-                                </label>
-                                Task name
-                            </div>
-                        </a>
-                        <div class="flex flex-row justify-between gap-4">
-                            <div>
-                                Todo
-                            </div>
-                            <div>
-                                Jericho Nomat
-                            </div>
-                            <div>
-                                <div class="dropdown dropdown-end">
-                                  <div tabindex="0" role="button" class="btn btn-xs">
-                                      <svg class="w-[30px] h-[30px]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                          <path stroke="currentColor" stroke-linecap="round" stroke-width="3" d="M6 12h.01m6 0h.01m5.99 0h.01"/>
-                                      </svg>
-                                  </div>
-                                  <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
-                                    <li><a>Move to</a></li>
-                                    <li><a>Assignee</a></li>
-                                    <li><a>Delete</a></li>
-                                  </ul>
+                                <div>
+                                    <select class="editable-select {% if task.status == 'todo' %}bg-gray-600{% elif task.status == 'in_progress' %}bg-sky-600{% elif task.status == 'review' %}bg-amber-600{% elif task.status == 'completed' %}bg-green-600{% endif %} text-white py-1 px-2 rounded" data-field="status">
+                                      {% for key, value in task.STATUS_CHOICES %}
+                                      <option
+                                        value="{{ key }}"
+                                        {% if task.status == key %}selected{% endif %}
+                                        class="py-2 font-medium bg-white text-gray-800">
+                                        {{ value }}
+                                      </option>
+                                      {% endfor %}
+                                    </select>
+                                </div>
+                                <div>
+                                    {{ task.assigned_member }}
+                                </div>
+                                <div>
+                                    <div class="dropdown dropdown-end">
+                                      <div tabindex="0" role="button" class="btn btn-xs">
+                                          <svg class="w-[30px] h-[30px]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                              <path stroke="currentColor" stroke-linecap="round" stroke-width="3" d="M6 12h.01m6 0h.01m5.99 0h.01"/>
+                                          </svg>
+                                      </div>
+                                      <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                                        <li><a>Move to</a></li>
+                                        <li><a>Assignee</a></li>
+                                        <li><a>Delete</a></li>
+                                      </ul>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        {% else %}
+            <tr class="border">
+                <td>
+                    <h1 class="text-center">No tasks assigned.</h1>
                 </td>
             </tr>
+        {% endif %}
         </tbody>
     </table>
 </div>
+{% endfor %}
 
-{% if tasks %}
-<div class="card w-full p-5 bg-base-100 shadow-md rounded-md mt-2">
+{% if backlog_tasks  %}
+<div class="card w-full p-5 bg-base-100 shadow-sm border mt-2">
     <div>
         <div class="flex flex-row justify-between">
-            <div class="flex flex-row justify-between gap-4">
+            <div class="flex flex-row justify-center items-center gap-4 mb-2">
                 <label>
                     <input type="checkbox" class="checkbox" />
                 </label>
-                <div class="text-lg font-medium mb-3">Backlogs</div>
+                <div class="text-xl h-full font-medium">Backlogs</div>
             </div>
         </div>
     </div>
     <table class="table w-full whitespace-no-wrap">
         <tbody>
-        {% for task in tasks %}
-            <tr class="border border-gray-200 hover:bg-gray-200 whitespace-nowrap">
+        {% for task in backlog_tasks %}
+            <tr class="border border-gray-200 hover:bg-gray-200 whitespace-nowrap" data-task-id="{{ task.id }}">
                 <td>
                     <div class="flex flex-row justify-between">
                         <a href="{% url 'task_detail' task.id %}">
@@ -92,7 +172,16 @@
                         </a>
                         <div class="flex flex-row justify-between gap-4">
                             <div>
-                                {{ task.get_status_display }}
+                                <select class="editable-select {% if task.status == 'todo' %}bg-gray-600{% elif task.status == 'in_progress' %}bg-sky-600{% elif task.status == 'review' %}bg-amber-600{% elif task.status == 'completed' %}bg-green-600{% endif %} text-white py-1 px-2 rounded" data-field="status">
+                                  {% for key, value in task.STATUS_CHOICES %}
+                                  <option
+                                    value="{{ key }}"
+                                    {% if task.status == key %}selected{% endif %}
+                                    class="py-2 font-medium bg-white text-gray-800">
+                                    {{ value }}
+                                  </option>
+                                  {% endfor %}
+                                </select>
                             </div>
                             <div>
                                 {{ task.assigned_member }}
@@ -123,4 +212,179 @@
 {% else %}
     <p>No tasks found for this project.</p>
 {% endif %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const csrfToken = '{{ csrf_token }}';
+        const sprintColumns = document.querySelectorAll('.sprint-column');
+        const createSprintModal = document.getElementById('create_sprint_modal');
+        const createSprintForm = document.getElementById('createSprintForm');
+        const sprintNameInput = document.getElementById('sprint_name');
+        const durationSelect = document.getElementById('duration');
+        const startDateInput = document.getElementById('start_date');
+        const endDateInput = document.getElementById('end_date');
+
+        async function updateTaskField(taskId, field, value) {
+            try {
+                const response = await fetch("{% url 'update_task_field' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        task_id: taskId,
+                        field: field,
+                        value: value,
+                    }),
+                });
+
+                const result = await response.json();
+                if (!result.success) {
+                    alert('Failed to update task: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error updating task:', error);
+                alert('An error occurred while updating the task.');
+            }
+        }
+
+        function updateSelectClass(select, field, value) {
+            // Remove existing status or priority-related classes
+            select.classList.remove('status-todo', 'status-in_progress', 'status-review', 'status-completed');
+
+            // Add the new class based on the selected value
+            if (field === 'status') {
+                select.classList.add(`status-${value}`);
+            }
+        }
+
+        // Handle inline editing for dropdown fields
+        document.querySelectorAll('.editable-select').forEach((select) => {
+            select.addEventListener('change', () => {
+                const taskId = select.closest('tr').dataset.taskId;
+                const field = select.dataset.field;
+                const value = select.value;
+
+                // Update the select's class dynamically
+                updateSelectClass(select, field, value);
+
+                // Update the task field on the server
+                updateTaskField(taskId, field, value);
+            });
+
+            // Initialize the correct class on page load
+            const field = select.dataset.field;
+            const value = select.value;
+            updateSelectClass(select, field, value);
+        });
+
+         document.getElementById('openCreateSprintModal').addEventListener('click', () => {
+            const sprintCount = document.querySelectorAll('.sprint-column').length;
+            sprintNameInput.value = `Sprint ${sprintCount + 1}`;
+            createSprintModal.showModal();
+        });
+
+        // Update end date based on duration
+        durationSelect.addEventListener('change', () => {
+            if (durationSelect.value !== 'custom') {
+                const weeks = parseInt(durationSelect.value);
+                if (startDateInput.value) {
+                    const startDate = new Date(startDateInput.value);
+                    const endDate = new Date(startDate);
+                    endDate.setDate(startDate.getDate() + weeks * 7 - 1);
+                    endDateInput.value = endDate.toISOString().split('T')[0];
+                }
+            } else {
+                endDateInput.value = '';
+            }
+        });
+
+        // Sync end date when start date changes for predefined durations
+        startDateInput.addEventListener('change', () => {
+            if (durationSelect.value !== 'custom') {
+                durationSelect.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // Form submission logic
+        createSprintForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const sprintData = {
+                name: sprintNameInput.value,
+                duration: durationSelect.value,
+                start_date: startDateInput.value,
+                end_date: endDateInput.value,
+            };
+
+            const response = await fetch('/sprints/create/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+                body: JSON.stringify(sprintData),
+            });
+
+            if (response.ok) {
+                location.reload(); // Reload the page to reflect the new sprint
+            } else {
+                alert('Failed to create sprint');
+            }
+        });
+
+        // Enable drag and drop on each column
+        sprintColumns.forEach(column => {
+            column.addEventListener('dragover', (event) => {
+                event.preventDefault();
+                column.classList.add('highlight'); // Optional visual feedback
+            });
+
+            column.addEventListener('dragleave', () => {
+                column.classList.remove('highlight');
+            });
+
+            column.addEventListener('drop', async (event) => {
+                event.preventDefault();
+                column.classList.remove('highlight');
+
+                const taskId = event.dataTransfer.getData('task-id');
+                const sprintId = column.dataset.sprintId;
+
+                if (taskId) {
+                    const response = await fetch("{% url 'update_task_sprint' %}", {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                        },
+                        body: new URLSearchParams({
+                            'task_id': taskId,
+                            'sprint_id': sprintId,
+                        }),
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        location.reload(); // Reload to reflect updated task position
+                    } else {
+                        alert('Failed to move task');
+                    }
+                }
+            });
+        });
+
+        // Make task items draggable
+        const taskItems = document.querySelectorAll('.task-item');
+        taskItems.forEach(task => {
+            task.draggable = true;
+
+            task.addEventListener('dragstart', (event) => {
+                event.dataTransfer.setData('task-id', task.dataset.taskId);
+            });
+        });
+    });
+</script>
+
+
 {% endblock %}

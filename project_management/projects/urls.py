@@ -15,8 +15,10 @@ urlpatterns = [
     path('tasks/', views.project_tasks, name='project_tasks'),
     path('tasks/create/', views.create_task, name='create_task'),
     path('tasks/update-field/', views.update_task_field, name='update_task_field'),
+    path('tasks/update_task_sprint/', views.update_task_sprint, name='update_task_sprint'),
 
     path('sprint/', views.project_sprints, name='project_sprints'),
+    path('create-sprint/', views.create_sprint, name='create_sprint'),
 
     path('my-tasks/', views.my_tasks, name='my_tasks'),
     path('tasks/<int:task_id>/', views.task_detail, name='task_detail'),
