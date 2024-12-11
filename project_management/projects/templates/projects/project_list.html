@@ -8,45 +8,242 @@
     <div class="flex flex-col items-center justify-between">
         <h1 class="text-2xl h-full font-bold">Your Projects</h1>
     </div>
-    <a href="{% url 'create_project' %}"
+    <button id="open-create-project-btn" onclick="create_project_modal.showModal()"
        class="btn btn-primary text-white">
         + Create Project
-    </a>
+    </button>
 </div>
+
+<dialog id="edit_project_modal" class="modal">
+  <div class="modal-box">
+    <h3 class="text-lg font-bold">Edit Project</h3>
+    <form id="edit_project_form">
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Project Name</span>
+        </label>
+        <input type="text" id="edit_project_name" name="project_name" class="input input-bordered" required />
+      </div>
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Description</span>
+        </label>
+        <textarea id="edit_project_description" name="description" class="textarea textarea-bordered" required></textarea>
+      </div>
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Select Color</span>
+        </label>
+          <div class="flex flex-row mb-2 gap-2">
+              {% for color in colors %}
+                <button type="button" class="w-8 h-8 rounded-full border-2 focus:ring-2 focus:ring-offset-2 bg-{{ color }}-500"
+                        data-color="{{ color }}" onclick="selectColor(this)"></button>
+              {% endfor %}
+          </div>
+        <input type="hidden" id="edit_project_color" name="color" />
+      </div>
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Select Icon</span>
+        </label>
+        <div id="icon-picker" class="grid grid-cols-7 gap-4 mt-3 max-h-[250px] overflow-y-auto p-4 border rounded-lg">
+          {% for icon in icons %}
+          <button
+            type="button"
+            class="flex items-center justify-center p-2 rounded-lg border border-gray-300 hover:bg-gray-100"
+            data-icon="{{ icon }}"
+            onclick="selectIcon(this)">
+            <i class="fas {{ icon }} text-xl"></i>
+          </button>
+          {% endfor %}
+        </div>
+        <input type="hidden" id="edit_project_icon" name="emoji_icon" />
+      </div>
+      <div class="modal-action">
+        <button class="btn" type="button" onclick="editProjectModal.close()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+
 
 {% if projects %}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-2">
-        {% for project in projects %}
-        <div class="card w-full p-5 bg-base-100 shadow-sm border mb-2">
-            <div class="col-span-1 flex flew-row gap-2">
-                <div class="flex flex-col justify-center items-center w-12 h-12 bg-{{project.color}}-500 rounded-md">
-                    <i class="fas {{ project.emoji_icon }} text-xl text-white flex items-center justify-center rounded-md"></i>
-                </div>
-                <div class="flex flex-col flex-grow">
-                    <h3 class="text-lg font-bold">
-                        {{ project.name }}
-                    </h3>
-                    <p>{{ project.description }}</p>
-                </div>
-                <div>
-                    <div class="dropdown dropdown-end">
-                      <div tabindex="0" role="button" class="btn btn-xs">
-                          <svg class="w-[20px] h-[20px]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                              <path stroke="currentColor" stroke-linecap="round" stroke-width="3" d="M6 12h.01m6 0h.01m5.99 0h.01"/>
-                          </svg>
-                      </div>
-                      <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
-                        <li><a href="{% url 'set_current_project' project.id %}">Switch Project</a></li>
-                          <li><a>Edit Project</a></li>
-                        <li><a>Delete</a></li>
-                      </ul>
-                    </div>
+    {% for project in projects %}
+    <div class="card w-full p-5 bg-base-100 shadow-sm border mb-2">
+        <div class="col-span-1 flex flew-row gap-2">
+            <div class="flex flex-col justify-center items-center w-12 h-12 bg-{{ project.color }}-500 rounded-md">
+                <i class="fas {{ project.emoji_icon }} text-xl text-white flex items-center justify-center rounded-md"></i>
+            </div>
+            <div class="flex flex-col flex-grow">
+                <h3 class="text-lg font-bold project-name">
+                    {{ project.name }}
+                </h3>
+                <p class="project-description">{{ project.description }}</p>
+            </div>
+            <div>
+                <div class="dropdown dropdown-end">
+                  <div tabindex="0" role="button" class="btn btn-xs">
+                      <svg class="w-[20px] h-[20px]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                          <path stroke="currentColor" stroke-linecap="round" stroke-width="3" d="M6 12h.01m6 0h.01m5.99 0h.01"/>
+                      </svg>
+                  </div>
+                  <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                    <li><a href="{% url 'set_current_project' project.id %}">Switch Project</a></li>
+                    <li>
+                        <button
+                          onclick="populateEditProjectModal(this)"
+                          data-project-id="{{ project.id }}"
+                          data-project-name="{{ project.name }}"
+                          data-project-description="{{ project.description }}"
+                          data-project-color="{{ project.color }}"
+                          data-project-icon="{{ project.emoji_icon }}">
+                          Edit Project
+                        </button>
+                    </li>
+                    <li><a>Delete</a></li>
+                  </ul>
                 </div>
             </div>
         </div>
-        {% endfor %}
     </div>
+    {% endfor %}
+</div>
+
 {% else %}
     <p class="text-gray-500">No projects found. Create a new project!</p>
 {% endif %}
+
+<script>
+        let selectedColorButton = null;  // To track the currently selected color button
+    let selectedIconButton = null;   // To track the currently selected icon button
+
+    // Function to populate the Edit Project modal
+    function populateEditProjectModal(button) {
+        const projectId = button.dataset.projectId;
+        const projectName = button.dataset.projectName;
+        const projectDescription = button.dataset.projectDescription;
+        const projectColor = button.dataset.projectColor;
+        const projectIcon = button.dataset.projectIcon;
+
+        // Populate the modal fields
+        document.getElementById('edit_project_name').value = projectName;
+        document.getElementById('edit_project_description').value = projectDescription;
+
+        // Set the color in the text input field
+        document.getElementById('edit_project_color').value = projectColor;
+
+        // Select the correct color button
+        if (selectedColorButton) {
+            selectedColorButton.classList.remove('ring', 'ring-offset-1', 'ring-blue-500');
+        }
+
+        const colorButton = document.querySelector(`button[data-color="${projectColor}"]`);
+        if (colorButton) {
+            colorButton.classList.add('ring', 'ring-offset-1', 'ring-blue-500');
+            selectedColorButton = colorButton;
+        }
+
+        // Set the icon for the project
+        const iconField = document.querySelector('input[name="emoji_icon"]');
+        iconField.value = projectIcon;
+
+        if (selectedIconButton) {
+            selectedIconButton.style.backgroundColor = '';
+            selectedIconButton.querySelector('i').classList.remove('text-white');
+        }
+
+        const iconButton = document.querySelector(`button[data-icon="${projectIcon}"]`);
+        if (iconButton) {
+            iconButton.style.backgroundColor = projectColor; // Use the project color
+            iconButton.querySelector('i').classList.add('text-white');
+            selectedIconButton = iconButton;
+        }
+
+        // Save the project ID to use during form submission
+        currentProjectId = projectId;
+
+        // Show the modal
+        editProjectModal.showModal();
+    }
+
+    // Reuse the existing selectColor function to manage color selection
+    function selectColor(colorButton) {
+        const color = colorButton.dataset.color;  // Correct way to access the color data from the button
+
+        // Update the form's color input field with the selected color
+        const colorInput = document.getElementById('edit_project_color');
+        colorInput.value = color;  // Set color in text input
+
+        // Add focus ring to the selected color button
+        if (selectedColorButton) {
+            selectedColorButton.classList.remove('ring', 'ring-offset-1', 'ring-blue-500');
+        }
+
+        // Set active state for the newly selected color
+        colorButton.classList.add('ring', 'ring-offset-1', 'ring-blue-500');
+        selectedColorButton = colorButton;
+
+        // Update the background color of the selected icon (if any)
+        if (selectedIconButton) {
+            selectedIconButton.style.backgroundColor = color;  // Update icon background color to the selected color
+        }
+    }
+
+    function selectIcon(button) {
+        // Remove styling from the previously selected icon
+        if (selectedIconButton) {
+            selectedIconButton.style.backgroundColor = '';
+            selectedIconButton.querySelector('i').classList.remove('text-white');
+        }
+
+        // Highlight the newly selected icon
+        button.style.backgroundColor = selectedColorButton ? selectedColorButton.dataset.color : '';  // Update icon background color to the selected color
+        button.querySelector('i').classList.add('text-white');
+
+        // Update the currently selected button
+        selectedIconButton = button;
+
+        // Update the hidden input field with the selected icon
+        const iconField = document.querySelector('input[name="emoji_icon"]');
+        iconField.value = button.dataset.icon;
+    }
+
+    // Handle edit project form submission
+    const editProjectForm = document.getElementById('edit_project_form');
+    const editProjectModal = document.getElementById('edit_project_modal');
+    let currentProjectId = null;
+
+    editProjectForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      // Collect data from the form
+      const formData = new FormData(editProjectForm);
+
+      // Send the request to update the project
+      const response = await fetch("{% url 'edit_project' %}", {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: new URLSearchParams({
+          ...Object.fromEntries(formData.entries()), // Convert FormData to plain object
+          project_id: currentProjectId,
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        location.reload(); // Reload the page to reflect changes
+      } else {
+        alert('Failed to update the project');
+      }
+
+      // Close the modal
+      editProjectModal.close();
+    });
+
+</script>
 {% endblock %}

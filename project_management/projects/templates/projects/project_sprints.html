@@ -79,7 +79,7 @@
               </div>
           </div>
           <div class="flex justify-end mt-8">
-              <button type="submit" class="btn btn-primary text-white">
+              <button type="submit" id="add_sprint_submit" class="btn btn-primary text-white">
                   <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                       <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path>
                   </svg>
@@ -368,8 +368,50 @@
         const deleteSprintModal = document.getElementById('delete_sprint_modal');
         const editSprintForm = document.getElementById('edit_sprint_form');
         const confirmDeleteSprintButton = document.getElementById('confirm_delete_sprint');
+        const existingStartDates = JSON.parse('{{ existing_start_dates|escapejs }}');
+        const submitButton = document.querySelector('button[id="add_sprint_submit"]');
         let currentTaskId = null;
         let currentSprintId = null;
+
+        submitButton.disabled = true;
+
+        document.getElementById('id_start_date').addEventListener('input', function () {
+            const startDate = document.getElementById('id_start_date').value;
+
+            // Check if the start date is already in the existing start dates
+            if (existingStartDates.includes(startDate)) {
+                // Disable submit button if date is duplicate
+                submitButton.disabled = true;
+                document.getElementById('start_date_warning').textContent = 'A sprint already exists with this start date in the current project.';
+                document.getElementById('start_date_warning').classList.remove('hidden');
+            } else {
+                // Enable submit button if date is not a duplicate
+                submitButton.disabled = false;
+                document.getElementById('start_date_warning').classList.add('hidden');
+            }
+        });
+
+        document.getElementById('id_end_date').addEventListener('input', function () {
+
+            const startDate = document.getElementById('id_start_date').value;
+            const endDate = document.getElementById('id_end_date').value;
+
+            // Convert dates to Date objects
+            const startDateObj = startDate ? new Date(startDate) : null;
+            const endDateObj = endDate ? new Date(endDate) : null;
+
+            // Check if the start date is already in the existing start dates
+            if (endDateObj <= startDateObj) {
+                // Disable submit button if date is duplicate
+                submitButton.disabled = true;
+                document.getElementById('end_date_warning').textContent = 'End date must be later than the start date';
+                document.getElementById('end_date_warning').classList.remove('hidden');
+            } else {
+                // Enable submit button if date is not a duplicate
+                submitButton.disabled = false;
+                document.getElementById('end_date_warning').classList.add('hidden');
+            }
+        });
 
         // Set initial Sprint name
         sprintNameInput.value = `Sprint ${sprintsCount + 1}`;
@@ -440,6 +482,7 @@
 
             // Validate that end date is after the start date
             if (endDateObj <= startDateObj) {
+                submitButton.disabled = true;
                 document.getElementById('end_date_warning').textContent = 'End date must be later than the start date';
                 document.getElementById('end_date_warning').classList.remove('hidden');
                 return;

@@ -37,7 +37,6 @@ class ProjectTeam(models.Model):
     COLOR_CHOICES = [
         ('purple', 'Purple'),
         ('red', 'Red'),
-        ('amber', 'Amber'),
         ('blue', 'Blue'),
         ('green', 'Green'),
         ('teal', 'Teal'),

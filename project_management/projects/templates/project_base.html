@@ -1,5 +1,6 @@
 {% load static %}
 {% load custom_filters %}
+{% load widget_tweaks %}
 
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
@@ -203,6 +204,7 @@
                 </li>
                     <span class="py-1"></span>
 
+
                 {% if request.user.role == 'manager' %}
                     <h2 class="text-sm font-bold mt-4 mb-2">Projects</h2>
                     <li tabindex="0" role="button" class="dropdown dropdown-bottom z-50">
@@ -246,9 +248,10 @@
                                 </ul>
                             </div>
                             <div class="flex flex-row gap-5 border-b py-2 border-base-600 justify-between max-w-full">
-                                <a href="/projects/create" class="btn btn-outline">
+                                <button id="open-create-project-btn" onclick="create_project_modal.showModal()"
+                                   class="btn btn-outline">
                                     Create new
-                                </a>
+                                </button>
                                 <a href="/projects/projects" class="btn btn-outline">
                                     Browse all
                                 </a>
@@ -386,6 +389,92 @@
             </ul>
         </div>
 
+        <dialog id="create_project_modal" class="modal">
+          <div class="modal-box w-10/12 max-w-5xl">
+              <div class="modal-action mt-0 flex items-center justify-between mb-8">
+                  <h3 class="text-2xl font-bold">Create New Project</h3>
+                  <form method="dialog">
+                      <button class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center">
+                          <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                          </svg>
+                      </button>
+                  </form>
+              </div>
+              <form method="POST" action="{% url 'create_project' %}">
+                {% csrf_token %}
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="">
+                        <!-- Project Name -->
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium" for="name">Project Name</label>
+                            {{ project_form.name|add_class:"block w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+                            {% if project_form.name.errors %}
+                                <p class="text-sm text-red-500 mt-1">
+                                    {{ project_form.name.errors|striptags }}
+                                </p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label class="block text-sm font-medium" for="description">Description</label>
+                            {{ project_form.description|add_class:"block w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+                            {% if project_form.description.errors %}
+                                <p class="text-sm text-red-500 mt-1">
+                                    {{ project_form.description.errors|striptags }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="">
+                        <!-- Color Selection -->
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium">Select Color</label>
+                            <div class="flex space-x-2 mt-2">
+                                {% for color, label in project_form.color.field.choices %}
+                                    <button type="button" class="w-8 h-8 rounded-full border-2 focus:ring-2 focus:ring-offset-2 bg-{{ color }}-500"
+                                            data-color="{{ color }}" onclick="selectColor('{{ color }}')"></button>
+                                {% endfor %}
+                            </div>
+                            <div class="hidden">{{ project_form.color }}</div>
+                            {% if project_form.color.errors %}
+                                <p class="text-sm text-red-500 mt-1">
+                                    {{ project_form.color.errors|striptags }}
+                                </p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Icon Selection -->
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium">Select Icon</label>
+                            <div id="icon-picker" class="grid grid-cols-7 gap-4 mt-3 max-h-[250px] overflow-y-auto p-4 border rounded-lg">
+                                {% for icon in icons %}
+                                    <button type="button" class="flex items-center justify-center p-2 rounded-lg border border-gray-300 hover:bg-gray-100"
+                                            data-icon="{{ icon }}" onclick="selectIcon(this)">
+                                       <div class="px-2 py-1 rounded-lg"><i class="fas {{ icon }} text-xl"></i></div>
+                                    </button>
+                                {% endfor %}
+                            </div>
+                            <div class="hidden">{{ project_form.emoji_icon }}</div>
+                            {% if project_form.emoji_icon.errors %}
+                                <p class="text-sm text-red-500 mt-1">
+                                    {{ project_form.emoji_icon.errors|striptags }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <!-- Submit Button -->
+                <div class="flex mt-4 justify-end">
+                    <button type="submit" class="btn btn-primary text-white">
+                        Create Project
+                    </button>
+                </div>
+            </form>
+          </div>
+        </dialog>
+
     </div>
 <!--<script src="{% static 'js/theme-selector.js' %}"></script>-->
 <script>
@@ -394,6 +483,61 @@
         const toasts = document.querySelectorAll('.toast .alert');
         toasts.forEach((toast) => toast.remove());
     }, 3000);
+
+    let selectedColor = 'blue';
+    let selectedColorButton = null; // Track the currently selected color button
+    let selectedIconButton = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Set default color and icon
+        selectColor('blue');
+        const defaultIconButton = document.querySelector(`button[data-icon="fa-star"]`);
+        if (defaultIconButton) {
+            selectIcon(defaultIconButton);
+        }
+    });
+
+    function selectColor(color) {
+        selectedColor = color;
+
+        // Update the form field
+        document.querySelector('select[name="color"]').value = color;
+
+        // Clear active state from previously selected color
+        if (selectedColorButton) {
+            selectedColorButton.classList.remove('ring', 'ring-offset-1', 'ring-blue-500');
+        }
+
+        // Set active state for the new color
+        const colorButton = document.querySelector(`button[data-color="${color}"]`);
+        colorButton.classList.add('ring', 'ring-offset-1', 'ring-blue-500');
+        selectedColorButton = colorButton;
+
+        // Update the background color of the selected icon (if any)
+        if (selectedIconButton) {
+            selectedIconButton.style.backgroundColor = selectedColor;
+        }
+    }
+
+    function selectIcon(button) {
+        // Remove styling from the previously selected icon
+        if (selectedIconButton) {
+            selectedIconButton.style.backgroundColor = '';
+            selectedIconButton.querySelector('i').classList.remove('text-white');
+        }
+
+        // Highlight the newly selected icon
+        button.style.backgroundColor = selectedColor;
+        button.querySelector('i').classList.add('text-white');
+
+        // Update the currently selected button
+        selectedIconButton = button;
+
+        // Update the hidden input field with the selected icon
+        const iconField = document.querySelector('input[name="emoji_icon"]');
+        iconField.value = button.dataset.icon;
+    }
+
 </script>
 </body>
 </html>

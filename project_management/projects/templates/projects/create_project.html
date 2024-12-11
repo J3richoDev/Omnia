@@ -14,10 +14,10 @@
                 <!-- Project Name -->
                 <div class="mb-3">
                     <label class="block text-sm font-medium" for="name">Project Name</label>
-                    {{ form.name|add_class:"block w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
-                    {% if form.name.errors %}
+                    {{ project_form.name|add_class:"block w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+                    {% if project_form.name.errors %}
                         <p class="text-sm text-red-500 mt-1">
-                            {{ form.name.errors|striptags }}
+                            {{ project_form.name.errors|striptags }}
                         </p>
                     {% endif %}
                 </div>
@@ -25,10 +25,10 @@
                 <!-- Description -->
                 <div>
                     <label class="block text-sm font-medium" for="description">Description</label>
-                    {{ form.description|add_class:"block w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
-                    {% if form.description.errors %}
+                    {{ project_form.description|add_class:"block w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+                    {% if project_form.description.errors %}
                         <p class="text-sm text-red-500 mt-1">
-                            {{ form.description.errors|striptags }}
+                            {{ project_form.description.errors|striptags }}
                         </p>
                     {% endif %}
                 </div>
@@ -38,15 +38,15 @@
                 <div class="mb-3">
                     <label class="block text-sm font-medium">Select Color</label>
                     <div class="flex space-x-2 mt-2">
-                        {% for color, label in form.color.field.choices %}
+                        {% for color, label in project_form.color.field.choices %}
                             <button type="button" class="w-8 h-8 rounded-full border-2 focus:ring-2 focus:ring-offset-2 bg-{{ color }}-500"
                                     data-color="{{ color }}" onclick="selectColor('{{ color }}')"></button>
                         {% endfor %}
                     </div>
-                    <div class="hidden">{{ form.color }}</div>
-                     {% if form.color.errors %}
+                    <div class="hidden">{{ project_form.color }}</div>
+                    {% if project_form.color.errors %}
                         <p class="text-sm text-red-500 mt-1">
-                            {{ form.color.errors|striptags }}
+                            {{ project_form.color.errors|striptags }}
                         </p>
                     {% endif %}
                 </div>
@@ -62,14 +62,13 @@
                             </button>
                         {% endfor %}
                     </div>
-                    <div class="hidden">{{ form.emoji_icon }}</div>
-                    {% if form.emoji_icon.errors %}
+                    <div class="hidden">{{ project_form.emoji_icon }}</div>
+                    {% if project_form.emoji_icon.errors %}
                         <p class="text-sm text-red-500 mt-1">
-                            {{ form.emoji_icon.errors|striptags }}
+                            {{ project_form.emoji_icon.errors|striptags }}
                         </p>
                     {% endif %}
                 </div>
-
             </div>
         </div>
         <!-- Submit Button -->
@@ -80,59 +79,59 @@
         </div>
     </form>
 </div>
-       <script>
-        let selectedColor = 'blue';
-        let selectedColorButton = null; // Track the currently selected color button
-        let selectedIconButton = null;
+<script>
+    let selectedColor = 'blue';
+    let selectedColorButton = null; // Track the currently selected color button
+    let selectedIconButton = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // Set default color and icon
-            selectColor('blue');
-            const defaultIconButton = document.querySelector(`button[data-icon="fa-star"]`);
-            if (defaultIconButton) {
-                selectIcon(defaultIconButton);
-            }
-        });
+    document.addEventListener('DOMContentLoaded', () => {
+        // Set default color and icon
+        selectColor('blue');
+        const defaultIconButton = document.querySelector(`button[data-icon="fa-star"]`);
+        if (defaultIconButton) {
+            selectIcon(defaultIconButton);
+        }
+    });
 
-        function selectColor(color) {
-            selectedColor = color;
+    function selectColor(color) {
+        selectedColor = color;
 
-            // Update the form field
-            document.querySelector('select[name="color"]').value = color;
+        // Update the form field
+        document.querySelector('select[name="color"]').value = color;
 
-            // Clear active state from previously selected color
-            if (selectedColorButton) {
-                selectedColorButton.classList.remove('ring', 'ring-offset-1', 'ring-blue-500');
-            }
-
-            // Set active state for the new color
-            const colorButton = document.querySelector(`button[data-color="${color}"]`);
-            colorButton.classList.add('ring', 'ring-offset-1', 'ring-blue-500');
-            selectedColorButton = colorButton;
-
-            // Update the background color of the selected icon (if any)
-            if (selectedIconButton) {
-                selectedIconButton.style.backgroundColor = selectedColor;
-            }
+        // Clear active state from previously selected color
+        if (selectedColorButton) {
+            selectedColorButton.classList.remove('ring', 'ring-offset-1', 'ring-blue-500');
         }
 
-        function selectIcon(button) {
-            // Remove styling from the previously selected icon
-            if (selectedIconButton) {
-                selectedIconButton.style.backgroundColor = '';
-                selectedIconButton.querySelector('i').classList.remove('text-white');
-            }
+        // Set active state for the new color
+        const colorButton = document.querySelector(`button[data-color="${color}"]`);
+        colorButton.classList.add('ring', 'ring-offset-1', 'ring-blue-500');
+        selectedColorButton = colorButton;
 
-            // Highlight the newly selected icon
-            button.style.backgroundColor = selectedColor;
-            button.querySelector('i').classList.add('text-white');
-
-            // Update the currently selected button
-            selectedIconButton = button;
-
-            // Update the hidden input field with the selected icon
-            const iconField = document.querySelector('input[name="emoji_icon"]');
-            iconField.value = button.dataset.icon;
+        // Update the background color of the selected icon (if any)
+        if (selectedIconButton) {
+            selectedIconButton.style.backgroundColor = selectedColor;
         }
-    </script>
+    }
+
+    function selectIcon(button) {
+        // Remove styling from the previously selected icon
+        if (selectedIconButton) {
+            selectedIconButton.style.backgroundColor = '';
+            selectedIconButton.querySelector('i').classList.remove('text-white');
+        }
+
+        // Highlight the newly selected icon
+        button.style.backgroundColor = selectedColor;
+        button.querySelector('i').classList.add('text-white');
+
+        // Update the currently selected button
+        selectedIconButton = button;
+
+        // Update the hidden input field with the selected icon
+        const iconField = document.querySelector('input[name="emoji_icon"]');
+        iconField.value = button.dataset.icon;
+    }
+</script>
 {% endblock %}

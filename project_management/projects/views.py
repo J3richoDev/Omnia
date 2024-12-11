@@ -59,7 +59,32 @@ def create_project(request):
              'fa-database', 'fa-paint-brush', 'fa-key', 'fa-gift', 'fa-cloud', 'fa-cloud-upload-alt', 'fa-file', 'fa-file-alt',
              'fa-comments', 'fa-briefcase', 'fa-cogs', 'fa-paper-plane', 'fa-bolt', 'fa-lightbulb', 'fa-shield-alt']
 
-    return render(request, 'projects/create_project.html', {'form': form, 'icons': icons})
+    return render(request, 'projects/dashboard.html', {'form': form, 'icons': icons})
+
+@csrf_exempt
+def edit_project(request):
+    if request.method == "POST":
+        project_id = request.POST.get('project_id')
+        name = request.POST.get('project_name')
+        description = request.POST.get('description')
+        color = request.POST.get('color')
+        emoji_icon = request.POST.get('emoji_icon')
+
+        try:
+            project = Project.objects.get(id=project_id)
+            project.name = name
+            project.description = description
+            project.color = color
+            project.emoji_icon = emoji_icon
+            project.save()
+
+            return JsonResponse({'success': True})
+        except Project.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Project not found'})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
+
+
 
 @login_required
 def set_current_project(request, project_id):
@@ -281,6 +306,8 @@ def project_sprints(request):
         sprint: sprint.tasks.all() for sprint in active_sprints
     }
 
+    existing_start_dates = [sprint.start_date.strftime('%Y-%m-%d') for sprint in sprints]
+
     if request.method == 'POST':
         form = SprintForm(request.POST)
         if form.is_valid():
@@ -296,6 +323,7 @@ def project_sprints(request):
 
     return render(request, 'projects/project_sprints.html', {
         'today':today,
+        'existing_start_dates': json.dumps(existing_start_dates),
         'sprints_with_tasks': sprints_with_tasks,
         'sprint_count' : sprint_count,
         'available_sprints': sprints,
@@ -424,7 +452,12 @@ def delete_sprint(request):
 
         try:
             sprint = Sprint.objects.get(id=sprint_id)
+
+            tasks = Task.objects.filter(sprint=sprint)
+            tasks.update(sprint=None)
+
             sprint.delete()
+
             return JsonResponse({'success': True})
         except Sprint.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Sprint not found'})
