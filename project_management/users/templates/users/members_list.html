@@ -1,10 +1,46 @@
 {% extends 'project_base.html' %}
-{% block title %}Members List{% endblock %}
+{% load crispy_forms_tags %}
 {% block content %}
+{% block title %}Members for {{ project.name }}{% endblock %}
+
+<!-- Button to trigger the modal -->
 
 <div class="card w-full p-6 bg-base-100 shadow-xl mt-2">
-    <div class="text-xl font-semibold mb-4">Members List</div>
-    <div class="overflow-x-auto w-full">
+    <div class="text-xl font-semibold inline-block">
+       Project Members
+       <div class="inline-block float-right">
+          <div class="inline-block float-right">
+            <button class="btn btn-primary text-white" onclick="openModal()">Create New</button>
+             <a href="{% url 'members_list' %}" class="btn btn-primary text-white">Members</a>
+          </div>
+       </div>
+    </div>
+
+    <input type="checkbox" id="createNewModal" class="modal-toggle" />
+    <div class="modal">
+       <div class="modal-box">
+          <h3 class="font-bold text-lg">Create New Member</h3>
+          <form method="POST">
+             {% csrf_token %}
+             {% if form %}
+             {{ form|crispy }}
+         {% else %}
+             <p>The form context is missing. Check the view that renders this template.</p>
+                 {% endif %}
+             <div class="form-control mb-4">
+                 <button type="submit" class="btn btn-primary">Save</button>
+             </div>
+         </form>
+          <div class="modal-action">
+             <label for="createNewModal" class="btn">Cancel</label>
+          </div>
+       </div>
+    </div>
+   
+
+    <div class="divider mt-2"></div>
+    <div class="h-full w-full pb-6 bg-base-100">
+       <div class="overflow-x-auto w-full">
         <table class="table w-full">
             <thead>
                 <tr>
@@ -29,7 +65,14 @@
                 {% endfor %}
             </tbody>
         </table>
+       </div>
     </div>
-</div>
+ </div>
 
+
+ <script>
+    function openModal() {
+       document.getElementById('createNewModal').checked = true;
+    }
+ </script>
 {% endblock %}

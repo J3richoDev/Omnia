@@ -1,17 +1,77 @@
 {% extends 'project_base.html' %}
 {% load crispy_forms_tags %}
 {% block content %}
-<div class="max-w-lg mx-auto mt-10">
-    <h1 class="text-2xl font-bold mb-4">Add a New Member</h1>
-    <form method="POST">
-        {% csrf_token %}
-        {{form|crispy}}
-        <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded">Create Member</button>
-    </form>
-    {% for field in form %}
-    {% for error in field.errors %}
-        <p style="color: red;">{{ error }}</p>
-    {% endfor %}
-{% endfor %}
-</div>
+{% block title %}Members for {{ project.name }}{% endblock %}
+
+<!-- Button to trigger the modal -->
+
+<div class="card w-full p-6 bg-base-100 shadow-xl mt-2">
+    <div class="text-xl font-semibold inline-block">
+       Project Members
+       <div class="inline-block float-right">
+          <div class="inline-block float-right">
+            <button class="btn btn-primary text-white" onclick="openModal()">Create New</button>
+          </div>
+       </div>
+    </div>
+
+    <input type="checkbox" id="createNewModal" class="modal-toggle" />
+    <div class="modal">
+       <div class="modal-box">
+          <h3 class="font-bold text-lg">Create New Member</h3>
+          <form method="POST">
+             {% csrf_token %}
+             {% if form %}
+             {{ form|crispy }}
+         {% else %}
+             <p>The form context is missing. Check the view that renders this template.</p>
+                 {% endif %}
+             <div class="form-control mb-4">
+                 <button type="submit" class="btn btn-primary">Save</button>
+             </div>
+         </form>
+          <div class="modal-action">
+             <label for="createNewModal" class="btn">Cancel</label>
+          </div>
+       </div>
+    </div>
+   
+
+    <div class="divider mt-2"></div>
+    <div class="h-full w-full pb-6 bg-base-100">
+       <div class="overflow-x-auto w-full">
+        <table class="table w-full">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Joined On</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for member in members %}
+                <tr>
+                    <td>{{ member.username }}</td>
+                    <td>{{ member.email }}</td>
+                    <td>{{ member.get_role_display }}</td>
+                    <td>{{ member.date_joined|date:"d M Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center">No members found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+       </div>
+    </div>
+ </div>
+
+
+ <script>
+    function openModal() {
+       document.getElementById('createNewModal').checked = true;
+    }
+ </script>
 {% endblock %}

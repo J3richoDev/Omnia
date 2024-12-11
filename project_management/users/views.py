@@ -5,6 +5,8 @@ from django.contrib.auth import update_session_auth_hash, logout, authenticate, 
 from django.contrib import messages
 from .forms import CustomUserCreationForm, MemberCreationForm, MemberProfileForm, UserUpdateForm, PasswordChangeForm, CustomAuthenticationForm
 from .models import CustomUser
+from django.shortcuts import render, get_object_or_404
+from projects.models import Project  # Replace `your_app` with the correct app name
 
 def login_view(request):
     if request.method == 'POST':
@@ -36,7 +38,6 @@ def register(request):
     else:
         form = CustomUserCreationForm()
     return render(request, 'users/register.html', {'form': form})
-
 @login_required
 def create_member(request):
     if request.user.role != CustomUser.MANAGER:
@@ -50,12 +51,21 @@ def create_member(request):
             member.set_password(form.cleaned_data['password'])
             try:
                 member.save()
-                return redirect('members_list')  # Replace with your members list URL
+                messages.success(request, "Member created successfully!", extra_tags="alert-success")
+                return redirect('create_member')  # Replace with your members list URL
             except IntegrityError:
-                form.add_error('email', "A user with this email already exists.")
+                messages.error(request, "A user with this email already exists.", extra_tags="alert-error")
+        else:
+            messages.error(request, "Failed to create the member. Please check the form and try again.", extra_tags="alert-error")
     else:
         form = MemberCreationForm()
-    return render(request, 'users/create_member.html', {'form': form})
+
+    members = CustomUser.objects.filter(role=CustomUser.MEMBER)
+    return render(request, 'users/create_member.html', {'form': form, 'members': members})
+
+
+
+
 
 @login_required
 def complete_profile(request):
@@ -65,7 +75,7 @@ def complete_profile(request):
             user = form.save(commit=False)
             user.set_password(form.cleaned_data['password'])
             user.save()
-            return redirect('dashboard')  # Redirect to the dashboard
+            return redirect('dashboard') 
     else:
         form = MemberProfileForm(instance=request.user)
     return render(request, 'users/complete_profile.html', {'form': form})
@@ -125,6 +135,11 @@ def members_list(request):
     return render(request, 'users/members_list.html', {'members': members})
 
 
+
+
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+
+
