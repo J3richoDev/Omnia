@@ -1,4 +1,7 @@
 {% extends 'project_base.html' %}
+{% load crispy_forms_tags %}
+{% load widget_tweaks %}
+
 {% block title %}Tasks for {{ project.name }}{% endblock %}
 {% block heading %}Sprints{% endblock %}
 
@@ -9,6 +12,7 @@
     .status-review { background-color: rgb(217 119 6); }    /* Orange */
     .status-completed { background-color: rgb(22 163 74); }  /* Green */
 </style>
+
 <div class="flex items-center justify-between mb-4">
     <h1 class="text-2xl font-bold mb-4">Tasks for {{ project.name }}</h1>
     <button onclick="create_sprint_modal.showModal()"
@@ -31,29 +35,47 @@
               </button>
           </form>
       </div>
-      <form id="createSprintForm">
+      <form method="post" id="createSprintForm">
+          {% csrf_token %}
           <div class="grid gap-4 mb-4 grid-cols-2">
               <div class="col-span-2">
-                  <label for="sprint_name" class="block mb-2 text-sm font-medium text-gray-900">Sprint Name</label>
-                  <input type="text" name="sprint_name" id="sprint_name" class="input input-bordered w-full max-w-xs" placeholder="Type sprint name" required="">
+                  <label class="block text-sm font-medium" for="name">Sprint Name</label>
+                {{ form.name|add_class:"block w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+                {% if form.name.errors %}
+                    <p class="text-sm text-red-500 mt-1">
+                        {{ form.name.errors|striptags }}
+                    </p>
+                {% endif %}
               </div>
-              <div class="col-span-2">
-                  <label for="duration" class="block mb-2 text-sm font-medium text-gray-900">Duration</label>
-                  <select id="duration" class="select input-bordered w-full max-w-xs">
-                      <option value="1" selected>1 week</option>
-                      <option value="2">2 weeks</option>
-                      <option value="3">3 weeks</option>
-                      <option value="4">4 weeks</option>
-                      <option value="custom">Custom</option>
-                  </select>
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium" for="duration">Select Duration</label>
+                    <select id="duration" name="duration"
+                            class="block w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="1_week">1 Week</option>
+                        <option value="2_weeks">2 Weeks</option>
+                        <option value="3_weeks">3 Weeks</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                </div>
+              <div class="col-span-2 sm:col-span-1">
+                <label class="block text-sm font-medium" for="start_date">Start Date</label>
+                {{ form.start_date|add_class:"block w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+                {% if form.start_date.errors %}
+                    <p class="text-sm text-red-500 mt-1">
+                        {{ form.start_date.errors|striptags }}
+                    </p>
+                {% endif %}
+                  <p id="start_date_warning" class="text-sm text-red-500 mt-1 hidden"></p>
               </div>
               <div class="col-span-2 sm:col-span-1">
-                  <label for="start_date" class="block mb-2 text-sm font-medium text-gray-900">Start Date</label>
-                  <input type="date" id="start_date" class="input input-bordered" data-field="start_date" required />
-              </div>
-              <div class="col-span-2 sm:col-span-1">
-                  <label for="end_date" class="block mb-2 text-sm font-medium text-gray-900">End Date</label>
-                  <input type="date" id="end_date" class="input input-bordered" data-field="end_date" required />
+                  <label class="block text-sm font-medium" for="end_date">End Date</label>
+                {{ form.end_date|add_class:"block w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+                {% if form.end_date.errors %}
+                    <p class="text-sm text-red-500 mt-1">
+                        {{ form.end_date.errors|striptags }}
+                    </p>
+                {% endif %}
+                  <p id="end_date_warning" class="text-sm text-red-500 mt-1 hidden"></p>
               </div>
           </div>
           <div class="flex justify-end mt-8">
@@ -68,6 +90,59 @@
   </div>
 </dialog>
 
+<dialog id="confirm_delete_modal" class="modal">
+  <div class="modal-box">
+    <h3 class="text-lg font-bold">Delete Task</h3>
+    <p class="py-4">Are you sure you want to delete this task?</p>
+    <div class="modal-action">
+      <form method="dialog">
+        <button class="btn">Close</button>
+      </form>
+      <button class="btn btn-error text-white">Delete</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="edit_sprint_modal" class="modal">
+  <div class="modal-box">
+    <h3 class="text-lg font-bold">Edit Sprint</h3>
+    <form id="edit_sprint_form">
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Sprint Name</span>
+        </label>
+        <input type="text" id="edit_sprint_name" name="name" class="input input-bordered" required />
+      </div>
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Start Date</span>
+        </label>
+        <input type="date" id="edit_sprint_start_date" name="start_date" class="input input-bordered" required />
+      </div>
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">End Date</span>
+        </label>
+        <input type="date" id="edit_sprint_end_date" name="end_date" class="input input-bordered" required />
+      </div>
+      <div class="modal-action">
+        <button class="btn" type="button" onclick="edit_sprint_modal.close()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<dialog id="delete_sprint_modal" class="modal">
+  <div class="modal-box">
+    <h3 class="text-lg font-bold">Delete Sprint</h3>
+    <p class="py-4">Are you sure you want to delete this sprint?</p>
+    <div class="modal-action">
+      <button class="btn" type="button" onclick="delete_sprint_modal.close()">Cancel</button>
+      <button class="btn btn-error text-white" id="confirm_delete_sprint">Delete</button>
+    </div>
+  </div>
+</dialog>
 
 {% for sprint, tasks in sprints_with_tasks.items %}
 <div class="sprint-column card w-full p-5 bg-base-100 shadow-sm border mt-2 mb-6" data-sprint-id="{{ sprint.id }}">
@@ -79,6 +154,43 @@
                 </label>
                 <div class="text-xl h-full font-medium">{{ sprint.name }}</div>
                 <span>{{ sprint.start_date }} - {{ sprint.end_date }}</span>
+                {% if sprint.end_date < today %}
+                <span class="text-red-500">Sprint is overdue</span>
+                {% elif  sprint.is_active %}
+                <span class="text-green-500">Active</span>
+                {% endif %}
+            </div>
+            <div class="sprint-header flex flex-row items-center justify-center gap-4 mb-2">
+                <div>
+                    {% if sprint.is_active %}
+                    <form method="post" action="{% url 'end_sprint' sprint.id %}">
+                        {% csrf_token %}
+                        <button class="btn btn-error btn-sm text-white">End Sprint</button>
+                    </form>
+                    {% elif not project.current_sprint %}
+                    <form method="post" action="{% url 'start_sprint' sprint.id %}">
+                        {% csrf_token %}
+                        <button class="btn btn-primary btn-sm text-white">Start Sprint</button>
+                    </form>
+                    {% endif %}
+                </div>
+                <div>
+                    <div class="dropdown dropdown-end">
+                        <div tabindex="0" role="button" class="btn btn-ghost btn-xs">
+                            <svg class="w-[30px] h-[30px]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-width="3" d="M6 12h.01m6 0h.01m5.99 0h.01"/>
+                            </svg>
+                        </div>
+                        <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                            <li>
+                                <button onclick="edit_sprint_modal.showModal()">Edit Sprint</button>
+                            </li>
+                            <li>
+                                <button onclick="delete_sprint_modal.showModal()">Delete Sprint</button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -115,16 +227,31 @@
                                 </div>
                                 <div>
                                     <div class="dropdown dropdown-end">
-                                      <div tabindex="0" role="button" class="btn btn-xs">
-                                          <svg class="w-[30px] h-[30px]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                              <path stroke="currentColor" stroke-linecap="round" stroke-width="3" d="M6 12h.01m6 0h.01m5.99 0h.01"/>
-                                          </svg>
-                                      </div>
-                                      <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
-                                        <li><a>Move to</a></li>
-                                        <li><a>Assignee</a></li>
-                                        <li><a>Delete</a></li>
-                                      </ul>
+                                        <div tabindex="0" role="button" class="btn btn-ghost btn-xs">
+                                            <svg class="w-[30px] h-[30px]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                <path stroke="currentColor" stroke-linecap="round" stroke-width="3" d="M6 12h.01m6 0h.01m5.99 0h.01"/>
+                                            </svg>
+                                        </div>
+                                        <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                                            <li class="group dropdown-left">
+                                                <button role="button" tabindex="0" class="move-task" data-task-id="{{ task.id }}">Move to</button>
+                                                <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow group-hover:block hidden">
+                                                    {% for sprint in available_sprints %}
+                                                    {% if sprint.id != task.sprint.id %}
+                                                    <li>
+                                                        <a href="#" class="move-to-sprint" data-task-id="{{ task.id }}" data-sprint-id="{{ sprint.id }}">{{ sprint.name }}</a>
+                                                    </li>
+                                                    {% endif %}
+                                                    {% endfor %}
+                                                    <li>
+                                                        <a href="#" class="move-to-sprint" data-task-id="{{ task.id }}" data-sprint-id="backlog">Backlog</a>
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                            <li>
+                                                <a href="#" class="delete-task" data-task-id="{{ task.id }}">Delete</a>
+                                            </li>
+                                        </ul>
                                     </div>
                                 </div>
                             </div>
@@ -145,7 +272,7 @@
 {% endfor %}
 
 {% if backlog_tasks  %}
-<div class="card w-full p-5 bg-base-100 shadow-sm border mt-2">
+<div class="card w-full p-5 bg-base-100 shadow-sm border mt-2" data-sprint-id="">
     <div>
         <div class="flex flex-row justify-between">
             <div class="flex flex-row justify-center items-center gap-4 mb-2">
@@ -188,16 +315,28 @@
                             </div>
                             <div>
                                 <div class="dropdown dropdown-end">
-                                  <div tabindex="0" role="button" class="btn btn-xs">
-                                      <svg class="w-[30px] h-[30px]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                          <path stroke="currentColor" stroke-linecap="round" stroke-width="3" d="M6 12h.01m6 0h.01m5.99 0h.01"/>
-                                      </svg>
-                                  </div>
-                                  <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
-                                    <li><a>Move to</a></li>
-                                    <li><a>Assignee</a></li>
-                                    <li><a>Delete</a></li>
-                                  </ul>
+                                    <div tabindex="0" role="button" class="btn btn-ghost btn-xs">
+                                        <svg class="w-[30px] h-[30px]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                            <path stroke="currentColor" stroke-linecap="round" stroke-width="3" d="M6 12h.01m6 0h.01m5.99 0h.01"/>
+                                        </svg>
+                                    </div>
+                                    <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                                        <li class="group dropdown-left">
+                                            <button role="button" tabindex="0" class="move-task" data-task-id="{{ task.id }}">Move to</button>
+                                            <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow group-hover:block hidden">
+                                                {% for sprint in available_sprints %}
+                                                {% if sprint.id != task.sprint.id %}
+                                                <li>
+                                                    <a href="#" class="move-to-sprint" data-task-id="{{ task.id }}" data-sprint-id="{{ sprint.id }}">{{ sprint.name }}</a>
+                                                </li>
+                                                {% endif %}
+                                                {% endfor %}
+                                            </ul>
+                                        </li>
+                                        <li>
+                                            <a href="#" class="delete-task" data-task-id="{{ task.id }}">Delete</a>
+                                        </li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
@@ -216,13 +355,123 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const csrfToken = '{{ csrf_token }}';
-        const sprintColumns = document.querySelectorAll('.sprint-column');
-        const createSprintModal = document.getElementById('create_sprint_modal');
-        const createSprintForm = document.getElementById('createSprintForm');
-        const sprintNameInput = document.getElementById('sprint_name');
-        const durationSelect = document.getElementById('duration');
-        const startDateInput = document.getElementById('start_date');
-        const endDateInput = document.getElementById('end_date');
+        const durationSelect = document.getElementById("duration");
+        const startDateInput = document.getElementById("id_start_date");
+        const endDateInput = document.getElementById("id_end_date");
+        const sprintNameInput = document.getElementById("id_name");
+        const sprintsCount = {{ sprint_count }};
+        const sprintColumns = document.querySelectorAll('.sprint-column, .card');
+        const deleteModal = document.getElementById('confirm_delete_modal');
+        const modalDeleteButton = deleteModal.querySelector('.btn-error');
+        const modalTaskName = deleteModal.querySelector('p');
+        const editSprintModal = document.getElementById('edit_sprint_modal');
+        const deleteSprintModal = document.getElementById('delete_sprint_modal');
+        const editSprintForm = document.getElementById('edit_sprint_form');
+        const confirmDeleteSprintButton = document.getElementById('confirm_delete_sprint');
+        let currentTaskId = null;
+        let currentSprintId = null;
+
+        // Set initial Sprint name
+        sprintNameInput.value = `Sprint ${sprintsCount + 1}`;
+
+        const calculateEndDate = (startDate, weeks) => {
+            const date = new Date(startDate);
+            date.setDate(date.getDate() + weeks * 7);
+            return date.toISOString().split("T")[0]; // Format as yyyy-mm-dd
+        };
+
+        const updateEndDate = () => {
+            const selectedDuration = durationSelect.value;
+            const startDateValue = startDateInput.value || new Date().toISOString().split("T")[0];
+            startDateInput.value = startDateValue; // Set start date to current date if not already set
+
+            if (selectedDuration === "1_week") {
+                endDateInput.value = calculateEndDate(startDateValue, 1);
+            } else if (selectedDuration === "2_weeks") {
+                endDateInput.value = calculateEndDate(startDateValue, 2);
+            } else if (selectedDuration === "3_weeks") {
+                endDateInput.value = calculateEndDate(startDateValue, 3);
+            }
+        };
+
+        // Listen for changes in duration or start date
+        durationSelect.addEventListener("change", updateEndDate);
+        startDateInput.addEventListener("change", updateEndDate);
+
+        // Handle custom duration
+        endDateInput.addEventListener("change", () => {
+            const selectedDuration = durationSelect.value;
+            const startDateValue = new Date(startDateInput.value);
+            const endDateValue = new Date(endDateInput.value);
+
+            // Switch to "custom" if end date doesn't match predefined durations
+            if (
+                selectedDuration !== "custom" &&
+                Math.floor((endDateValue - startDateValue) / (1000 * 60 * 60 * 24)) !==
+                    (selectedDuration === "1_week" ? 7 : selectedDuration === "2_weeks" ? 14 : 21)
+            ) {
+                durationSelect.value = "custom";
+            }
+        });
+
+        // Initial setup
+        updateEndDate();
+
+        document.getElementById('createSprintForm').addEventListener('submit', function (event) {
+            event.preventDefault(); // Prevent form submission at the start
+
+            const startDate = document.getElementById('id_start_date').value;
+            const endDate = document.getElementById('id_end_date').value;
+
+            // Convert dates to Date objects
+            const startDateObj = startDate ? new Date(startDate) : null;
+            const endDateObj = endDate ? new Date(endDate) : null;
+
+            // Clear any previous warnings
+            document.getElementById('start_date_warning').classList.add('hidden');
+            document.getElementById('end_date_warning').classList.add('hidden');
+
+            // Validate that start date and end date are provided and that end date is after the start date
+            if (!startDateObj || !endDateObj) {
+                document.getElementById('start_date_warning').textContent = 'Both start date and end date are required';
+                document.getElementById('start_date_warning').classList.remove('hidden');
+                return;
+            }
+
+            // Validate that end date is after the start date
+            if (endDateObj <= startDateObj) {
+                document.getElementById('end_date_warning').textContent = 'End date must be later than the start date';
+                document.getElementById('end_date_warning').classList.remove('hidden');
+                return;
+            }
+
+            // Validate unique start date via AJAX
+            fetch("{% url 'validate_start_date' %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    start_date: startDate,
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists) {
+                    document.getElementById('start_date_warning').textContent = 'A sprint already exists with this start date';
+                    document.getElementById('start_date_warning').classList.remove('hidden');
+                } else {
+                    // If validation is successful, submit the form manually
+                    document.getElementById('createSprintForm').submit();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while validating the start date.');
+            });
+        });
+
 
         async function updateTaskField(taskId, field, value) {
             try {
@@ -279,78 +528,216 @@
             updateSelectClass(select, field, value);
         });
 
-         document.getElementById('openCreateSprintModal').addEventListener('click', () => {
-            const sprintCount = document.querySelectorAll('.sprint-column').length;
-            sprintNameInput.value = `Sprint ${sprintCount + 1}`;
-            createSprintModal.showModal();
+        // Add event listeners to all delete buttons
+        document.querySelectorAll('.delete-task').forEach(button => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                currentTaskId = button.dataset.taskId;
+
+                // Set the task name in the modal (you may pass task name in a data attribute)
+                const taskName = button.closest('tr').querySelector('a').textContent.trim();
+                modalTaskName.textContent = `Are you sure you want to delete "${taskName}"?`;
+
+                // Show the modal
+                deleteModal.showModal();
+            });
         });
 
-        // Update end date based on duration
-        durationSelect.addEventListener('change', () => {
-            if (durationSelect.value !== 'custom') {
-                const weeks = parseInt(durationSelect.value);
-                if (startDateInput.value) {
-                    const startDate = new Date(startDateInput.value);
-                    const endDate = new Date(startDate);
-                    endDate.setDate(startDate.getDate() + weeks * 7 - 1);
-                    endDateInput.value = endDate.toISOString().split('T')[0];
+        // Handle the delete action in the modal
+        modalDeleteButton.addEventListener('click', async () => {
+            if (currentTaskId) {
+                const response = await fetch("{% url 'delete_task' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                    body: new URLSearchParams({
+                        'task_id': currentTaskId,
+                    }),
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    location.reload(); // Reload the page to reflect changes
+                } else {
+                    alert('Failed to delete the task');
                 }
-            } else {
-                endDateInput.value = '';
+                currentTaskId = null; // Reset the task ID
             }
         });
 
-        // Sync end date when start date changes for predefined durations
-        startDateInput.addEventListener('change', () => {
-            if (durationSelect.value !== 'custom') {
-                durationSelect.dispatchEvent(new Event('change'));
-            }
+        // Optional: Close modal when clicking outside or using form dialog button
+        deleteModal.addEventListener('close', () => {
+            currentTaskId = null; // Reset the task ID on close
         });
 
-        // Form submission logic
-        createSprintForm.addEventListener('submit', async (event) => {
+
+        // Function to convert a date string like "Jan. 2, 2025" to "2025-01-02"
+        function formatDateToInputFormat(dateStr) {
+            // Parse the date string into a Date object
+            const date = new Date(dateStr);
+
+            // Extract the year, month, and day
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-based, so add 1
+            const day = date.getDate().toString().padStart(2, '0');
+
+            // Return the date in "yyyy-MM-dd" format
+            return `${year}-${month}-${day}`;
+        }
+
+        // Event listener for "Edit Sprint" button
+        document.querySelectorAll('.sprint-column .dropdown [onclick*="edit_sprint_modal"]').forEach(button => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+
+                // Get the sprint data (id and other details)
+                const sprintCard = button.closest('.sprint-column');
+                currentSprintId = sprintCard.dataset.sprintId;
+
+                const sprintName = sprintCard.querySelector('.sprint-header .font-medium').textContent.trim();
+                const sprintDates = sprintCard.querySelector('.sprint-header span').textContent.trim().split(' - ');
+
+                const startDateStr = sprintDates[0].trim();
+                const endDateStr = sprintDates[1].trim();
+
+                // Convert the date strings to the proper format (yyyy-MM-dd)
+                const formattedStartDate = formatDateToInputFormat(startDateStr);
+                const formattedEndDate = formatDateToInputFormat(endDateStr);
+
+                // Populate the modal fields with the sprint data
+                document.getElementById('edit_sprint_name').value = sprintName;
+                document.getElementById('edit_sprint_start_date').value = formattedStartDate;
+                document.getElementById('edit_sprint_end_date').value = formattedEndDate;
+
+                // Show the edit sprint modal
+                editSprintModal.showModal();
+            });
+        });
+
+        // Handle edit sprint
+        editSprintForm.addEventListener('submit', async (event) => {
             event.preventDefault();
 
-            const sprintData = {
-                name: sprintNameInput.value,
-                duration: durationSelect.value,
-                start_date: startDateInput.value,
-                end_date: endDateInput.value,
-            };
+            // Collect data from the form
+            const formData = new FormData(editSprintForm);
 
-            const response = await fetch('/sprints/create/', {
+            // Send the request to update the sprint
+            const response = await fetch("{% url 'edit_sprint' %}", {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     'X-CSRFToken': '{{ csrf_token }}',
                 },
-                body: JSON.stringify(sprintData),
+                body: new URLSearchParams({
+                    ...Object.fromEntries(formData.entries()), // Convert FormData to plain object
+                    sprint_id: currentSprintId,
+                }),
             });
 
-            if (response.ok) {
-                location.reload(); // Reload the page to reflect the new sprint
+            const result = await response.json();
+            if (result.success) {
+                location.reload(); // Reload the page to reflect changes
             } else {
-                alert('Failed to create sprint');
+                alert('Failed to update the sprint');
             }
+
+            // Close the modal
+            editSprintModal.close();
         });
 
-        // Enable drag and drop on each column
+        // Add event listeners for "Delete Sprint" buttons
+        document.querySelectorAll('.sprint-column .dropdown [onclick*="delete_sprint_modal"]').forEach(button => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+
+                // Get the sprint ID
+                const sprintCard = button.closest('.sprint-column');
+                currentSprintId = sprintCard.dataset.sprintId;
+
+                // Show the delete modal
+                deleteSprintModal.showModal();
+            });
+        });
+
+        // Handle delete confirmation
+        confirmDeleteSprintButton.addEventListener('click', async () => {
+            if (currentSprintId) {
+                const response = await fetch("{% url 'delete_sprint' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                    body: new URLSearchParams({
+                        sprint_id: currentSprintId,
+                    }),
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    location.reload(); // Reload the page to reflect changes
+                } else {
+                    alert('Failed to delete the sprint');
+                }
+
+                // Reset the current sprint ID
+                currentSprintId = null;
+            }
+
+            // Close the modal
+            deleteSprintModal.close();
+        });
+
+        // Handle moving tasks (you can extend this to show a modal or list of sprints/backlog)
+        document.querySelectorAll('.move-task').forEach(button => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                alert('Move functionality can be implemented here.');
+                // Extend this to show a modal or implement other move logic
+            });
+        });
+
+        document.querySelectorAll('.move-to-sprint').forEach(button => {
+            button.addEventListener('click', async (event) => {
+                event.preventDefault();
+                const taskId = button.dataset.taskId;
+                const sprintId = button.dataset.sprintId;
+
+                const response = await fetch("{% url 'move_task' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                    body: new URLSearchParams({
+                        'task_id': taskId,
+                        'sprint_id': sprintId,
+                    }),
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    location.reload(); // Reload the page to reflect the move
+                } else {
+                    alert('Failed to move the task');
+                }
+            });
+        });
+
         sprintColumns.forEach(column => {
             column.addEventListener('dragover', (event) => {
                 event.preventDefault();
-                column.classList.add('highlight'); // Optional visual feedback
+                column.classList.add('bg-blue-100'); // Highlight column during drag
             });
 
             column.addEventListener('dragleave', () => {
-                column.classList.remove('highlight');
+                column.classList.remove('bg-blue-100'); // Remove highlight
             });
 
             column.addEventListener('drop', async (event) => {
                 event.preventDefault();
-                column.classList.remove('highlight');
+                column.classList.remove('bg-blue-100');
 
                 const taskId = event.dataTransfer.getData('task-id');
-                const sprintId = column.dataset.sprintId;
+                const newSprintId = column.dataset.sprintId || ''; // Null for backlog
 
                 if (taskId) {
                     const response = await fetch("{% url 'update_task_sprint' %}", {
@@ -360,29 +747,30 @@
                         },
                         body: new URLSearchParams({
                             'task_id': taskId,
-                            'sprint_id': sprintId,
+                            'new_sprint_id': newSprintId,
                         }),
                     });
 
                     const result = await response.json();
                     if (result.success) {
-                        location.reload(); // Reload to reflect updated task position
+                        location.reload(); // Reload page to reflect the update
                     } else {
-                        alert('Failed to move task');
+                        alert('Failed to update task sprint');
                     }
                 }
             });
         });
 
-        // Make task items draggable
-        const taskItems = document.querySelectorAll('.task-item');
-        taskItems.forEach(task => {
+        // Make tasks draggable
+        const sprintTasks = document.querySelectorAll('tr[data-task-id]');
+        sprintTasks.forEach(task => {
             task.draggable = true;
 
             task.addEventListener('dragstart', (event) => {
                 event.dataTransfer.setData('task-id', task.dataset.taskId);
             });
         });
+
     });
 </script>
 

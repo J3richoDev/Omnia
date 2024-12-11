@@ -59,6 +59,8 @@ class Sprint(models.Model):
     name = models.CharField(max_length=100)
     start_date = models.DateField()
     end_date = models.DateField()
+    is_active = models.BooleanField(default=False)
+    ended = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
