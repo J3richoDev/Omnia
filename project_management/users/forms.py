@@ -28,35 +28,17 @@ class CustomUserCreationForm(UserCreationForm):
 class MemberCreationForm(forms.ModelForm):
     class Meta:
         model = CustomUser
-        fields = ['email','username', 'password', 'profile_picture']
+        fields = ['email','username', 'password']
         widgets = {
             'password': forms.PasswordInput(),
-        }
-    def __init__(self, project=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.project = project    
-
+        } 
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if CustomUser.objects.filter(email=email).exists():
             raise forms.ValidationError("A user with this email already exists.")
         return email
-    def clean_profile_picture(self):
-        picture = self.cleaned_data.get('profile_picture')
-        if picture:
-            if picture.size > 5 * 1024 * 1024:  # 5 MB limit
-                raise forms.ValidationError("The profile picture size should not exceed 5MB.")
-            if not picture.content_type.startswith("image/"):
-                raise forms.ValidationError("Only image files are allowed.")
-        return picture
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        if commit:
-            user.save()
-            # Create ProjectMember instance
-            ProjectMember.objects.create(project=self.project, user=user)
-        return user 
     
+   
 class MemberProfileForm(forms.ModelForm):
     class Meta:
         model = CustomUser
@@ -69,10 +51,19 @@ class UserUpdateForm(forms.ModelForm):
     class Meta:
         model = CustomUser
         fields = ['username', 'email', 'first_name', 'last_name', 'profile_picture']
-       
+        
+    def clean_profile_picture(self):
+        picture = self.cleaned_data.get('profile_picture')
+        if picture:
+            if picture.size > 5 * 1024 * 1024:  # 5 MB limit
+                raise forms.ValidationError("The profile picture size should not exceed 5MB.")
+            valid_mime_types = ["image/jpeg", "image/png"]
+            if picture.content_type not in valid_mime_types:
+                raise forms.ValidationError("Only JPEG and PNG files are allowed.")
+        return picture
 
 class PasswordChangeForm(forms.Form):
-    old_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'input-class-old w-1/ border rounded px-3 py-2'}), required=True)
+    old_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'input-class-old w-1/3 border rounded px-3 py-2'}), required=True)
     new_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'input-class-new  w-1/3 border rounded px-3 py-2'}), required=True)
     confirm_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'input-class-confirm  w-1/3    border rounded px-3 py-2'}), required=True)
 

@@ -7,6 +7,8 @@ from .forms import CustomUserCreationForm, MemberCreationForm, MemberProfileForm
 from .models import CustomUser
 from django.shortcuts import render, get_object_or_404
 from projects.models import Project, ProjectMember  # Replace `your_app` with the correct app name
+from django.http import HttpResponseForbidden
+
 
 def login_view(request):
     if request.method == 'POST':
@@ -38,10 +40,21 @@ def register(request):
     else:
         form = CustomUserCreationForm()
     return render(request, 'users/register.html', {'form': form})
+
 @login_required
 def create_member(request):
     if request.user.role != CustomUser.MANAGER:
         return redirect('dashboard')  # Restrict access to managers
+    
+    project_id = request.session.get('current_project_id')
+    if not project_id:
+        return HttpResponseForbidden("No project selected.")
+
+    try:
+        project = get_object_or_404(Project, id=project_id, owner=request.user)
+    except ValueError:
+        messages.error(request, "Invalid project ID.", extra_tags="alert-error")
+        return redirect('dashboard')
 
     if request.method == 'POST':
         form = MemberCreationForm(request.POST, request.FILES)
@@ -49,7 +62,6 @@ def create_member(request):
             member = form.save(commit=False)
             member.role = CustomUser.MEMBER
             member.set_password(form.cleaned_data['password'])
-            project = get_object_or_404(Project, id=request.POST.get('project_id')) 
             try:
                 member.save()
                 ProjectMember.objects.create(project=project, user=member)
@@ -64,6 +76,7 @@ def create_member(request):
 
     members = CustomUser.objects.filter(role=CustomUser.MEMBER)
     return render(request, 'users/create_member.html', {'form': form, 'members': members})
+
 
 
 
