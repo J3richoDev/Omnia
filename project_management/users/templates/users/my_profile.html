@@ -20,10 +20,12 @@
         </ul>
     {% endif %}
     <!-- Update Profile Picture -->
-    <div class="card w-full p-6 bg-base-100 shadow-xl mt-2">
+    <div class="flex">
+        <div class="w-3/4 flex flex-col">
+    <div class="card w-23 h-full p-10 bg-base-100 shadow-xl mt-2 ms-5 items-center justify-center"><h2 class="text-xl font-bold mb-2 ">Update Profile Picture</h2>
     <form method="POST" enctype="multipart/form-data" class="space-y-6">
         {% csrf_token %}
-        <h2 class="text-xl font-bold mb-2">Update Profile Picture</h2>
+        
         <div>
             <label for="profile_picture">Profile Picture:</label><br>
             {% if user.profile_picture %}
@@ -31,7 +33,9 @@
             {% endif %}
             {{ user_form.profile_picture }}
         </div>
+        <div class="flex justify-center mt-4">
         <button type="submit" name="save_profile" class="bg-blue-500 text-white py-2 px-4 rounded">Save Profile Picture</button>
+        </div>
     </form>
     {% if user_form.errors %}
         <ul>
@@ -42,54 +46,83 @@
             {% endfor %}
         </ul>
     {% endif %}
-    </div>
-    <hr class="my-6">
+    </div></div>
+  
 
     <!-- Update General Info -->
+     <div class="w-full flex flex-col">
+        <div class="h-200 px-4 mb-4">
     <div class="card w-full p-6 bg-base-100 shadow-xl mt-2">
-    <form method="POST" class="space-y-6">
+    
+        <div class="flex justify-between items-center">
+            <h2 class="text-xl font-bold mb-2">Update Info</h2> 
+            <svg id="edit-icon" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cursor-pointer">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />  
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+        </div>
+        <form id="update-form" method="POST" style="display: none;">
         {% csrf_token %}
-        <h2 class="text-xl font-bold mb-2">Update Info</h2>
-        <div>
+        <div class="mb-4">
             <label for="username">Username:</label>
             {{ user_form.username }}
         </div>
-        <div>
+        <div class="mb-4">
             <label for="email">Email:</label>
             {{ user_form.email }}
         </div>
-        <div>
+        <div class="mb-4">
             <label for="first_name">First Name:</label>
             {{ user_form.first_name }}
         </div>
-        <div>
+        <div class="mb-4">
             <label for="last_name">Last Name:</label>
             {{ user_form.last_name }}
         </div>
-        <button type="submit" name="update_info" class="bg-green-500 text-white py-2 px-4 rounded">Update Info</button>
-    </form>
+        <div class="flex justify-center mt-4">
+        <button type="submit" name="update_info" class="bg-green-500 text-white py-2 px-4 rounded ">Update Info</button>
     </div>
-    <hr class="my-6">
+    </form>
+    </div></div>
+ 
 
     <!-- Change Password -->
-     
-    <div class="card w-full p-6 bg-base-100 shadow-xl mt-2">
-    <form method="POST" class="space-y-6">
-        {% csrf_token %}
+    <div class="h-200 px-4">
+        <div class="card w-full p-6 bg-base-100 shadow-xl">
+           
+    <div class="flex justify-between items-center">    
         <h2 class="text-xl font-bold mb-2">Change Password</h2>
+        <svg id="edit-pass" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cursor-pointer">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />  
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+        </svg>
+    </div> 
+    <form id="change-password" method="POST" style="display: none;">
+        {% csrf_token %}
         <div class="mb-4">
-            <label for="old_password" class="block font-bold mb-2">Old Password:</label>
-            {{ password_form.old_password }}
+            <label for="old_password" class="block font-bold mb-2">Old Password: {{ password_form.old_password }}</label>
         </div>
         <div class="mb-4">
-            <label for="new_password" class="block font-bold mb-2">New Password:</label>
-            {{ password_form.new_password }}
+            <label for="new_password" class="block font-bold mb-2">New Password: {{ password_form.new_password }}</label>
         </div>
         <div class="mb-4">
-            <label for="confirm_password" class="block font-bold mb-2">Confirm Password:</label>
-            {{ password_form.confirm_password }}
+            <label for="confirm_password" class="block font-bold mb-2">Confirm Password: {{ password_form.confirm_password }}</label>
         </div>
-        <button type="submit" name="change_password" class="bg-red-500 text-white py-2 px-4 rounded">Change Password</button>
+        <div class="flex justify-center mt-4">
+        <button type="submit" name="change_password" class="bg-red-500 text-white py-2 px-4 rounded">Change Password</button></div>
     </form></div>   
-</div>
+</div></div></div></div>
+
+
+
+<script>
+    document.getElementById('edit-icon').addEventListener('click', function() {
+        var form = document.getElementById('update-form');
+        form.style.display = 'block';
+    });
+    document.getElementById('edit-pass').addEventListener('click', function() {
+        var form = document.getElementById('change-password');
+        form.style.display = 'block';
+    });
+</script>
 {% endblock %}

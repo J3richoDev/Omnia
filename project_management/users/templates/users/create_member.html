@@ -39,7 +39,7 @@
         <table class="table w-full">
             <thead>
                 <tr>
-                    <th>Profile</th>
+                    <!--<th>Profile</th>-->
                     <th>Name</th>
                     <th>Email</th>
                     <th>Role</th>
@@ -49,7 +49,7 @@
             <tbody>
                 {% for member in members %}
                 <tr>
-                    <td>{{ member.profile_picture }}</td>
+                    <!--<td>{{ member.profile_picture }}</td>-->
                     <td>{{ member.username }}</td>
                     <td>{{ member.email }}</td>
                     <td class="badge badge-outline mt-2">{{ member.get_role_display }}</td>

@@ -51,7 +51,13 @@ class UserUpdateForm(forms.ModelForm):
     class Meta:
         model = CustomUser
         fields = ['username', 'email', 'first_name', 'last_name', 'profile_picture']
-        
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'input-class-old w-2/3 border rounded px-3 py-2'}),
+            'email': forms.EmailInput(attrs={'class': 'input-class-old w-2/3 border rounded px-3 py-2'}),
+            'first_name': forms.TextInput(attrs={'class': 'input-class-old w-2/3 border rounded px-3 py-2'}),
+            'last_name': forms.TextInput(attrs={'class': 'input-class-old w-2/3 border rounded px-3 py-2'}),
+            'profile_picture': forms.FileInput(attrs={'class': 'input-class-old w-2/3 border rounded px-3 py-2'}),
+        }
     def clean_profile_picture(self):
         picture = self.cleaned_data.get('profile_picture')
         if picture:
@@ -63,9 +69,9 @@ class UserUpdateForm(forms.ModelForm):
         return picture
 
 class PasswordChangeForm(forms.Form):
-    old_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'input-class-old w-1/3 border rounded px-3 py-2'}), required=True)
-    new_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'input-class-new  w-1/3 border rounded px-3 py-2'}), required=True)
-    confirm_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'input-class-confirm  w-1/3    border rounded px-3 py-2'}), required=True)
+    old_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'input-class-old w-2/3 border rounded px-3 py-2'}), required=True)
+    new_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'input-class-new  w-2/3 border rounded px-3 py-2'}), required=True)
+    confirm_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'input-class-confirm  w-2/3    border rounded px-3 py-2'}), required=True)
 
     def clean(self):
         cleaned_data = super().clean()
