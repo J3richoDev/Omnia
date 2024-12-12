@@ -38,7 +38,6 @@ LOGIN_URL = 'users/login/'
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
-    'django_password_eye',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
