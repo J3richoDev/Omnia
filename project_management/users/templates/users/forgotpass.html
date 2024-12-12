@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="min-h-screen bg-base-200 flex items-center">
+  <div class="card mx-auto w-full max-w-5xl shadow-xl">
+    <div class="grid md:grid-cols-2 grid-cols-1 bg-base-100 rounded-xl">
+      
+      <div>
+        <div class="hero min-h-full rounded-l-xl bg-base-200">
+          <div class="hero-content py-12">
+            <div class="max-w-md">
+              <div class="flex justify-center align-center">
+                <img src="{% static 'logo/logo.png' %}" class="w-12 inline-block mr-2 mask mask-circle" alt="logo">
+                <h1 class="text-3xl text-center mt-2 font-bold">Omnia</h1>
+              </div>
+              <div class="text-center mt-12">
+                <img src="{% static 'images/forgotp.png' %}" alt="Forgot Password Image" class="w-60 inline-block">
+              </div>
+              <div class="mb-10 text-center">
+                <h1 class="text-2xl mt-8 font-bold">Forgot Password?</h1>
+                <p class="py-2 mt-4">No worries, we’ll help you reset it!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="py-24 px-10">
+        <h2 class="text-2xl font-semibold mb-12 text-center">Reset Your Password</h2>
+        <form method="POST" action="{% url 'forgot_password' %}">
+          {% csrf_token %}
+          <div class="form-control w-full max-w-md mx-auto">
+            <label class="label">
+              <!-- <span class="label-text">Enter your email</span> -->
+            </label>
+            <input
+              type="email"
+              name="email"
+              placeholder="example@gmail.com"
+              class="input input-bordered w-full max-w-md"
+              required>
+          </div>
+          <p class="text-center text-error mt-4">{{ error_message|default:"" }}</p>
+          <!-- <a href="/users/reset-password/<uidb64>/<token>/">
+            <button type="submit" class="btn mt-4 w-full mb-7 btn-primary">Send Reset Link</button>
+          </a> -->
+          <button type="submit" class="btn mt-4 w-full btn-primary">Send Reset Link</button>
+          <div class="text-center mt-4">
+            Back to
+            <a href="/users/login">
+              <span class="  inline-block  hover:text-primary hover:underline hover:cursor-pointer transition duration-200">
+                Login
+              </span>
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,4 +1,6 @@
 from django import template
+from django.utils.timezone import now
+from datetime import datetime,date
 
 register = template.Library()
 
@@ -14,3 +16,19 @@ def get_item(value, key):
         if item.id == int(key):
             return item
     return None
+
+@register.filter
+def is_overdue(end_date):
+    try:
+        # If the input is already a date object, use it directly
+        if isinstance(end_date, date):
+            end_date_obj = end_date
+        else:
+            # Parse the string into a date object
+            end_date_obj = datetime.strptime(end_date, "%b. %d, %Y").date()
+
+        # Compare with today's date
+        return end_date_obj < now().date()
+    except (ValueError, TypeError):
+        # Return False if parsing fails or input is invalid
+        return False

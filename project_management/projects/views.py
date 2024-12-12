@@ -1,20 +1,20 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.http import HttpResponseForbidden
-from django.db import DatabaseError
-from django.http import HttpResponse
+from django.utils.timezone import now
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import json
 from datetime import timedelta, datetime
 from .models import Project, Task, TaskFile, TaskComment, ProjectMember, Sprint
-from .forms import ProjectForm, TaskForm, TaskCommentForm, TaskFileForm, AddMemberForm
+from .forms import ProjectForm, TaskForm, TaskCommentForm, TaskFileForm, AddMemberForm, SprintForm
 from django.apps import apps
 from .forms import MemberCreationForm
 from django.db import IntegrityError
 from users.models import CustomUser
+
 
 @login_required
 def initial_setup(request):
@@ -64,7 +64,32 @@ def create_project(request):
              'fa-database', 'fa-paint-brush', 'fa-key', 'fa-gift', 'fa-cloud', 'fa-cloud-upload-alt', 'fa-file', 'fa-file-alt',
              'fa-comments', 'fa-briefcase', 'fa-cogs', 'fa-paper-plane', 'fa-bolt', 'fa-lightbulb', 'fa-shield-alt']
 
-    return render(request, 'projects/create_project.html', {'form': form, 'icons': icons})
+    return render(request, 'projects/dashboard.html', {'form': form, 'icons': icons})
+
+@csrf_exempt
+def edit_project(request):
+    if request.method == "POST":
+        project_id = request.POST.get('project_id')
+        name = request.POST.get('project_name')
+        description = request.POST.get('description')
+        color = request.POST.get('color')
+        emoji_icon = request.POST.get('emoji_icon')
+
+        try:
+            project = Project.objects.get(id=project_id)
+            project.name = name
+            project.description = description
+            project.color = color
+            project.emoji_icon = emoji_icon
+            project.save()
+
+            return JsonResponse({'success': True})
+        except Project.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Project not found'})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
+
+
 
 @login_required
 def set_current_project(request, project_id):
@@ -114,6 +139,17 @@ def project_list(request):
     return render(request, 'projects/project_list.html', {'projects': user_projects})
 
 @login_required
+def project_tasks(request):
+    project_id = request.session.get('current_project_id')
+    if not project_id:
+        return HttpResponseForbidden("No project selected.")
+
+    project = Project.objects.get(id=project_id, owner=request.user)
+    tasks = project.tasks.all()
+
+    return render(request, 'projects/project_tasks.html', {'tasks': tasks, 'project': project})
+
+@login_required
 def create_task(request):
     project_id = request.session.get('current_project_id')
     if not project_id:
@@ -145,7 +181,6 @@ def create_task(request):
 
     return render(request, 'projects/create_task.html', {'form': form, 'project': project})
 
-
 @csrf_exempt
 @login_required
 @require_POST
@@ -172,17 +207,37 @@ def update_task_field(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
+@csrf_exempt
+def delete_task(request):
+    if request.method == 'POST':
+        task_id = request.POST.get('task_id')
+        try:
+            task = Task.objects.get(id=task_id)
+            task.delete()
+            return JsonResponse({'success': True})
+        except Task.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Task not found'})
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
 
-@login_required
-def project_tasks(request):
-    project_id = request.session.get('current_project_id')
-    if not project_id:
-        return HttpResponseForbidden("No project selected.")
+@csrf_exempt
+def move_task(request):
+    if request.method == 'POST':
+        task_id = request.POST.get('task_id')
+        sprint_id = request.POST.get('sprint_id')
 
-    project = Project.objects.get(id=project_id, owner=request.user)
-    tasks = project.tasks.all()
+        try:
+            task = Task.objects.get(id=task_id)
+            if sprint_id == "backlog":
+                task.sprint = None  # Move to backlog
+            else:
+                sprint = Sprint.objects.get(id=sprint_id)
+                task.sprint = sprint
 
-    return render(request, 'projects/project_tasks.html', {'tasks': tasks, 'project': project})
+            task.save()
+            return JsonResponse({'success': True})
+        except (Task.DoesNotExist, Sprint.DoesNotExist):
+            return JsonResponse({'success': False, 'error': 'Task or Sprint not found'})
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
 
 @login_required
 def my_tasks(request):
@@ -246,14 +301,41 @@ def project_sprints(request):
     if not project_id:
         return HttpResponseForbidden("No project selected.")
 
+    today = now().date()
     project = Project.objects.get(id=project_id, owner=request.user)
-    sprints = project.sprints.all().order_by('-start_date')
+    sprints = project.sprints.all().order_by('start_date')
+    active_sprints = project.sprints.filter(ended=False).order_by('start_date')
+    sprint_count = sprints.count()
     backlog_tasks = project.tasks.filter(sprint__isnull=True)
     sprints_with_tasks = {
-        sprint: sprint.tasks.all() for sprint in sprints
+        sprint: sprint.tasks.all() for sprint in active_sprints
     }
 
-    return render(request, 'projects/project_sprints.html', {'sprints_with_tasks': sprints_with_tasks,'backlog_tasks': backlog_tasks, 'project': project})
+    existing_start_dates = [sprint.start_date.strftime('%Y-%m-%d') for sprint in sprints]
+
+    if request.method == 'POST':
+        form = SprintForm(request.POST)
+        if form.is_valid():
+            sprint = form.save(commit=False)
+            sprint.project = project
+            sprint.save()
+            messages.success(request, "Sprint created successfully!", extra_tags="alert-success")
+            return redirect('project_sprints')
+        else:
+            messages.error(request, "Failed to create the sprint. Please check the form and try again.", extra_tags="alert-error")
+    else:
+        form = SprintForm()
+
+    return render(request, 'projects/project_sprints.html', {
+        'today':today,
+        'existing_start_dates': json.dumps(existing_start_dates),
+        'sprints_with_tasks': sprints_with_tasks,
+        'sprint_count' : sprint_count,
+        'available_sprints': sprints,
+        'backlog_tasks': backlog_tasks,
+        'project': project,
+        'form': form
+    })
 
 @csrf_exempt
 @login_required
@@ -283,23 +365,107 @@ def create_sprint(request):
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
+
+@csrf_exempt
+def validate_start_date(request):
+    if request.method == 'POST':
+        start_date = request.POST.get('start_date')
+
+        if start_date:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+            # Check if a sprint already exists with the same start date
+            exists = Sprint.objects.filter(start_date=start_date).exists()
+            return JsonResponse({'exists': exists})
+        else:
+            return JsonResponse({'exists': False})
+
+
+def start_sprint(request, sprint_id):
+    sprint = get_object_or_404(Sprint, id=sprint_id)
+    project = sprint.project
+
+    if project.current_sprint:
+        messages.error(request, "You must end the current sprint before starting a new one.")
+        return redirect('project_sprints')
+
+    sprint.is_active = True
+    project.current_sprint = sprint
+    sprint.save()
+    project.save()
+
+    messages.success(request, f"Sprint '{sprint.name}' started successfully!")
+    return redirect('project_sprints')
+
+def end_sprint(request, sprint_id):
+    sprint = get_object_or_404(Sprint, id=sprint_id)
+    project = sprint.project
+
+    if project.current_sprint != sprint:
+        messages.error(request, "This sprint is not currently active.")
+        return redirect('project_sprints')
+
+    sprint.is_active = False
+    sprint.ended = True
+    project.current_sprint = None
+    sprint.save()
+    project.save()
+
+    messages.success(request, f"'{sprint.name}' ended successfully!")
+    return redirect('project_sprints')
+
 @csrf_exempt
 @login_required
 def update_task_sprint(request):
     if request.method == 'POST':
         task_id = request.POST.get('task_id')
-        sprint_id = request.POST.get('sprint_id')
+        new_sprint_id = request.POST.get('new_sprint_id')
+
         try:
             task = Task.objects.get(id=task_id)
-            if sprint_id == 'backlog':
-                task.sprint = None  # Move to backlog
+            if new_sprint_id:
+                task.sprint_id = new_sprint_id
             else:
-                task.sprint = Sprint.objects.get(id=sprint_id)
+                task.sprint = None  # Move to backlog
             task.save()
             return JsonResponse({'success': True})
-        except (Task.DoesNotExist, Sprint.DoesNotExist):
-            return JsonResponse({'success': False, 'error': 'Invalid task or sprint'})
+        except Task.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Task not found'})
     return JsonResponse({'success': False, 'error': 'Invalid request'})
+
+@login_required
+def edit_sprint(request):
+    if request.method == 'POST':
+        sprint_id = request.POST.get('sprint_id')
+        name = request.POST.get('name')
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+
+        try:
+            sprint = Sprint.objects.get(id=sprint_id)
+            sprint.name = name
+            sprint.start_date = start_date
+            sprint.end_date = end_date
+            sprint.save()
+            return JsonResponse({'success': True})
+        except Sprint.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Sprint not found'})
+
+@login_required
+def delete_sprint(request):
+    if request.method == 'POST':
+        sprint_id = request.POST.get('sprint_id')
+
+        try:
+            sprint = Sprint.objects.get(id=sprint_id)
+
+            tasks = Task.objects.filter(sprint=sprint)
+            tasks.update(sprint=None)
+
+            sprint.delete()
+
+            return JsonResponse({'success': True})
+        except Sprint.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Sprint not found'})
 
 @login_required
 def kanban_board(request):
@@ -308,14 +474,25 @@ def kanban_board(request):
         return HttpResponseForbidden("No project selected.")
 
     project = Project.objects.get(id=project_id)
-    tasks = project.tasks.all()
-    tasks_by_status = {
-        'todo': tasks.filter(status='todo'),
-        'in_progress': tasks.filter(status='in_progress'),
-        'review': tasks.filter(status='review'),
-        'completed': tasks.filter(status='completed'),
-    }
-    return render(request, 'projects/kanban_board.html', {'project': project, 'tasks_by_status': tasks_by_status})
+
+    # Ensure we only fetch tasks for the current active sprint
+    current_sprint = project.current_sprint
+    if current_sprint:
+        tasks = current_sprint.tasks.all()
+        tasks_by_status = {
+            'todo': tasks.filter(status='todo'),
+            'in_progress': tasks.filter(status='in_progress'),
+            'review': tasks.filter(status='review'),
+            'completed': tasks.filter(status='completed'),
+        }
+    else:
+        tasks_by_status = {}  # No tasks if there is no active sprint
+
+    return render(request, 'projects/kanban_board.html', {
+        'project': project,
+        'tasks_by_status': tasks_by_status,
+        'current_sprint': current_sprint,
+    })
 
 @login_required
 def my_kanban_board(request):

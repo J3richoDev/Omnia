@@ -7,8 +7,11 @@
 {% block content %}
 <div class="flex flex-row justify-between mb-4">
     <h1 class="text-2xl font-bold">{{ project.name }}</h1>
-    <h2 class="text-lg font-medium">Sprint : {{ project.current_sprint }}</h2>
+    <h2 class="text-lg font-medium">Sprint : {{ current_sprint.name }}</h2>
 </div>
+
+{% if current_sprint %}
+
 <div id="kanban-board" class="grid grid-cols-4 gap-2">
     {% for status, tasks in tasks_by_status.items %}
         <div class="card w-full p-3 bg-base-100 shadow-sm border min-h-screen ">
@@ -26,7 +29,7 @@
                                 <p class="text-sm">{{ task.description|truncatewords:10 }}</p>
                             </div>
                         {% empty %}
-                            <p class="text-gray-500 italic">No tasks</p>
+                            <p class="text-gray-500 text-center italic">No tasks</p>
                         {% endfor %}
                     </div>
                 </div>
@@ -34,6 +37,10 @@
         </div>
     {% endfor %}
 </div>
+
+{% else %}
+  <p>There is no active sprint.</p>
+{% endif %}
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {

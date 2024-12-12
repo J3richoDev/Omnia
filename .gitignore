@@ -1,3 +1,3 @@
-
-*.pyc
 project_management/db.sqlite3
+*.pyc
+*.sqlite3

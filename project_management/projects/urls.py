@@ -8,6 +8,7 @@ urlpatterns = [
 
     path('set_project/<int:project_id>/', views.set_current_project, name='set_current_project'),
     path('projects/', views.project_list, name='projects'),
+    path('projects/edit', views.edit_project, name='edit_project'),
 
     path('members/', views.project_members, name='members'),
     path('add_member/', views.add_member, name='add_member'),
@@ -15,10 +16,19 @@ urlpatterns = [
     path('tasks/', views.project_tasks, name='project_tasks'),
     path('tasks/create/', views.create_task, name='create_task'),
     path('tasks/update-field/', views.update_task_field, name='update_task_field'),
-    path('tasks/update_task_sprint/', views.update_task_sprint, name='update_task_sprint'),
+    path('delete-task/', views.delete_task, name='delete_task'),
+    path('move-task/', views.move_task, name='move_task'),
+    # path('tasks/update_task_sprint/', views.update_task_sprint, name='update_task_sprint'),
 
-    path('sprint/', views.project_sprints, name='project_sprints'),
-    path('create-sprint/', views.create_sprint, name='create_sprint'),
+    path('sprints/', views.project_sprints, name='project_sprints'),
+    path('sprints/create/', views.create_sprint, name='create_sprint'),
+    path('validate_start_date/', views.validate_start_date, name='validate_start_date'),
+    path('update-task-sprint/', views.update_task_sprint, name='update_task_sprint'),
+    path('sprints/edit', views.edit_sprint, name='edit_sprint'),
+    path('sprints/delete', views.delete_sprint, name='delete_sprint'),
+    path('start-sprint/<int:sprint_id>/', views.start_sprint, name='start_sprint'),
+    path('end-sprint/<int:sprint_id>/', views.end_sprint, name='end_sprint'),
+
 
     path('my-tasks/', views.my_tasks, name='my_tasks'),
     path('tasks/<int:task_id>/', views.task_detail, name='task_detail'),

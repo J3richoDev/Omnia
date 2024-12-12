@@ -1,4 +1,5 @@
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import SetPasswordForm
 from .models import CustomUser
 from django import forms
 from projects.models import ProjectMember
@@ -9,12 +10,15 @@ class CustomAuthenticationForm(AuthenticationForm):
     def clean_username(self):
         username = self.cleaned_data.get('username')
 
+        if not username:
+            raise forms.ValidationError("Please enter your username or email.")
+
         if '@' in username:  # Check if input is an email
             try:
                 user = CustomUser.objects.get(email=username)
                 if not user.is_active:
                     raise forms.ValidationError("This account is inactive.")
-                return user.username  # Ensure it returns a string (correct)
+                return user.username
             except CustomUser.DoesNotExist:
                 raise forms.ValidationError("No user found with this email address.")
         return username
@@ -82,3 +86,33 @@ class PasswordChangeForm(forms.Form):
         confirm_password = cleaned_data.get("confirm_password")
         if new_password != confirm_password:
             raise forms.ValidationError("The new passwords do not match.")
+
+
+class ForgotPasswordForm(forms.Form):
+    email = forms.EmailField(label="Enter your registered email address",
+                             widget=forms.EmailInput(attrs={'class': 'input input-bordered w-full'}))
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        try:
+            user = CustomUser.objects.get(email=email)
+            if not user.is_active:
+                raise forms.ValidationError("This account is inactive.")
+        except CustomUser.DoesNotExist:
+            raise forms.ValidationError("No user found with this email address.")
+        return email
+
+
+class ResetPasswordForm(SetPasswordForm):
+    new_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'input input-bordered w-full'}),
+                                   label="New Password", required=True)
+    confirm_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'input input-bordered w-full'}),
+                                       label="Confirm New Password", required=True)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        new_password = cleaned_data.get("new_password")
+        confirm_password = cleaned_data.get("confirm_password")
+        if new_password != confirm_password:
+            raise forms.ValidationError("The new passwords do not match.")
+        return cleaned_data
