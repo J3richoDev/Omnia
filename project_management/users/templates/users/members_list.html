@@ -11,6 +11,7 @@
        <div class="inline-block float-right">
           <div class="inline-block float-right">
             <button class="btn btn-primary text-white" onclick="openModal()">Create New</button>
+             <a href="{% url 'members_list' %}" class="btn btn-primary text-white">Members</a>
           </div>
        </div>
     </div>
@@ -19,15 +20,19 @@
     <div class="modal">
        <div class="modal-box">
           <h3 class="font-bold text-lg">Create New Member</h3>
-                <form method="POST" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        {{ form|crispy }}
-                    <div class="form-control mb-4">
-                        <button type="submit" class="btn btn-primary">Save</button>
-                    </div>
-                </form>
-            <div class="modal-action">
-                <label for="createNewModal" class="btn">Cancel</label>
+          <form method="POST">
+             {% csrf_token %}
+             {% if form %}
+             {{ form|crispy }}
+         {% else %}
+             <p>The form context is missing. Check the view that renders this template.</p>
+                 {% endif %}
+             <div class="form-control mb-4">
+                 <button type="submit" class="btn btn-primary">Save</button>
+             </div>
+         </form>
+          <div class="modal-action">
+             <label for="createNewModal" class="btn">Cancel</label>
           </div>
        </div>
     </div>
@@ -39,7 +44,7 @@
         <table class="table w-full">
             <thead>
                 <tr>
-                    <th>Profile</th>
+                    <th>Name</th>
                     <th>Name</th>
                     <th>Email</th>
                     <th>Role</th>
@@ -49,10 +54,9 @@
             <tbody>
                 {% for member in members %}
                 <tr>
-                    <td>{{ member.profile_picture }}</td>
                     <td>{{ member.username }}</td>
                     <td>{{ member.email }}</td>
-                    <td class="badge badge-outline mt-2">{{ member.get_role_display }}</td>
+                    <td>{{ member.get_role_display }}</td>
                     <td>{{ member.date_joined|date:"d M Y" }}</td>
                 </tr>
                 {% empty %}

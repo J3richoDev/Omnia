@@ -1,6 +1,8 @@
 {% extends 'project_base.html' %}
 {% block content %}
+
 <div class="container mx-auto py-6">
+    
     <h1 class="text-2xl font-bold mb-4">My Profile</h1>
     {% if messages %}
         <ul class="messages">
@@ -18,6 +20,7 @@
         </ul>
     {% endif %}
     <!-- Update Profile Picture -->
+    <div class="card w-full p-6 bg-base-100 shadow-xl mt-2">
     <form method="POST" enctype="multipart/form-data" class="space-y-6">
         {% csrf_token %}
         <h2 class="text-xl font-bold mb-2">Update Profile Picture</h2>
@@ -39,10 +42,11 @@
             {% endfor %}
         </ul>
     {% endif %}
-
+    </div>
     <hr class="my-6">
 
     <!-- Update General Info -->
+    <div class="card w-full p-6 bg-base-100 shadow-xl mt-2">
     <form method="POST" class="space-y-6">
         {% csrf_token %}
         <h2 class="text-xl font-bold mb-2">Update Info</h2>
@@ -64,26 +68,28 @@
         </div>
         <button type="submit" name="update_info" class="bg-green-500 text-white py-2 px-4 rounded">Update Info</button>
     </form>
-
+    </div>
     <hr class="my-6">
 
     <!-- Change Password -->
+     
+    <div class="card w-full p-6 bg-base-100 shadow-xl mt-2">
     <form method="POST" class="space-y-6">
         {% csrf_token %}
         <h2 class="text-xl font-bold mb-2">Change Password</h2>
-        <div>
-            <label for="old_password">Old Password:</label>
+        <div class="mb-4">
+            <label for="old_password" class="block font-bold mb-2">Old Password:</label>
             {{ password_form.old_password }}
         </div>
-        <div>
-            <label for="new_password">New Password:</label>
+        <div class="mb-4">
+            <label for="new_password" class="block font-bold mb-2">New Password:</label>
             {{ password_form.new_password }}
         </div>
-        <div>
-            <label for="confirm_password">Confirm Password:</label>
+        <div class="mb-4">
+            <label for="confirm_password" class="block font-bold mb-2">Confirm Password:</label>
             {{ password_form.confirm_password }}
         </div>
         <button type="submit" name="change_password" class="bg-red-500 text-white py-2 px-4 rounded">Change Password</button>
-    </form>
+    </form></div>   
 </div>
 {% endblock %}

@@ -8,6 +8,7 @@ urlpatterns = [
     path('members/create/', views.create_member, name='create_member'),
     path('complete-profile/', views.complete_profile, name='complete_profile'),
     path('my-profile/', views.my_profile, name='my_profile'),
+    path('members/', members_list, name='members_list'),
 
     # newly added path
     path('forgot-password/', views.forgot_password, name='forgot_password'),

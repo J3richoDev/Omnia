@@ -10,6 +10,11 @@ import json
 from datetime import timedelta, datetime
 from .models import Project, Task, TaskFile, TaskComment, ProjectMember, Sprint
 from .forms import ProjectForm, TaskForm, TaskCommentForm, TaskFileForm, AddMemberForm, SprintForm
+from django.apps import apps
+from .forms import MemberCreationForm
+from django.db import IntegrityError
+from users.models import CustomUser
+
 
 @login_required
 def initial_setup(request):
@@ -559,4 +564,32 @@ def project_members(request):
 
     project = Project.objects.get(id=project_id, owner=request.user)
     return render(request, 'projects/members.html', {'project': project})
+
+
+
+@login_required
+def create_member(request):
+    if request.user.role != CustomUser.MANAGER:
+        return redirect('dashboard')  # Restrict access to managers
+
+    if request.method == 'POST':
+        form = MemberCreationForm(request.POST)
+        if form.is_valid():
+            member = form.save(commit=False)
+            member.role = CustomUser.MEMBER
+            member.set_password(form.cleaned_data['password'])
+            try:
+                member.save()
+                return redirect('project_members') 
+            except IntegrityError:
+                form.add_error('email', "A user with this email already exists.")
+    else:
+        form = MemberCreationForm()
+    return render(request, 'projects/members.html', {'form': form})
+
+@login_required
+def members_list(request):
+    members = CustomUser.objects.filter(role=CustomUser.MEMBER)  
+    return render(request, 'projects/members.html', {'members': members})
+
 

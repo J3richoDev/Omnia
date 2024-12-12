@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
+from users.models import CustomUser
 
 class Project(models.Model):
     COLOR_CHOICES = [

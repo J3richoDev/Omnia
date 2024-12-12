@@ -1,9 +1,11 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.db import IntegrityError
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import update_session_auth_hash, logout, authenticate, login
 from django.contrib import messages
 from .forms import CustomUserCreationForm, MemberCreationForm, MemberProfileForm, UserUpdateForm, PasswordChangeForm, CustomAuthenticationForm, ForgotPasswordForm, ResetPasswordForm
 from .models import CustomUser
+from projects.models import Project, ProjectMember
 from django.core.mail import send_mail
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
@@ -39,23 +41,33 @@ def register(request):
     else:
         form = CustomUserCreationForm()
     return render(request, 'users/register.html', {'form': form})
-
+  
 @login_required
 def create_member(request):
     if request.user.role != CustomUser.MANAGER:
         return redirect('dashboard')  # Restrict access to managers
 
     if request.method == 'POST':
-        form = MemberCreationForm(request.POST)
+        form = MemberCreationForm(request.POST, request.FILES)
         if form.is_valid():
             member = form.save(commit=False)
             member.role = CustomUser.MEMBER
             member.set_password(form.cleaned_data['password'])
-            member.save()
-            return redirect('members_list')  # Replace with your members list URL
+            project = get_object_or_404(Project, id=request.POST.get('project_id')) 
+            try:
+                member.save()
+                ProjectMember.objects.create(project=project, user=member)
+                messages.success(request, "Member created successfully!", extra_tags="alert-success")
+                return redirect('create_member')  # Replace with your members list URL
+            except IntegrityError:
+                messages.error(request, "A user with this email already exists.", extra_tags="alert-error")
+        else:
+            messages.error(request, "Failed to create the member. Please check the form and try again.", extra_tags="alert-error")
     else:
         form = MemberCreationForm()
-    return render(request, 'users/create_member.html', {'form': form})
+
+    members = CustomUser.objects.filter(role=CustomUser.MEMBER)
+    return render(request, 'users/create_member.html', {'form': form, 'members': members})
 
 @login_required
 def complete_profile(request):
@@ -65,7 +77,7 @@ def complete_profile(request):
             user = form.save(commit=False)
             user.set_password(form.cleaned_data['password'])
             user.save()
-            return redirect('dashboard')  # Redirect to the dashboard
+            return redirect('dashboard') 
     else:
         form = MemberProfileForm(instance=request.user)
     return render(request, 'users/complete_profile.html', {'form': form})
@@ -118,6 +130,14 @@ def my_profile(request):
     context["user_form"] = user_form
     context["password_form"] = password_form
     return render(request, "users/my_profile.html", context)
+
+@login_required
+def members_list(request):
+    members = CustomUser.objects.filter(role=CustomUser.MEMBER)  # Fetch members with a specific role
+    return render(request, 'users/members_list.html', {'members': members})
+
+
+
 
 def logout_view(request):
     logout(request)
@@ -225,3 +245,4 @@ def reset_password(request, uidb64, token):
 #         return redirect('login')
 
 #     return render(request, 'users/reset_password.html', {'form': form})
+

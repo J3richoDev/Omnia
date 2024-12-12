@@ -72,3 +72,16 @@ class TaskFileForm(forms.ModelForm):
     class Meta:
         model = TaskFile
         fields = ['file']
+
+class MemberCreationForm(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        fields = ['email','username', 'password']
+        widgets = {
+            'password': forms.PasswordInput(),
+        }
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if CustomUser.objects.filter(email=email).exists():
+            raise forms.ValidationError("A user with this email already exists.")
+        return email

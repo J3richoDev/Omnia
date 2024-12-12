@@ -8,7 +8,10 @@
    <div class="text-xl font-semibold inline-block">
       Project Members
       <div class="inline-block float-right">
-         <div class="inline-block float-right"><button class="btn px-6 btn-sm normal-case btn-primary">Create New</button></div>
+         <div class="inline-block float-right">
+            <a href="{% url 'create_member' %}" class="btn px-6 btn-sm normal-case btn-primary">Create New</a>
+            <a href="{% url 'members_list' %}" class="btn px-6 btn-sm normal-case btn-primary">Members</a>
+         </div>
       </div>
    </div>
    <div class="divider mt-2"></div>
