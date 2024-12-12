@@ -6,7 +6,7 @@ from django.contrib import messages
 from .forms import CustomUserCreationForm, MemberCreationForm, MemberProfileForm, UserUpdateForm, PasswordChangeForm, CustomAuthenticationForm
 from .models import CustomUser
 from django.shortcuts import render, get_object_or_404
-from projects.models import Project  # Replace `your_app` with the correct app name
+from projects.models import Project, ProjectMember  # Replace `your_app` with the correct app name
 
 def login_view(request):
     if request.method == 'POST':
@@ -44,13 +44,15 @@ def create_member(request):
         return redirect('dashboard')  # Restrict access to managers
 
     if request.method == 'POST':
-        form = MemberCreationForm(request.POST)
+        form = MemberCreationForm(request.POST, request.FILES)
         if form.is_valid():
             member = form.save(commit=False)
             member.role = CustomUser.MEMBER
             member.set_password(form.cleaned_data['password'])
+            project = get_object_or_404(Project, id=request.POST.get('project_id')) 
             try:
                 member.save()
+                ProjectMember.objects.create(project=project, user=member)
                 messages.success(request, "Member created successfully!", extra_tags="alert-success")
                 return redirect('create_member')  # Replace with your members list URL
             except IntegrityError:
