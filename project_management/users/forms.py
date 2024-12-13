@@ -73,19 +73,30 @@ class UserUpdateForm(forms.ModelForm):
     class Meta:
         model = CustomUser
         fields = ['username', 'email', 'first_name', 'last_name', 'profile_picture']
-       
+
 
 class PasswordChangeForm(forms.Form):
-    old_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'input-class-old w-1/ border rounded px-3 py-2'}), required=True)
-    new_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'input-class-new  w-1/3 border rounded px-3 py-2'}), required=True)
-    confirm_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'input-class-confirm  w-1/3    border rounded px-3 py-2'}), required=True)
+    old_password = forms.CharField(widget=forms.PasswordInput, required=True)
+    new_password = forms.CharField(widget=forms.PasswordInput, required=True)
+    confirm_password = forms.CharField(widget=forms.PasswordInput, required=True)
+
+    def __init__(self, user=None, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean_old_password(self):
+        old_password = self.cleaned_data.get('old_password')
+        if not self.user.check_password(old_password):
+            raise forms.ValidationError("Your old password was entered incorrectly. Please enter it again.")
+        return old_password
 
     def clean(self):
         cleaned_data = super().clean()
         new_password = cleaned_data.get("new_password")
         confirm_password = cleaned_data.get("confirm_password")
-        if new_password != confirm_password:
-            raise forms.ValidationError("The new passwords do not match.")
+        if new_password and confirm_password and new_password != confirm_password:
+            self.add_error('confirm_password', "The new passwords do not match.")
+        return cleaned_data
 
 
 class ForgotPasswordForm(forms.Form):

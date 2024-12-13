@@ -1,8 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import IntegrityError
+from django.http import JsonResponse
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import update_session_auth_hash, logout, authenticate, login
 from django.contrib import messages
+from django.urls import reverse
+
 from .forms import CustomUserCreationForm, MemberCreationForm, MemberProfileForm, UserUpdateForm, PasswordChangeForm, CustomAuthenticationForm, ForgotPasswordForm, ResetPasswordForm
 from .models import CustomUser
 from projects.models import Project, ProjectMember
@@ -12,6 +16,8 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 
 def login_view(request):
+    if request.user.is_authenticated:
+        return redirect(reverse("dashboard"))
     if request.method == 'POST':
         form = CustomAuthenticationForm(request, data=request.POST)
         if form.is_valid():
@@ -83,60 +89,71 @@ def complete_profile(request):
     return render(request, 'users/complete_profile.html', {'form': form})
 
 @login_required
+def upload_photo(request):
+    if request.method == "POST" and request.FILES.get('profile_picture'):
+        user = request.user
+        user.profile_picture = request.FILES['profile_picture']
+        user.save()
+        print("MEDIA_ROOT:", settings.MEDIA_ROOT)
+        print("Saved file path:", user.profile_picture.path)
+        print("File URL:", user.profile_picture.url)
+        return JsonResponse({'new_photo_url': user.profile_picture.url})
+    else:
+        return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required
+def delete_user(request):
+    if request.method == 'POST':
+        user = request.user
+        user.delete()  # Deletes the user
+        logout(request)  # Logs out the user
+        return JsonResponse({'success': True, 'message': 'Account deleted successfully.'})
+    return JsonResponse({'success': False, 'message': 'Invalid request'}, status=400)
+
+@login_required
 def my_profile(request):
     user = request.user
-
-    # Initialize the forms with the user's data
     user_form = UserUpdateForm(instance=user)
-    password_form = PasswordChangeForm()
+    password_form = PasswordChangeForm(user=user)
+
+    if request.method == "POST":
+        user_form = UserUpdateForm(request.POST, instance=user)
+        password_form = PasswordChangeForm(user=user, data=request.POST)
+
+        is_user_form_valid = user_form.is_valid()
+        password_attempt = any(request.POST.get(field) for field in ['old_password', 'new_password', 'confirm_password'])
+        is_password_form_valid = password_form.is_valid() if password_attempt else False
+
+        # Process password change if there's an attempt
+        if password_attempt:
+            if is_password_form_valid:
+                new_password = password_form.cleaned_data["new_password"]
+                user.set_password(new_password)
+                user.save()
+                update_session_auth_hash(request, user)  # Keeps the user logged in
+                messages.success(request, "Password changed successfully!")
+            else:
+                messages.error(request, "Please correct the errors in the password form.")
+                print("Password Form Errors:", password_form.errors)  # Debug errors
+
+        # Both forms are valid and all updates are successful
+        if is_user_form_valid and (not password_attempt or is_password_form_valid):
+            if is_user_form_valid:  # Only save and show message if user form is valid
+                user_form.save()
+                messages.success(request, "Profile updated successfully!")
+            return redirect("my_profile")
+
     context = {
         "user_form": user_form,
         "password_form": password_form,
     }
-
-    if request.method == "POST":
-        if "save_profile" in request.POST:
-            # Handle profile picture update
-            user_form = UserUpdateForm(request.POST, request.FILES, instance=user)
-            if user_form.is_valid():
-                user_form.save()
-                messages.success(request, "Profile picture updated successfully!")
-                return redirect("my_profile")
-
-        elif "update_info" in request.POST:
-            # Handle general user info update
-            user_form = UserUpdateForm(request.POST, instance=user)
-            if user_form.is_valid():
-                user_form.save()
-                messages.success(request, "Info changed successfully!")
-                return redirect("my_profile")
-
-        elif "change_password" in request.POST:
-            # Handle password change
-            password_form = PasswordChangeForm(request.POST)
-            if password_form.is_valid():
-                old_password = password_form.cleaned_data["old_password"]
-                new_password = password_form.cleaned_data["new_password"]
-
-                if user.check_password(old_password):
-                    user.set_password(new_password)
-                    user.save()
-                    messages.success(request, "Password changed successfully!")
-                    update_session_auth_hash(request, user)  # Keep user logged in
-                    return redirect("my_profile")
-                else:
-                    password_form.add_error("old_password", "Old password is incorrect.")
-
-    context["user_form"] = user_form
-    context["password_form"] = password_form
     return render(request, "users/my_profile.html", context)
+
 
 @login_required
 def members_list(request):
     members = CustomUser.objects.filter(role=CustomUser.MEMBER)  # Fetch members with a specific role
     return render(request, 'users/members_list.html', {'members': members})
-
-
 
 
 def logout_view(request):

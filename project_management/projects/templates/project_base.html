@@ -7,7 +7,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Dashboard{% endblock %}</title>
+    <title>{% block heading %}
+              {% if request.path == '/users/my-profile/' %}
+                  My Profile
+              {% else %}
+                  Dashboard
+              {% endif %}
+          {% endblock %}
+    </title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,7 +36,13 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path>
                         </svg>
                     </label>
-                    <h1 class="text-2xl font-semibold ml-2">{% block heading %}Dashboard{% endblock %}</h1>
+                    <h1 class="text-2xl font-semibold ml-2">
+                        {% if request.path == '/users/my-profile/' %}
+                            My Profile
+                        {% else %}
+                            Dashboard
+                        {% endif %}
+                    </h1>
                 </div>
                 <div class="flex-none">
                     <label class="swap">
@@ -148,7 +161,7 @@
                     <div class="dropdown dropdown-end ml-4">
                         <label tabindex="0" class="btn btn-ghost btn-circle avatar">
                           <div class="w-10 rounded-full">
-                              <img src="https://placeimg.com/80/80/people" alt="profile">
+                              <img src="{% if request.user.profile_picture %}{{ request.user.profile_picture.url }}{% else %}{% static 'default-profile.png' %}{% endif %}" alt="Profile">
                           </div>
                       </label>
                       <ul tabindex="0" class="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-52">
