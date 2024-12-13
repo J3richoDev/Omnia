@@ -7,14 +7,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block heading %}
-              {% if request.path == '/users/my-profile/' %}
-                  My Profile
-              {% else %}
-                  Dashboard
-              {% endif %}
-          {% endblock %}
-    </title>
+    <title>{% block title %}Dashboard{% endblock %}</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -37,11 +30,7 @@
                         </svg>
                     </label>
                     <h1 class="text-2xl font-semibold ml-2">
-                        {% if request.path == '/users/my-profile/' %}
-                            My Profile
-                        {% else %}
-                            Dashboard
-                        {% endif %}
+                        {% block heading %}Dashboard{% endblock %}
                     </h1>
                 </div>
                 <div class="flex-none">

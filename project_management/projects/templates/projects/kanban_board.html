@@ -94,6 +94,15 @@
             task.addEventListener('dragstart', (event) => {
                 event.dataTransfer.setData('task-id', task.dataset.taskId);
             });
+
+             // Navigate to the task detail page on click
+             task.addEventListener('click', () => {
+                const taskId = task.dataset.taskId;
+                if (taskId) {
+                    const taskDetailUrl = `{% url 'task_detail' 0 %}`.replace('/0/', `/${taskId}/`);
+                    window.location.href = taskDetailUrl;
+                }
+            });
         });
     });
 </script>

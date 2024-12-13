@@ -5,30 +5,28 @@
 {% block heading %}Task Detail{% endblock %}
 
 {% block content %}
-<h1 class="text-2xl font-bold mb-4">{{ task.name }}</h1>
-<p><strong>Description:</strong> {{ task.description }}</p>
-<p><strong>Status:</strong> {{ task.get_status_display }}</p>
-<p><strong>Priority:</strong> {{ task.get_priority_display }}</p>
-<p><strong>Start Date:</strong> {{ task.start_date }}</p>
-<p><strong>End Date:</strong> {{ task.end_date }}</p>
+<div class="card w-full p-5 bg-base-100 border shadow-sm">
+    <h1 class="text-2xl font-bold mb-4">{{ task.name }}</h1>
 
-<h2 class="text-xl font-bold mt-6">Comments</h2>
-<ul>
-    {% for comment in comments %}
-        <li class="bg-white shadow p-4 rounded mb-2">
-            <p><strong>{{ comment.author.username }}</strong> said:</p>
-            <p>{{ comment.content }}</p>
-            <p class="text-sm text-gray-500">{{ comment.created_at }}</p>
-        </li>
-    {% endfor %}
-</ul>
-<form method="POST">
-    {% csrf_token %}
-    {{ comment_form|crispy }}
-    <button type="submit" name="comment" class="bg-blue-500 text-white py-2 px-4 rounded">Add Comment</button>
-</form>
+    <div class="grid grid-cols-3 gap-4">
+        <div class="col-span-2">
+            <div class="card w-full p-5 bg-base-100 border shadow-sm">
 
-<h2 class="text-xl font-bold mt-6">Files</h2>
+            </div>
+        </div>
+        <div class="col-span-1">
+            <div class="card w-full p-5 bg-base-100 border shadow-sm">
+                <p><strong>Description:</strong> {{ task.description }}</p>
+                <p><strong>Status:</strong> {{ task.get_status_display }}</p>
+                <p><strong>Priority:</strong> {{ task.get_priority_display }}</p>
+                <p><strong>Start Date:</strong> {{ task.start_date }}</p>
+                <p><strong>End Date:</strong> {{ task.end_date }}</p>
+            </div>
+        </div>
+    </div>
+
+
+<h2 class="text-xl font-bold mt-6">Attachments</h2>
 <ul>
     {% for file in files %}
         <li class="bg-white shadow p-4 rounded mb-2">
@@ -48,4 +46,21 @@
     {{ file_form|crispy }}
     <button type="submit" name="file" class="bg-green-500 text-white py-2 px-4 rounded">Upload File</button>
 </form>
+
+<h2 class="text-xl font-bold mt-6">Comments</h2>
+<ul>
+    {% for comment in comments %}
+        <li class="bg-white shadow p-4 rounded mb-2">
+            <p><strong>{{ comment.author.username }}</strong> said:</p>
+            <p>{{ comment.content }}</p>
+            <p class="text-sm text-gray-500">{{ comment.created_at }}</p>
+        </li>
+    {% endfor %}
+</ul>
+<form method="POST">
+    {% csrf_token %}
+    {{ comment_form|crispy }}
+    <button type="submit" name="comment" class="bg-blue-500 text-white py-2 px-4 rounded">Add Comment</button>
+</form>
+</div>
 {% endblock %}

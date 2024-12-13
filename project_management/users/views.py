@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import IntegrityError
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import update_session_auth_hash, logout, authenticate, login
@@ -53,13 +53,22 @@ def create_member(request):
     if request.user.role != CustomUser.MANAGER:
         return redirect('dashboard')  # Restrict access to managers
 
+    project_id = request.session.get('current_project_id')
+    if not project_id:
+        return HttpResponseForbidden("No project selected.")
+
+    try:
+        project = get_object_or_404(Project, id=project_id, owner=request.user)
+    except ValueError:
+        messages.error(request, "Invalid project ID.", extra_tags="alert-error")
+        return redirect('dashboard')
+
     if request.method == 'POST':
         form = MemberCreationForm(request.POST, request.FILES)
         if form.is_valid():
             member = form.save(commit=False)
             member.role = CustomUser.MEMBER
             member.set_password(form.cleaned_data['password'])
-            project = get_object_or_404(Project, id=request.POST.get('project_id')) 
             try:
                 member.save()
                 ProjectMember.objects.create(project=project, user=member)

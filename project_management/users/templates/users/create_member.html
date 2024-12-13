@@ -1,5 +1,6 @@
 {% extends 'project_base.html' %}
 {% load crispy_forms_tags %}
+{% load static %}
 {% block content %}
 {% block title %}Members for {{ project.name }}{% endblock %}
 
@@ -49,7 +50,11 @@
             <tbody>
                 {% for member in members %}
                 <tr>
-                    <td>{{ member.profile_picture }}</td>
+                    <td>
+                        <div class="w-10 rounded-full">
+                          <img src="{% if member.profile_picture %}/media/{{ member.profile_picture }}{% else %}{% static 'default-profile.png' %}{% endif %}" alt="Profile">
+                          </div>
+                    </td>
                     <td>{{ member.username }}</td>
                     <td>{{ member.email }}</td>
                     <td class="badge badge-outline mt-2">{{ member.get_role_display }}</td>
