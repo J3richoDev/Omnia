@@ -41,9 +41,6 @@
                     <!-- Icon Selection -->
                     <div class="mb-3">
                         <label class="block text-sm font-medium text-gray-700">Select Icon</label>
-                        <button type="button" onclick="toggleIconPicker()" class="mt-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-300">
-                            Select Icon
-                        </button>
                         <div id="icon-picker" class="grid grid-cols-6 gap-4 mt-4 max-h-48 overflow-y-auto hidden bg-gray-50 p-4 rounded-lg shadow-md">
                             {% for icon in icons %}
                                 <button type="button" class="flex items-center justify-center p-2 rounded-lg border border-gray-300 hover:bg-gray-100"
@@ -56,17 +53,6 @@
                         {{ form.emoji_icon }}</div>
                     </div>
 
-                    <!-- Start and End Dates -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-1 mb-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700" for="start_date">Start Date</label>
-                            {{ form.start_date|add_class:"block w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700" for="end_date">End Date</label>
-                            {{ form.end_date|add_class:"block w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
-                        </div>
-                    </div>
                 </div>
             </div>
                 <!-- Submit Button -->
@@ -91,11 +77,6 @@
             if (selectedIconButton) {
                 selectedIconButton.style.backgroundColor = selectedColor;
             }
-        }
-
-        function toggleIconPicker() {
-            const picker = document.getElementById('icon-picker');
-            picker.classList.toggle('hidden');
         }
 
         function selectIcon(button) {

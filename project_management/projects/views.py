@@ -89,8 +89,6 @@ def edit_project(request):
 
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
-
-
 @login_required
 def set_current_project(request, project_id):
     try:
@@ -146,8 +144,9 @@ def project_tasks(request):
 
     project = Project.objects.get(id=project_id, owner=request.user)
     tasks = project.tasks.all()
+    sprints = project.sprints.all()
 
-    return render(request, 'projects/project_tasks.html', {'tasks': tasks, 'project': project})
+    return render(request, 'projects/project_tasks.html', {'tasks': tasks, 'sprints': sprints, 'project': project})
 
 @login_required
 def create_task(request):
@@ -185,27 +184,38 @@ def create_task(request):
 @login_required
 @require_POST
 def update_task_field(request):
-    try:
+    if request.method == "POST":
         data = json.loads(request.body)
         task_id = data.get("task_id")
         field = data.get("field")
         value = data.get("value")
 
-        task = Task.objects.get(id=task_id)
+        try:
+            task = Task.objects.get(id=task_id)
 
-        # Ensure the field exists on the model
-        if not hasattr(task, field):
-            return JsonResponse({'success': False, 'error': 'Invalid field'})
+            # If the field is 'sprint', we need to assign a Sprint instance
+            if field == "sprint":
+                if value:
+                    sprint_instance = get_object_or_404(Sprint, id=value)
+                    setattr(task, field, sprint_instance)  # Assign the Sprint instance
+                else:
+                    setattr(task, field, None)  # Clear the sprint if no value
+            else:
+                setattr(task, field, value)  # For other fields, directly assign the value
 
-        # Set the field value and save
-        setattr(task, field, value)
-        task.save()
+            task.save()
 
-        return JsonResponse({'success': True})
-    except Task.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Task not found'})
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
+            messages.success(request, f"{field.capitalize()} updated successfully!")
+            return JsonResponse({"success": True})
+
+        except Task.DoesNotExist:
+            messages.error(request, "Task not found.")
+            return JsonResponse({"success": False, "error": "Task not found."})
+        except Exception as e:
+            messages.error(request, "An error occurred.")
+            return JsonResponse({"success": False, "error": str(e)})
+    else:
+        return JsonResponse({"success": False, "error": "Invalid request method."})
 
 @csrf_exempt
 def delete_task(request):
@@ -365,7 +375,6 @@ def create_sprint(request):
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
-
 @csrf_exempt
 def validate_start_date(request):
     if request.method == 'POST':
@@ -378,7 +387,6 @@ def validate_start_date(request):
             return JsonResponse({'exists': exists})
         else:
             return JsonResponse({'exists': False})
-
 
 def start_sprint(request, sprint_id):
     sprint = get_object_or_404(Sprint, id=sprint_id)
@@ -564,8 +572,6 @@ def project_members(request):
 
     project = Project.objects.get(id=project_id, owner=request.user)
     return render(request, 'projects/members.html', {'project': project})
-
-
 
 @login_required
 def create_member(request):

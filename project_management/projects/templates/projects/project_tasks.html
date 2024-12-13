@@ -87,7 +87,23 @@
                   {% endfor %}
                 </select>
               </td>
-              <td contenteditable="true" data-field="sprint" class="editable">{{ task.sprint.name }}</td>
+              <td class="flex items-center">
+                  {% if task.sprint and task.sprint.ended %}
+                    <svg class="w-4 h-4 text-green-600 ml-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.5 11.5 11 14l4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                    </svg>
+                  {% else %}
+                    <svg class="w-4 h-4 ml-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"></svg>
+                  {% endif %}
+                  <select class="editable-select" data-field="sprint">
+                      <option value="" {% if not task.sprint %}selected{% endif %}>None</option>
+                      {% for sprint in sprints %}
+                      <option value="{{ sprint.id }}" {% if task.sprint and task.sprint.id == sprint.id %}selected{% endif %}>
+                          {{ sprint.name }}
+                      </option>
+                      {% endfor %}
+                  </select>
+              </td>
               <td contenteditable="true" data-field="assigned_members" class="editable">{{ task.assigned_members }}</td>
               <td>
                 <input
@@ -119,31 +135,65 @@
     document.addEventListener('DOMContentLoaded', () => {
         const csrfToken = '{{ csrf_token }}';
 
+        {% if messages %}
+            {% for message in messages %}
+                addToast("{{ message.tags }}", "{{ message }}");
+            {% endfor %}
+        {% endif %}
+
         // Function to send an update request to the server
         async function updateTaskField(taskId, field, value) {
-            try {
-                const response = await fetch("{% url 'update_task_field' %}", {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': csrfToken,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        task_id: taskId,
-                        field: field,
-                        value: value,
-                    }),
-                });
+          const csrfToken = "{{ csrf_token }}";
 
-                const result = await response.json();
-                if (!result.success) {
-                    alert('Failed to update task: ' + (result.error || 'Unknown error'));
-                }
-            } catch (error) {
-                console.error('Error updating task:', error);
-                alert('An error occurred while updating the task.');
-            }
-        }
+          try {
+              const response = await fetch("{% url 'update_task_field' %}", {
+                  method: 'POST',
+                  headers: {
+                      'X-CSRFToken': csrfToken,
+                      'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                      task_id: taskId,
+                      field: field,
+                      value: value,
+                  }),
+              });
+
+              const result = await response.json();
+
+              if (result.success) {
+                  // Trigger success toast
+                  addToast("success", `${field} updated successfully!`);
+              } else {
+                  // Trigger error toast
+                  addToast("error", `Failed to update task: ${result.error || "Unknown error"}`);
+              }
+          } catch (error) {
+              console.error("Error updating task:", error);
+              // Trigger error toast
+              addToast("error", "An error occurred while updating the task.");
+          }
+      }
+
+        // Function to dynamically add a toast message
+        function addToast(type, message) {
+          const toastContainer = document.querySelector(".toast.messages");
+          const alertDiv = document.createElement("div");
+          alertDiv.setAttribute("role", "alert");
+          alertDiv.className = `alert ${type}`;
+          alertDiv.innerHTML = `
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>${message}</span>
+          `;
+          toastContainer.appendChild(alertDiv);
+
+          // Automatically remove the toast after 3 seconds
+          setTimeout(() => {
+              toastContainer.removeChild(alertDiv);
+          }, 3000);
+      }
 
         // Handle inline editing for text fields
         document.querySelectorAll('.editable').forEach((cell) => {
@@ -199,6 +249,16 @@
             });
         });
 
+        document.querySelectorAll('.editable-select[data-field="sprint"]').forEach((select) => {
+              select.addEventListener('change', () => {
+                  const taskId = select.closest('tr').dataset.taskId;
+                  const field = select.dataset.field;
+                  const value = select.value;
+
+                  updateTaskField(taskId, field, value);
+              });
+          });
+
         document.querySelectorAll('.editable-date').forEach((dateInput) => {
             dateInput.addEventListener('change', () => {
                 const taskId = dateInput.closest('tr').dataset.taskId;
@@ -208,6 +268,8 @@
                 updateTaskField(taskId, field, value);
             });
         });
+
+
     });
 </script>
 
