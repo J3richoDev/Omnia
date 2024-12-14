@@ -574,28 +574,11 @@ def project_members(request):
     return render(request, 'projects/members.html', {'project': project})
 
 @login_required
-def create_member(request):
-    if request.user.role != CustomUser.MANAGER:
-        return redirect('dashboard')  # Restrict access to managers
-
-    if request.method == 'POST':
-        form = MemberCreationForm(request.POST)
-        if form.is_valid():
-            member = form.save(commit=False)
-            member.role = CustomUser.MEMBER
-            member.set_password(form.cleaned_data['password'])
-            try:
-                member.save()
-                return redirect('project_members') 
-            except IntegrityError:
-                form.add_error('email', "A user with this email already exists.")
-    else:
-        form = MemberCreationForm()
-    return render(request, 'projects/members.html', {'form': form})
-
-@login_required
-def members_list(request):
-    members = CustomUser.objects.filter(role=CustomUser.MEMBER)  
-    return render(request, 'projects/members.html', {'members': members})
-
+def reports_view(request):
+    members = CustomUser.objects.filter(role=CustomUser.MEMBER)
+    context = {
+        'members': members,
+        'member_count': members.count(), 
+    }
+    return render(request, 'projects/reports.html', context)
 

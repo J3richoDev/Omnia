@@ -161,7 +161,7 @@ def my_profile(request):
 
 @login_required
 def members_list(request):
-    members = CustomUser.objects.filter(role=CustomUser.MEMBER)  # Fetch members with a specific role
+    members = CustomUser.objects.filter(role=CustomUser.MEMBER)
     return render(request, 'users/members_list.html', {'members': members})
 
 
