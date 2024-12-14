@@ -1,7 +1,6 @@
 from django.db import models
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
-from users.models import CustomUser
 
 class Project(models.Model):
     COLOR_CHOICES = [
@@ -34,26 +33,6 @@ class ProjectMember(models.Model):
     def __str__(self):
         return f'{self.user.username} - {self.project.name}'
 
-class ProjectTeam(models.Model):
-    COLOR_CHOICES = [
-        ('purple', 'Purple'),
-        ('red', 'Red'),
-        ('blue', 'Blue'),
-        ('green', 'Green'),
-        ('teal', 'Teal'),
-        ('yellow', 'Yellow'),
-        ('orange', 'Orange'),
-        ('pink', 'Pink'),
-        ('gray', 'Grey'),
-    ]
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='teams')
-    name = models.CharField(max_length=100)
-    color = models.CharField(max_length=20, choices=COLOR_CHOICES, default='blue')
-    members = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='teams')
-
-    def __str__(self):
-        return f'{self.name} - {self.project.name}'
-
 class Sprint(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='sprints')
     name = models.CharField(max_length=100)
@@ -64,7 +43,7 @@ class Sprint(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'Sprint {self.name} - {self.project.name}'
+        return self.name
 
 class Task(models.Model):
     STATUS_CHOICES = [
@@ -90,7 +69,6 @@ class Task(models.Model):
     sprint = models.ForeignKey(Sprint, on_delete=models.CASCADE, related_name='tasks', blank=True, null=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks')
     assigned_members = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='tasks', blank=True)
-    assigned_teams = models.ManyToManyField(ProjectTeam, related_name='tasks', blank=True)
 
     def __str__(self):
         return self.name

@@ -7,7 +7,7 @@
 {% block content %}
 <div class="flex flex-row justify-between mb-4">
     <h1 class="text-2xl font-bold">{{ project.name }}</h1>
-    <h2 class="text-lg font-medium">Sprint : {{ current_sprint.name }}</h2>
+    <h2 class="text-lg font-medium">Sprint : {{ current_sprint}}</h2>
 </div>
 
 {% if current_sprint %}
@@ -23,10 +23,21 @@
                 <div class="h-full">
                     <div class="kanban-tasks space-y-2">
                         {% for task in tasks %}
-                            <div class="kanban-task card w-full p-5 bg-base-100 shadow-sm border cursor-pointer"
+                            <div class="kanban-task card w-full bg-base-100 shadow-sm border cursor-pointer overflow-hidden"
                                  data-task-id="{{ task.id }}">
-                                <p class="font-medium">{{ task.name }}</p>
-                                <p class="text-sm">{{ task.description|truncatewords:10 }}</p>
+                                {% for file in task.files.all %}
+                                    <div class="file-item w-full h-full">
+                                        {% if file.file.name|is_image %}
+                                            <img src="{{ file.file.url }}" alt="{{ file.file.name }}" class="file-preview">
+                                        {% else %}
+                                            <a href="{{ file.file.url }}" target="_blank">{{ file.file.name }}</a>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                                <div class=" p-5 ">
+                                    <p class="font-medium">{{ task.name }}</p>
+                                    <p class="text-sm">{{ task.description|truncatewords:10 }}</p>
+                                </div>
                             </div>
                         {% empty %}
                             <p class="text-gray-500 text-center italic">No tasks</p>

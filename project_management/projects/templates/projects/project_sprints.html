@@ -239,7 +239,7 @@
                                                     {% for sprint in available_sprints %}
                                                     {% if sprint.id != task.sprint.id %}
                                                     <li>
-                                                        <a href="#" class="move-to-sprint" data-task-id="{{ task.id }}" data-sprint-id="{{ sprint.id }}">{{ sprint.name }}</a>
+                                                        <a href="#" class="move-to-sprint" data-task-id="{{ task.id }}" data-sprint-id="{{ sprint.id }}">{{ sprint }}</a>
                                                     </li>
                                                     {% endif %}
                                                     {% endfor %}
@@ -327,7 +327,7 @@
                                                 {% for sprint in available_sprints %}
                                                 {% if sprint.id != task.sprint.id %}
                                                 <li>
-                                                    <a href="#" class="move-to-sprint" data-task-id="{{ task.id }}" data-sprint-id="{{ sprint.id }}">{{ sprint.name }}</a>
+                                                    <a href="#" class="move-to-sprint" data-task-id="{{ task.id }}" data-sprint-id="{{ sprint.id }}">{{ sprint }}</a>
                                                 </li>
                                                 {% endif %}
                                                 {% endfor %}

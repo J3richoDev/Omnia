@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.exceptions import ValidationError
+from projects.models import Project
 
 def validate_profile_picture(file):
     max_size = 2 * 1024 * 1024
@@ -27,3 +28,5 @@ class CustomUser(AbstractUser):
         null=True,
         validators=[validate_profile_picture]
     )
+    assigned_projects = models.ManyToManyField(Project, related_name='members')
+

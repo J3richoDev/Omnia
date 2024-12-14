@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.http import HttpResponseForbidden
@@ -146,7 +147,27 @@ def project_tasks(request):
     tasks = project.tasks.all()
     sprints = project.sprints.all()
 
-    return render(request, 'projects/project_tasks.html', {'tasks': tasks, 'sprints': sprints, 'project': project})
+    members = CustomUser.objects.filter(assigned_projects=project)
+
+    if request.method == 'POST':
+        form = TaskForm(request.POST, project_id=project.id)
+        if form.is_valid():
+            task = form.save(commit=False)
+            task.project = project
+            task.save()
+            try:
+                form.save_m2m()
+                messages.success(request, f"Task '{task.name}' created successfully!" ,extra_tags="alert-success")
+            except Exception as e:
+                messages.error(request, f"Failed to save task relationships: {str(e)}" ,extra_tags="alert-error")
+            return redirect('project_tasks')  # Adjust as needed
+        else:
+            messages.error(request, "Failed to create the task. Please check the form and try again." ,extra_tags="alert-error")
+    else:
+        form = TaskForm(project_id=project.id)
+
+    return render(request, 'projects/project_tasks.html',
+  {'tasks': tasks, 'sprints': sprints, 'project': project, 'members': members, 'form': form})
 
 @login_required
 def create_task(request):
@@ -172,7 +193,7 @@ def create_task(request):
                 messages.success(request, f"Task '{task.name}' created successfully!" ,extra_tags="alert-success")
             except Exception as e:
                 messages.error(request, f"Failed to save task relationships: {str(e)}" ,extra_tags="alert-error")
-            return redirect('dashboard')  # Adjust as needed
+            return redirect('project_tasks')  # Adjust as needed
         else:
             messages.error(request, "Failed to create the task. Please check the form and try again." ,extra_tags="alert-error")
     else:
@@ -193,7 +214,6 @@ def update_task_field(request):
         try:
             task = Task.objects.get(id=task_id)
 
-            # If the field is 'sprint', we need to assign a Sprint instance
             if field == "sprint":
                 if value:
                     sprint_instance = get_object_or_404(Sprint, id=value)
@@ -218,14 +238,101 @@ def update_task_field(request):
         return JsonResponse({"success": False, "error": "Invalid request method."})
 
 @csrf_exempt
+def update_task_detail(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            task_id = data.get('task_id')
+            field = data.get('field')
+            value = data.get('value')
+
+            if not (task_id and field):
+                return JsonResponse({'success': False, 'error': 'Missing task_id or field'})
+
+            # Retrieve task
+            task = Task.objects.get(id=task_id)
+
+            # Check if field exists and update
+            if hasattr(task, field):
+                setattr(task, field, value)
+                task.save()
+                return JsonResponse({'success': True})
+            else:
+                return JsonResponse({'success': False, 'error': f"Field '{field}' does not exist"})
+        except Task.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Task not found'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+@csrf_exempt
+def update_task_sprint(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        task_id = data.get("task_id")
+        sprint_id = data.get("sprint_id")
+
+        print(f"Received task_id: {task_id}, sprint_id: {sprint_id}")
+
+        if not task_id or not sprint_id:
+            return JsonResponse({"success": False, "error": "Missing task ID or sprint ID."})
+
+        try:
+            task = Task.objects.get(id=task_id)  # Ensure the task exists
+            sprint = Sprint.objects.get(id=sprint_id)  # Ensure the sprint exists
+
+            task.sprint = sprint
+            task.save()
+
+            messages.success(request, f"Sprint updated to {sprint.name} successfully!")
+            return JsonResponse({"success": True})
+        except Task.DoesNotExist:
+            return JsonResponse({"success": False, "error": "Task not found."})
+        except Sprint.DoesNotExist:
+            return JsonResponse({"success": False, "error": "Sprint not found."})
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)})
+    else:
+        return JsonResponse({"success": False, "error": "Invalid request method."})
+
+@csrf_exempt
+def assign_members(request, task_id):
+    if request.method == 'POST':
+        try:
+            # Parse JSON body
+            data = json.loads(request.body)
+            member_ids = data.get('members', [])
+
+            # Debug: Log incoming data
+            print(f"Received task_id: {task_id}, member_ids: {member_ids}")
+
+            # Get the task
+            task = get_object_or_404(Task, id=task_id)
+
+            # Assign members to the task
+            task.assigned_members.set(member_ids)  # Only valid user IDs will be set
+            task.save()
+
+            messages.success(request, f"Members assigned to task {task.name} successfully!")
+
+            return JsonResponse({'success': True})
+        except Task.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Task not found'}, status=404)
+        except Exception as e:
+            print(f"Error occurred: {e}")  # Debugging log
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)
+
+@csrf_exempt
 def delete_task(request):
     if request.method == 'POST':
         task_id = request.POST.get('task_id')
         try:
             task = Task.objects.get(id=task_id)
             task.delete()
+            messages.success(request, "Task deleted successfully!")
             return JsonResponse({'success': True})
         except Task.DoesNotExist:
+            messages.error(request, "Task not found!")
             return JsonResponse({'success': False, 'error': 'Task not found'})
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
@@ -260,9 +367,18 @@ def my_tasks(request):
 
 @login_required
 def task_detail(request, task_id):
+    project_id = request.session.get('current_project_id')
+    if not project_id:
+        return HttpResponseForbidden("No project selected.")
+
+    project = Project.objects.get(id=project_id, owner=request.user)
+
     task = Task.objects.get(id=task_id)
     comments = task.comments.all()
     files = task.files.all()
+
+    sprints = project.sprints.all()
+    members = CustomUser.objects.filter(assigned_projects=project)
 
     if request.method == 'POST':
         if 'comment' in request.POST:
@@ -295,6 +411,8 @@ def task_detail(request, task_id):
             'files': files,
             'comment_form': comment_form,
             'file_form': file_form,
+            'sprints': sprints,
+            'members': members,
         },
     )
 
@@ -303,6 +421,7 @@ def delete_file(request, file_id):
     task_file = TaskFile.objects.get(id=file_id)
     if request.user == task_file.task.project.owner:
         task_file.delete()
+        messages.success(request, "File deleted successfully!")
     return redirect('task_detail', task_id=task_file.task.id)
 
 @login_required
@@ -421,23 +540,36 @@ def end_sprint(request, sprint_id):
     messages.success(request, f"'{sprint.name}' ended successfully!")
     return redirect('project_sprints')
 
+
 @csrf_exempt
 @login_required
 def update_task_sprint(request):
     if request.method == 'POST':
-        task_id = request.POST.get('task_id')
-        new_sprint_id = request.POST.get('new_sprint_id')
-
         try:
+            # Parse the JSON body of the request
+            data = json.loads(request.body)
+            task_id = data.get('task_id')
+            new_sprint_id = data.get('new_sprint_id')
+
+            # Ensure the task exists before updating
             task = Task.objects.get(id=task_id)
+
             if new_sprint_id:
                 task.sprint_id = new_sprint_id
             else:
                 task.sprint = None  # Move to backlog
+
             task.save()
+            messages.success(request, "Sprint updated successfully!")
             return JsonResponse({'success': True})
+
         except Task.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Task not found'})
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid JSON data'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
 @login_required

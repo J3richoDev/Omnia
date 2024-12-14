@@ -7,7 +7,8 @@ from django.contrib.auth import update_session_auth_hash, logout, authenticate, 
 from django.contrib import messages
 from django.urls import reverse
 
-from .forms import CustomUserCreationForm, MemberCreationForm, MemberProfileForm, UserUpdateForm, PasswordChangeForm, CustomAuthenticationForm, ForgotPasswordForm, ResetPasswordForm
+from .forms import CustomUserCreationForm, MemberCreationForm, MemberProfileForm, UserUpdateForm, PasswordChangeForm, \
+    CustomAuthenticationForm, ForgotPasswordForm, ResetPasswordForm, AssignProjectsForm
 from .models import CustomUser
 from projects.models import Project, ProjectMember
 from django.core.mail import send_mail
@@ -47,42 +48,88 @@ def register(request):
     else:
         form = CustomUserCreationForm()
     return render(request, 'users/register.html', {'form': form})
-  
+
+
+@login_required
+def project_list(request):
+    user_projects = Project.objects.filter(owner=request.user) if request.user.role == 'manager' else []
+    return render(request, 'projects/project_list.html', {'projects': user_projects})
+
+
 @login_required
 def create_member(request):
+    # Restrict access to project managers
     if request.user.role != CustomUser.MANAGER:
-        return redirect('dashboard')  # Restrict access to managers
+        return redirect('dashboard')
 
     project_id = request.session.get('current_project_id')
     if not project_id:
         return HttpResponseForbidden("No project selected.")
 
+    # Retrieve the selected project
     try:
         project = get_object_or_404(Project, id=project_id, owner=request.user)
     except ValueError:
         messages.error(request, "Invalid project ID.", extra_tags="alert-error")
         return redirect('dashboard')
 
-    if request.method == 'POST':
-        form = MemberCreationForm(request.POST, request.FILES)
-        if form.is_valid():
-            member = form.save(commit=False)
-            member.role = CustomUser.MEMBER
-            member.set_password(form.cleaned_data['password'])
-            try:
-                member.save()
-                ProjectMember.objects.create(project=project, user=member)
-                messages.success(request, "Member created successfully!", extra_tags="alert-success")
-                return redirect('create_member')  # Replace with your members list URL
-            except IntegrityError:
-                messages.error(request, "A user with this email already exists.", extra_tags="alert-error")
-        else:
-            messages.error(request, "Failed to create the member. Please check the form and try again.", extra_tags="alert-error")
-    else:
-        form = MemberCreationForm()
+    member_form = MemberCreationForm()
+    assign_form = AssignProjectsForm()
 
+    if request.method == 'POST':
+        # Handle Member Creation Form
+        if 'btnform1' in request.POST:
+            member_form = MemberCreationForm(request.POST, request.FILES)
+            if member_form.is_valid():
+                member = member_form.save(commit=False)
+                member.role = CustomUser.MEMBER
+                member.set_password(member_form.cleaned_data['password'])
+                try:
+                    member.save()
+                    ProjectMember.objects.create(project=project, user=member)
+                    messages.success(request, "Member created successfully!", extra_tags="alert-success")
+                    return redirect('create_member')
+                except IntegrityError:
+                    messages.error(request, "A user with this email already exists.", extra_tags="alert-error")
+            else:
+                messages.error(request, "Failed to create the member. Please check the form.", extra_tags="alert-error")
+
+        # Handle Assign Projects Form
+        elif 'btnform2' in request.POST:
+            assign_form = AssignProjectsForm(request.POST)
+            if assign_form.is_valid():
+                user_id = request.POST.get('user_id')  # Retrieve user ID from the hidden input
+                member = get_object_or_404(CustomUser, id=user_id)
+                projects = assign_form.cleaned_data['assigned_projects']
+                member.assigned_projects.set(projects)
+                messages.success(request, f"Projects assigned to {member.username} successfully!",
+                                 extra_tags="alert-success")
+                return redirect('create_member')
+            else:
+                messages.error(request, "Failed to assign projects. Please check the form.", extra_tags="alert-error")
+
+    # Retrieve existing members for display
     members = CustomUser.objects.filter(role=CustomUser.MEMBER)
-    return render(request, 'users/create_member.html', {'form': form, 'members': members})
+    user_projects = Project.objects.filter(owner=request.user) if request.user.role == 'manager' else []
+
+    return render(request, 'users/create_member.html', {
+        'member_form': member_form,
+        'assign_form': assign_form,
+        'members': members,
+        'projects': user_projects,
+    })
+
+@login_required
+def get_member_projects(request, member_id):
+    # Ensure only managers can access this
+    if request.user.role != CustomUser.MANAGER:
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+
+    # Fetch the member and their assigned projects
+    member = get_object_or_404(CustomUser, id=member_id)
+    assigned_projects = member.assigned_projects.values_list('id', flat=True)
+
+    return JsonResponse({'assigned_projects': list(assigned_projects)})
 
 @login_required
 def complete_profile(request):

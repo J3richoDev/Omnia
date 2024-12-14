@@ -56,12 +56,22 @@ class SprintForm(forms.ModelForm):
 class TaskForm(forms.ModelForm):
     class Meta:
         model = Task
-        fields = ['name', 'description', 'status', 'priority', 'start_date', 'end_date', 'assigned_members']
+        fields = ['name', 'description', 'status', 'priority', 'start_date', 'end_date','sprint', 'assigned_members']
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'}),
             'end_date': forms.DateInput(attrs={'type': 'date'}),
+            'sprint': forms.Select(),
             'assigned_members': forms.CheckboxSelectMultiple(),
         }
+
+    def __init__(self, *args, **kwargs):
+        project_id = kwargs.pop('project_id', None)  # Get the project_id from the form's kwargs
+        super().__init__(*args, **kwargs)
+
+        if project_id:
+            # Filter sprints by the project_id
+            self.fields['sprint'].queryset = Sprint.objects.filter(project_id=project_id)
+            self.fields['assigned_members'].queryset = CustomUser.objects.filter(assigned_projects=project_id)
 
 class TaskCommentForm(forms.ModelForm):
     class Meta:

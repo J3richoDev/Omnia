@@ -2,7 +2,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.forms import SetPasswordForm
 from .models import CustomUser
 from django import forms
-from projects.models import ProjectMember
+from projects.models import Project
 
 class CustomAuthenticationForm(AuthenticationForm):
     username = forms.CharField(label="Username or Email")
@@ -42,6 +42,13 @@ class MemberCreationForm(forms.ModelForm):
         if CustomUser.objects.filter(email=email).exists():
             raise forms.ValidationError("A user with this email already exists.")
         return email
+
+class AssignProjectsForm(forms.Form):
+    assigned_projects = forms.ModelMultipleChoiceField(
+        queryset=Project.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False
+    )
     
 class MemberProfileForm(forms.ModelForm):
     class Meta:

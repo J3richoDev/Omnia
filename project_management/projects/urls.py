@@ -18,6 +18,8 @@ urlpatterns = [
     path('tasks/update-field/', views.update_task_field, name='update_task_field'),
     path('delete-task/', views.delete_task, name='delete_task'),
     path('move-task/', views.move_task, name='move_task'),
+    path('tasks/<int:task_id>/assign-members/', views.assign_members, name='assign_members'),
+    path('tasks/update-detail/', views.update_task_detail, name='update_task_detail'),
     # path('tasks/update_task_sprint/', views.update_task_sprint, name='update_task_sprint'),
 
     path('sprints/', views.project_sprints, name='project_sprints'),

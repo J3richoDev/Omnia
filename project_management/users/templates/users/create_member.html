@@ -4,35 +4,53 @@
 {% block content %}
 {% block title %}Members for {{ project.name }}{% endblock %}
 
-<!-- Button to trigger the modal -->
+
+<dialog id="createNewModal" class="modal">
+   <div class="modal-box">
+       <form method="dialog">
+          <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+      <h3 class="font-bold text-lg">Create New Member</h3>
+        <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ member_form|crispy }}
+            <div class="form-control mb-4">
+                <button type="submit" name="btnform1" class="btn btn-primary text-white">Create</button>
+            </div>
+        </form>
+   </div>
+</dialog>
+
+<dialog id="assign_modal" class="modal">
+  <div class="modal-box">
+    <form method="dialog">
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+    </form>
+    <h3 id="assign_modal_info" class="text-xl font-bold mb-3"></h3>
+    <form method="POST">
+        {% csrf_token %}
+        <!-- Hidden Input for Member ID -->
+        <input type="hidden" id="member_id" name="user_id">
+        <div class="mb-2 px-3 text-xl">
+            {{ assign_form|crispy }}
+        </div>
+        <div class="flex justify-end">
+            <button type="submit" name="btnform2" class="btn btn-primary text-white">Assign Projects</button>
+        </div>
+    </form>
+  </div>
+</dialog>
 
 <div class="card w-full p-6 bg-base-100 shadow-xl mt-2">
     <div class="text-xl font-semibold inline-block">
        Project Members
        <div class="inline-block float-right">
           <div class="inline-block float-right">
-            <button class="btn btn-primary text-white" onclick="openModal()">Create New</button>
+            <button class="btn btn-primary text-white" onclick="createNewModal.showModal()">Create New</button>
           </div>
        </div>
     </div>
 
-    <input type="checkbox" id="createNewModal" class="modal-toggle" />
-    <div class="modal">
-       <div class="modal-box">
-          <h3 class="font-bold text-lg">Create New Member</h3>
-                <form method="POST" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        {{ form|crispy }}
-                    <div class="form-control mb-4">
-                        <button type="submit" class="btn btn-primary">Save</button>
-                    </div>
-                </form>
-            <div class="modal-action">
-                <label for="createNewModal" class="btn">Cancel</label>
-          </div>
-       </div>
-    </div>
-   
 
     <div class="divider mt-2"></div>
     <div class="h-full w-full pb-6 bg-base-100">
@@ -45,6 +63,7 @@
                     <th>Email</th>
                     <th>Role</th>
                     <th>Joined On</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -59,6 +78,10 @@
                     <td>{{ member.email }}</td>
                     <td class="badge badge-outline mt-2">{{ member.get_role_display }}</td>
                     <td>{{ member.date_joined|date:"d M Y" }}</td>
+                    <td>
+                        <button class="btn btn-outline btn-sm"
+                                onclick="openAssignModal('{{ member.id }}', '{{ member.username }}')">Assign Project</button>
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
@@ -72,9 +95,47 @@
  </div>
 
 
+
  <script>
-    function openModal() {
-       document.getElementById('createNewModal').checked = true;
+async function openAssignModal(memberId, memberName) {
+    // Populate the hidden input with the member's ID
+    document.getElementById('member_id').value = memberId;
+
+    // Update the modal text to include the member's name
+    document.getElementById('assign_modal_info').textContent = `Assign projects to ${memberName}`;
+
+    try {
+        // Ensure URL is correctly formed
+        const response = await fetch(`/users/get-member-projects/${memberId}/`);
+        if (response.ok) {
+            const data = await response.json();
+            console.log("Assigned Projects Data:", data);  // Log the data received
+
+            const projectCheckboxes = document.querySelectorAll('input[name="assigned_projects"]');
+
+            // Reset all checkboxes
+            projectCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+
+            // Mark the checkboxes for assigned projects as checked
+            data.assigned_projects.forEach(projectId => {
+                const checkbox = document.querySelector(`input[name="assigned_projects"][value="${projectId}"]`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+            });
+        } else {
+            console.error("Failed to fetch assigned projects.");
+        }
+    } catch (error) {
+        console.error("Error fetching assigned projects:", error);
     }
+
+    // Show the modal
+    document.getElementById('assign_modal').showModal();
+}
+
+
  </script>
 {% endblock %}

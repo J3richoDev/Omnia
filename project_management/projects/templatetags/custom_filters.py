@@ -32,3 +32,8 @@ def is_overdue(end_date):
     except (ValueError, TypeError):
         # Return False if parsing fails or input is invalid
         return False
+
+@register.filter
+def is_image(file_name):
+    """Check if a file name corresponds to an image format."""
+    return file_name.lower().endswith(('.jpg', '.jpeg', '.png'))
