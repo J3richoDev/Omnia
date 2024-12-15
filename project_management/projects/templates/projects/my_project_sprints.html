@@ -1,0 +1,238 @@
+{% extends 'project_base.html' %}
+{% load crispy_forms_tags %}
+{% load widget_tweaks %}
+
+{% block title %}Tasks for {{ project.name }}{% endblock %}
+{% block heading %}Sprints{% endblock %}
+
+{% block content %}
+<style>
+    .status-todo { background-color: rgb(75 85 99); }      /* Yellow */
+    .status-in_progress { background-color: rgb(2 132 199); } /* Blue */
+    .status-review { background-color: rgb(217 119 6); }    /* Orange */
+    .status-completed { background-color: rgb(22 163 74); }  /* Green */
+</style>
+
+<div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-bold mb-4">Tasks for {{ project.name }}</h1>
+</div>
+
+
+{% for sprint, tasks in sprints_with_tasks.items %}
+<div class="sprint-column card w-full p-5 bg-base-100 shadow-sm border mt-2 mb-6" data-sprint-id="{{ sprint.id }}">
+    <div>
+        <div class="flex flex-row justify-between">
+            <div class="sprint-header flex flex-row items-center justify-center gap-4 mb-2">
+                <label>
+                    <input type="checkbox" class="checkbox select-all" data-sprint-id="{{ sprint.id }}" />
+                </label>
+                <div class="text-xl h-full font-medium">{{ sprint.name }}</div>
+                <span>{{ sprint.start_date }} - {{ sprint.end_date }}</span>
+                {% if sprint.end_date < today %}
+                <span class="text-red-500">Sprint is overdue</span>
+                {% elif  sprint.is_active %}
+                <span class="text-green-500">Active</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <table class="table w-full whitespace-no-wrap">
+        <tbody>
+        {% if tasks %}
+            {% for task in tasks %}
+                <tr class="border hover:bg-gray-200 whitespace-nowrap" data-task-id="{{ task.id }}">
+                    <td>
+                        <div class="flex flex-row justify-between">
+                            <a href="{% url 'my_task_detail' task.id %}">
+                                <div class="flex flex-row justify-between gap-4">
+                                    <label>
+                                        <input type="checkbox" class="checkbox task-checkbox" data-sprint-id="{{ sprint.id }}" />
+                                    </label>
+                                    {{task.name}}
+                                </div>
+                            </a>
+                            <div class="flex flex-row justify-between gap-4">
+                                <div>
+                                    <select class="editable-select {% if task.status == 'todo' %}bg-gray-600{% elif task.status == 'in_progress' %}bg-sky-600{% elif task.status == 'review' %}bg-amber-600{% elif task.status == 'completed' %}bg-green-600{% endif %} text-white py-1 px-2 rounded" data-field="status">
+                                      {% for key, value in task.STATUS_CHOICES %}
+                                      <option
+                                        value="{{ key }}"
+                                        {% if task.status == key %}selected{% endif %}
+                                        class="py-2 font-medium bg-white text-gray-800">
+                                        {{ value }}
+                                      </option>
+                                      {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        {% else %}
+            <tr class="border">
+                <td>
+                    <h1 class="text-center">No tasks assigned.</h1>
+                </td>
+            </tr>
+        {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endfor %}
+
+{% if backlog_tasks  %}
+<div class="card w-full p-5 bg-base-100 shadow-sm border mt-2" data-sprint-id="">
+    <div>
+        <div class="flex flex-row justify-between">
+            <div class="flex flex-row justify-center items-center gap-4 mb-2">
+                <label>
+                    <input type="checkbox" class="checkbox select-all" data-sprint-id="backlog" />
+                </label>
+                <div class="text-xl h-full font-medium">Backlogs</div>
+            </div>
+        </div>
+    </div>
+    <table class="table w-full whitespace-no-wrap">
+        <tbody>
+        {% for task in backlog_tasks %}
+            <tr class="border border-gray-200 hover:bg-gray-200 whitespace-nowrap" data-task-id="{{ task.id }}">
+                <td>
+                    <div class="flex flex-row justify-between">
+                        <a href="{% url 'my_task_detail' task.id %}">
+                            <div class="flex flex-row justify-between gap-4">
+                                <label>
+                                    <input type="checkbox" class="checkbox task-checkbox" data-sprint-id="backlog" />
+                                </label>
+                                {{task.name}}
+                            </div>
+                        </a>
+                        <div class="flex flex-row justify-between gap-4">
+                            <div>
+                                <select class="editable-select {% if task.status == 'todo' %}bg-gray-600{% elif task.status == 'in_progress' %}bg-sky-600{% elif task.status == 'review' %}bg-amber-600{% elif task.status == 'completed' %}bg-green-600{% endif %} text-white py-1 px-2 rounded" data-field="status">
+                                  {% for key, value in task.STATUS_CHOICES %}
+                                  <option
+                                    value="{{ key }}"
+                                    {% if task.status == key %}selected{% endif %}
+                                    class="py-2 font-medium bg-white text-gray-800">
+                                    {{ value }}
+                                  </option>
+                                  {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% else %}
+    <p class="text-center">No tasks assigned for this project.</p>
+{% endif %}
+
+<!-- Sticky div for status update -->
+<div id="sticky-update-bar" class="fixed flex justify-center w-7/12 bottom-0 right-32 bg-indigo-900 text-white p-4 mb-7 rounded-lg shadow border hidden">
+    <div class="flex justify-between items-center w-full px-10">
+        <div>
+            <span id="selected-count">0 tasks selected</span>
+        </div>
+        <div>
+            <select id="bulk-status-select" class="bg-gray-600 text-white py-1 px-2 mr-3 rounded">
+                <option value="">Select Status</option>
+                <option value="todo">Todo</option>
+                <option value="in_progress">In Progress</option>
+                <option value="review">Review</option>
+                <option value="completed">Completed</option>
+            </select>
+            <button id="update-status-btn" class="bg-blue-600 p-2 rounded">Update Status</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const selectAllCheckboxes = document.querySelectorAll('.select-all');
+        const taskCheckboxes = document.querySelectorAll('.task-checkbox');
+        const stickyBar = document.getElementById('sticky-update-bar');
+        const selectedCountLabel = document.getElementById('selected-count');
+        const bulkStatusSelect = document.getElementById('bulk-status-select');
+        const updateStatusBtn = document.getElementById('update-status-btn');
+        let selectedTasks = [];
+
+        // Update the selected tasks array and the sticky bar
+        function updateSelectedTasks() {
+            selectedTasks = [];
+            taskCheckboxes.forEach((checkbox) => {
+                if (checkbox.checked) {
+                    selectedTasks.push(checkbox.closest('tr').dataset.taskId);
+                }
+            });
+            selectedCountLabel.textContent = `${selectedTasks.length} task(s) selected`;
+
+            // Show or hide the sticky bar based on selection
+            if (selectedTasks.length > 0) {
+                stickyBar.classList.remove('hidden');
+            } else {
+                stickyBar.classList.add('hidden');
+            }
+        }
+
+        // Handle "Select All" checkbox behavior
+        selectAllCheckboxes.forEach((checkbox) => {
+            checkbox.addEventListener('change', () => {
+                const sprintId = checkbox.dataset.sprintId;
+                const taskCheckboxesInSprint = document.querySelectorAll(`.task-checkbox[data-sprint-id="${sprintId}"]`);
+                taskCheckboxesInSprint.forEach((taskCheckbox) => {
+                    taskCheckbox.checked = checkbox.checked;
+                });
+                updateSelectedTasks();
+            });
+        });
+
+        // Handle individual task checkbox selection
+        taskCheckboxes.forEach((checkbox) => {
+            checkbox.addEventListener('change', () => {
+                updateSelectedTasks();
+            });
+        });
+
+        // Handle bulk status update
+        updateStatusBtn.addEventListener('click', async () => {
+            const newStatus = bulkStatusSelect.value;
+            if (selectedTasks.length > 0 && newStatus) {
+                // Send a request to update all selected tasks
+                try {
+                    const response = await fetch("{% url 'update_bulk_task_status' %}", {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            task_ids: selectedTasks,
+                            status: newStatus,
+                        }),
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        location.reload();
+                    } else {
+                        alert('Failed to update tasks');
+                    }
+                } catch (error) {
+                    alert('An error occurred while updating tasks');
+                }
+            }
+        });
+
+        // Initial update of selected tasks
+        updateSelectedTasks();
+    });
+</script>
+
+
+{% endblock %}

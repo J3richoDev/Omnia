@@ -4,6 +4,7 @@ from .models import CustomUser
 from django import forms
 from projects.models import Project
 
+
 class CustomAuthenticationForm(AuthenticationForm):
     username = forms.CharField(label="Username or Email")
 
@@ -13,14 +14,25 @@ class CustomAuthenticationForm(AuthenticationForm):
         if not username:
             raise forms.ValidationError("Please enter your username or email.")
 
-        if '@' in username:  # Check if input is an email
+        # Check if the input is an email
+        if '@' in username:
             try:
                 user = CustomUser.objects.get(email=username)
                 if not user.is_active:
                     raise forms.ValidationError("This account is inactive.")
-                return user.username
+                return user.username  # Return the username for authentication
             except CustomUser.DoesNotExist:
                 raise forms.ValidationError("No user found with this email address.")
+
+        # If it's not an email, treat it as a username
+        try:
+            user = CustomUser.objects.get(username=username)
+            if not user.is_active:
+                raise forms.ValidationError("This account is inactive.")
+            return username  # Return the username for authentication
+        except CustomUser.DoesNotExist:
+            raise forms.ValidationError("No user found with this username.")
+
         return username
 
 

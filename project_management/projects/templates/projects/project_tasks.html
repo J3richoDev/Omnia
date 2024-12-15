@@ -2,8 +2,8 @@
 {% load widget_tweaks %}
 {% load crispy_forms_tags %}
 
-{% block title %}Tasks for {{ project.name }}{% endblock %}
-{% block heading %}Projects{% endblock %}
+{% block title %}{{ project.name }}{% endblock %}
+{% block heading %}Tasks{% endblock %}
 
 {% block content %}
 <style>
@@ -143,10 +143,10 @@
   </div>
 </dialog>
 
-<div class="card w-full p-6 bg-base-100 shadow-xl mt-2 max-h-screen overflow-y-auto">
+<div class="card w-full p-6 bg-base-100 shadow-xl mt-2 max-h-screen overflow-y-auto min-h-[500px]">
 
   <div class="flex items-center justify-between mb-4">
-      <h1 class="text-2xl font-bold mb-4">Tasks for {{ project.name }}</h1>
+      <h1 class="text-2xl font-bold mb-4">{{ project.name }}</h1>
       <button
          class="btn btn-primary text-white py-2 px-4 rounded hover:bg-blue-600"
        onclick="create_task_modal.showModal()">
@@ -297,14 +297,14 @@
                   type="date"
                   class="editable-date border border-gray-300 rounded p-1"
                   data-field="end_date"
-                  value="{{ task.end_date|date:'Y-m-d' }}" />
+                  value="{{ task.end_date|date:'M d, Y' }}" />
               </td>
               <td>
                 <input
                   type="date"
                   class="editable-date border border-gray-300 rounded p-1"
                   data-field="start_date"
-                  value="{{ task.start_date|date:'Y-m-d' }}" />
+                  value="{{ task.start_date|date:'M d, Y' }}" />
               </td>
               <td>{{ task.created_at }}</td>
               {% if request.user.role == 'manager' %}

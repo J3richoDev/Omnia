@@ -90,14 +90,21 @@ def edit_project(request):
 
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
-@login_required
+
 def set_current_project(request, project_id):
     try:
-        project = Project.objects.get(id=project_id, owner=request.user)
+        if request.user.role == 'member':
+            project = Project.objects.get(id=project_id)
+        else:
+            project = Project.objects.get(id=project_id, owner=request.user)
+
         request.session['current_project_id'] = project.id
     except Project.DoesNotExist:
-        messages.error(request, "The selected project does not exist or you do not have access." ,extra_tags="alert-error")
-    return redirect('dashboard')
+        messages.error(request, "The selected project does not exist or you do not have access.",
+                       extra_tags="alert-error")
+        return redirect('dashboard')
+
+    return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
 
 @login_required
 def add_member(request):
@@ -359,11 +366,27 @@ def move_task(request):
 @login_required
 def my_tasks(request):
     if request.user.role != 'member':
-        return redirect('dashboard')  # Redirect non-members to the dashboard
+        return redirect('dashboard')
 
-    tasks = Task.objects.filter(assigned_members=request.user)
-    context = {'tasks': tasks}
-    return render(request, 'projects/my_tasks.html', context)
+    project_id = request.session.get('current_project_id')
+
+    user = request.user
+
+    if project_id:
+        tasks = Task.objects.filter(assigned_members=user, project_id=project_id)
+    else:
+        tasks = Task.objects.filter(assigned_members=user)
+
+    assigned_projects = user.assigned_projects.all()
+
+    return render(
+        request,
+        'projects/my_tasks.html',
+        {
+            'tasks': tasks,
+            'assigned_projects': assigned_projects,
+        }
+    )
 
 @login_required
 def task_detail(request, task_id):
@@ -398,6 +421,10 @@ def task_detail(request, task_id):
                 task_file.uploaded_by = request.user
                 task_file.save()
                 return redirect('task_detail', task_id=task_id)
+            else:
+                messages.error(request,
+                               "Invalid file. Please upload a file with an allowed format (jpg, jpeg, png, pdf, zip).",extra_tags="alert-error")
+                return redirect('task_detail', task_id=task_id)
     else:
         comment_form = TaskCommentForm()
         file_form = TaskFileForm()
@@ -411,6 +438,61 @@ def task_detail(request, task_id):
             'files': files,
             'comment_form': comment_form,
             'file_form': file_form,
+            'sprints': sprints,
+            'members': members,
+        },
+    )
+
+@login_required
+def my_task_detail(request, task_id):
+    project_id = request.session.get('current_project_id')
+    if not project_id:
+        return HttpResponseForbidden("No project selected.")
+
+    project = Project.objects.get(id=project_id)
+
+    task = Task.objects.get(id=task_id)
+    comments = task.comments.all()
+    files = task.files.all()
+
+    sprints = project.sprints.all()
+    members = CustomUser.objects.filter(assigned_projects=project)
+
+    if request.method == 'POST':
+        if 'comment' in request.POST:
+            comment_form = TaskCommentForm(request.POST)
+            if comment_form.is_valid():
+                comment = comment_form.save(commit=False)
+                comment.task = task
+                comment.author = request.user
+                comment.save()
+                return redirect('my_task_detail', task_id=task_id)
+
+        if 'file' in request.FILES:
+            file_form = TaskFileForm(request.POST, request.FILES)
+            if file_form.is_valid():
+                task_file = file_form.save(commit=False)
+                task_file.task = task
+                task_file.uploaded_by = request.user
+                task_file.save()
+                return redirect('my_task_detail', task_id=task_id)
+            else:
+                messages.error(request,
+                               "Invalid file. Please upload a file with an allowed format (jpg, jpeg, png, pdf, zip).",extra_tags="alert-error")
+                return redirect('my_task_detail', task_id=task_id)
+    else:
+        my_comment_form = TaskCommentForm()
+        my_file_form = TaskFileForm()
+
+    return render(
+        request,
+        'projects/my_task_detail.html',
+        {
+            'task': task,
+            'comments': comments,
+            'files': files,
+            'my_comment_form': my_comment_form,
+            'my_file_form': my_file_form,
             'sprints': sprints,
             'members': members,
         },
@@ -465,6 +547,68 @@ def project_sprints(request):
         'project': project,
         'form': form
     })
+
+
+@login_required
+def my_project_sprints(request):
+    project_id = request.session.get('current_project_id')
+    if not project_id:
+        return HttpResponseForbidden("No project selected.")
+
+    today = now().date()
+    project = Project.objects.get(id=project_id)
+
+    # Get all sprints, ordered by start date
+    sprints = project.sprints.all().order_by('start_date')
+
+    # Filter for active sprints (sprints that haven't ended)
+    active_sprints = project.sprints.filter(ended=False).order_by('start_date')
+
+    # Get the total number of sprints
+    sprint_count = sprints.count()
+
+    # Get backlog tasks (tasks not assigned to any sprint)
+    backlog_tasks = project.tasks.filter(sprint__isnull=True)
+
+    # Filter sprints that have tasks assigned to the current user
+    sprints_with_tasks = {
+        sprint: sprint.tasks.filter(assigned_members=request.user)
+        for sprint in active_sprints
+        if sprint.tasks.filter(assigned_members=request.user).exists()
+    }
+
+    # Collect existing start dates for the sprints
+    existing_start_dates = [sprint.start_date.strftime('%Y-%m-%d') for sprint in sprints]
+
+    return render(request, 'projects/my_project_sprints.html', {
+        'today': today,
+        'existing_start_dates': json.dumps(existing_start_dates),
+        'sprints_with_tasks': sprints_with_tasks,
+        'sprint_count': sprint_count,
+        'available_sprints': sprints,
+        'backlog_tasks': backlog_tasks,
+        'project': project,
+    })
+
+
+@csrf_exempt
+def update_bulk_task_status(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            task_ids = data['task_ids']
+            new_status = data['status']
+
+            # Update tasks with the selected status
+            tasks = Task.objects.filter(id__in=task_ids)
+            tasks.update(status=new_status)
+
+            messages.success(request, f"Tasks status updated successfully!", extra_tags="alert-success")
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 @csrf_exempt
 @login_required
@@ -613,12 +757,19 @@ def kanban_board(request):
     if not project_id:
         return HttpResponseForbidden("No project selected.")
 
-    project = Project.objects.get(id=project_id)
+    if request.user.role == 'member':
+        project = Project.objects.get(id=project_id)
+    else:
+        project = Project.objects.get(id=project_id, owner=request.user)
 
     # Ensure we only fetch tasks for the current active sprint
     current_sprint = project.current_sprint
     if current_sprint:
-        tasks = current_sprint.tasks.all()
+        if request.user.role == 'member':
+            tasks = current_sprint.tasks.filter(assigned_members=request.user)
+        else:
+            tasks = current_sprint.tasks.all()
+
         tasks_by_status = {
             'todo': tasks.filter(status='todo'),
             'in_progress': tasks.filter(status='in_progress'),
@@ -626,7 +777,7 @@ def kanban_board(request):
             'completed': tasks.filter(status='completed'),
         }
     else:
-        tasks_by_status = {}  # No tasks if there is no active sprint
+        tasks_by_status = {}
 
     return render(request, 'projects/kanban_board.html', {
         'project': project,
@@ -639,18 +790,38 @@ def my_kanban_board(request):
     if request.user.role != 'member':
         return redirect('dashboard')  # Redirect non-members to the dashboard
 
-    tasks = Task.objects.filter(assigned_members=request.user)
-    if tasks.exists():
-        project = tasks.first().project
+    project_id = request.session.get('current_project_id')
+    if not project_id:
+        return HttpResponseForbidden("No project selected.")
+
+    if request.user.role == 'member':
+        project = Project.objects.get(id=project_id)
     else:
-        project = None
-    tasks_by_status = {
-        'todo': tasks.filter(status='todo'),
-        'in_progress': tasks.filter(status='in_progress'),
-        'review': tasks.filter(status='review'),
-        'completed': tasks.filter(status='completed'),
-    }
-    return render(request, 'projects/kanban_board.html', {'project': project, 'tasks_by_status': tasks_by_status})
+        project = Project.objects.get(id=project_id, owner=request.user)
+
+    # Ensure we only fetch tasks for the current active sprint
+    current_sprint = project.current_sprint
+    if current_sprint:
+        if request.user.role =='member':
+            tasks = current_sprint.tasks.filter(assigned_members=request.user)
+        else:
+            tasks = current_sprint.tasks.all()
+
+        tasks_by_status = {
+            'todo': tasks.filter(status='todo'),
+            'in_progress': tasks.filter(status='in_progress'),
+            'review': tasks.filter(status='review'),
+            'completed': tasks.filter(status='completed'),
+        }
+    else:
+        tasks_by_status = {}
+    return render(
+        request, 'projects/my_kanban_board.html',
+        {
+            'project': project,
+            'tasks_by_status': tasks_by_status,
+            'current_sprint': current_sprint,
+        })
 
 @csrf_exempt
 @login_required

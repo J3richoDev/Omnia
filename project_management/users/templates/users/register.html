@@ -167,6 +167,11 @@
               {% endif %}
         </div>
       </div>
+          {% if form.errors %}
+            <p class="text-sm text-red-500 mt-1">
+                {{ form.non_field_errors|striptags }}
+            </p>
+        {% endif %}
        <div class="form-control flex flex-row justify-start my-2">
         <label class="label cursor-pointer ">
           <input type="checkbox" checked="checked" class="checkbox" />

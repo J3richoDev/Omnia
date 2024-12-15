@@ -4,31 +4,35 @@
 {% block heading %}Gantt Chart{% endblock %}
 
 {% block content %}
-<div class="container mx-auto py-6">
-    <h1 class="text-2xl font-bold mb-4">Gantt Chart - {{ project.name }}</h1>
+<div class="container mx-auto">
+    <div class="flex flex-row items-center justify-between">
+        <h1 class="text-2xl font-bold mb-4">{{ project.name }}</h1>
 
-    <!-- Filters -->
-    <div class="mb-4">
-        <label for="filterStatus" class="block text-sm font-medium">Filter by Status:</label>
-        <select id="filterStatus" class="border rounded p-2">
-            <option value="all">All</option>
-            <option value="todo">To Do</option>
-            <option value="in_progress">In Progress</option>
-            <option value="review">Review</option>
-            <option value="completed">Completed</option>
-        </select>
-    </div>
+        <div class="flex flex-row justify-end gap-3">
+        <!-- Filters -->
+            <div class="mb-4">
+                <label for="filterStatus" class="block text-sm font-medium">Filter by Status:</label>
+                <select id="filterStatus" class="border rounded-md p-2">
+                    <option value="all">All</option>
+                    <option class="text-gray-600" value="todo">To Do</option>
+                    <option class="text-sky-600" value="in_progress">In Progress</option>
+                    <option class="text-amber-600" value="review">Review</option>
+                    <option class="text-green-600" value="completed">Completed</option>
+                </select>
+            </div>
 
-    <div class="mb-4">
-        <label class="block text-sm font-medium mb-2">Filter by Time:</label>
-        <button id="filterToday" class="bg-blue-500 text-white px-3 py-1 rounded mr-2">Today</button>
-        <button id="filterWeek" class="bg-blue-500 text-white px-3 py-1 rounded mr-2">This Week</button>
-        <button id="filterMonth" class="bg-blue-500 text-white px-3 py-1 rounded mr-2">This Month</button>
-        <button id="filterQuarter" class="bg-blue-500 text-white px-3 py-1 rounded">This Quarter</button>
+            <div class="mb-4">
+                <label class="block text-sm font-medium">Filter by Time:</label>
+                <button id="filterToday" class="bg-blue-500 text-white px-3 py-2 rounded mr-2">Today</button>
+                <button id="filterWeek" class="bg-blue-500 text-white px-3 py-2 rounded mr-2">This Week</button>
+                <button id="filterMonth" class="bg-blue-500 text-white px-3 py-2 rounded mr-2">This Month</button>
+                <button id="filterQuarter" class="bg-blue-500 text-white px-3 py-2 rounded">This Quarter</button>
+            </div>
+        </div>
     </div>
 
     <!-- Gantt Chart Container -->
-    <div id="ganttChartContainer" class="bg-white p-4 rounded shadow-lg"></div>
+    <div id="ganttChartContainer" class="bg-white p-4 rounded-lg shadow-lg mb-5"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>

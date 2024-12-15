@@ -110,7 +110,7 @@
              task.addEventListener('click', () => {
                 const taskId = task.dataset.taskId;
                 if (taskId) {
-                    const taskDetailUrl = `{% url 'task_detail' 0 %}`.replace('/0/', `/${taskId}/`);
+                    const taskDetailUrl = `{% url 'my_task_detail' 0 %}`.replace('/0/', `/${taskId}/`);
                     window.location.href = taskDetailUrl;
                 }
             });

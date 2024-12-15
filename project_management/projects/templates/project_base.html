@@ -148,7 +148,7 @@
                         </div>
                       </ul>
                     </div>
-                    <div class="dropdown dropdown-end ml-4">
+                    <div class="dropdown dropdown-end ml-4 ">
                         <label tabindex="0" class="btn btn-ghost btn-circle avatar">
                           <div class="w-10 rounded-full">
                               <img src="{% if request.user.profile_picture %}{{ request.user.profile_picture.url }}{% else %}{% static 'default-profile.png' %}{% endif %}" alt="Profile">
@@ -220,7 +220,7 @@
                                     </span>
                                 {% endwith %}
                             {% else %}
-                                Project Name
+                                Select Project
                             {% endif %}
 
                             <svg class="w-6 h-6 text-gray-800 ml-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
@@ -339,6 +339,51 @@
                     </li>
                     {% endif %}
                 {% else %}
+                <h2 class="text-sm font-bold mt-4 mb-2">Assigned Projects</h2>
+                    <li tabindex="0" role="button" class="dropdown dropdown-bottom z-50">
+                        <span class="flex items-center text-base font-medium rounded-lg transition duration-75 border">
+                            {% if request.session.current_project_id %}
+                                {% with current_project=user_projects|get_item:request.session.current_project_id %}
+                                    <i class="fas {{ current_project.emoji_icon }} text-lg text-gray-100 bg-{{ current_project.color }}-500 w-8 h-8 flex items-center justify-center rounded-md mr-2"></i>
+                                    <span class="truncate max-w-[150px] min-w-[150px] flex items-center">
+                                        {{ current_project.name }}
+                                    </span>
+                                {% endwith %}
+                            {% else %}
+                                Select Project
+                            {% endif %}
+
+                            <svg class="w-6 h-6 text-gray-800 ml-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/>
+                            </svg>
+                        </span>
+                        <div tabindex="0" class="flex flex-col w-72 text-gray-700 menu menu-compact dropdown-content mt-3 shadow-lg border border-gray-300 bg-base-100 divide-y divide-solid hover:bg-white">
+                            <div class="w-full text-left pl-3 my-2">
+                                <p class="text-base font-medium">
+                                    Select Project
+                                </p>
+                            </div>
+                            <div class="max-h-40 w-full overflow-y-auto">
+                                <ul class="m-0 p-0">
+                                {% for project in user_projects %}
+                                    <li>
+                                        <a href="{% url 'set_current_project' project.id %}"
+                                           class="block py-2 px-4 truncate max-w-[230px] min-w-[230px]
+                                                  {% if project.id|stringformat:'d' == request.session.current_project_id|stringformat:'d' %}bg-{{project.color}}-500 hover:bg-{{project.color}}-300 text-white{% else %}hover:bg-gray-200{% endif %}">
+                                           <i class="fas {{ project.emoji_icon }} text-lg py-0.5 px-2 rounded-md mr-2
+                                                    {% if project.id|stringformat:'d' == request.session.current_project_id|stringformat:'d' %}text-white{% else %}text-{{project.color}}-700{% endif %}"></i>
+                                            {{ project.name }}
+                                        </a>
+                                    </li>
+                                {% empty %}
+                                    <li class="block py-2 px-4 text-gray-500">No projects available</li>
+                                {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </li>
+                    <span class="py-3"></span>
+                    <h2 class="text-sm font-bold mt-4 mb-2">Manage Tasks</h2>
                     <li>
                         <a href="{% url 'dashboard' %}"
                            class="flex items-center p-2 text-base font-medium rounded-lg transition duration-75 {% if request.path == '/projects/dashboard/' %}active{% endif %}"
@@ -358,33 +403,29 @@
                     </li>
                     <li>
                         <a href="{% url 'my_tasks' %}"
-                           class="block py-2 px-4 hover:bg-blue-700 {% if request.path == '/my-tasks/' %}active{% endif %}">
-                           <svg
-                                aria-hidden="true"
-                                class="w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path>
-                                <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path>
-                              </svg>
+                           class="flex items-center p-2 text-base font-medium rounded-lg transition duration-75 {% if 'tasks' in request.path %}active{% endif %}">
+                            <svg class="w-6 h-6 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                              <path fill-rule="evenodd" d="M4 5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H4Zm0 6h16v6H4v-6Z" clip-rule="evenodd"/>
+                              <path fill-rule="evenodd" d="M5 14a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2H6a1 1 0 0 1-1-1Zm5 0a1 1 0 0 1 1-1h5a1 1 0 1 1 0 2h-5a1 1 0 0 1-1-1Z" clip-rule="evenodd"/>
+                            </svg>
                            <span class="ml-3">My Tasks</span>
                         </a>
                     </li>
                     <li>
+                        <a href="{% url 'my_project_sprints' %} "
+                           class="flex items-center p-2 text-base font-medium rounded-lg transition duration-75 {% if 'sprint' in request.path %}active{% endif %}">
+                            <svg class="w-6 h-6 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                <path fill="currentcolor" d="m17.717 17.137-1.436-1.438a1.003 1.003 0 0 1 1.418-1.418l3.007 3.01a1 1 0 0 1 0 1.417l-3.007 3.01a1.003 1.003 0 0 1-1.417-1.42l1.3-1.3-6.072-.003A8 8 0 0 1 4 11.01C4 6.587 7.582 3 12 3s8 3.587 8 8.01a8 8 0 0 1-.789 3.451l-1.438-1.44a6.1 6.1 0 0 0 .345-2.01A6.12 6.12 0 0 0 12 4.884a6.12 6.12 0 0 0-6.118 6.125 6.12 6.12 0 0 0 5.647 6.102zm-12.163-.119c.561.759 1.456 1.49 2.457 1.981L3.937 19C3.42 19 3 18.552 3 18s.42-1 .937-1l1.614.005z"></path>
+                            </svg>
+                           <span class="ml-3">Sprint</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{% url 'my_kanban' %}"
-                           class="block py-2 px-4 hover:bg-blue-700 {% if request.path == '/my-kanban/' %}active{% endif %}">
-                           <svg
-                                aria-hidden="true"
-                                class="w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path>
-                                <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path>
-                              </svg>
+                          class="flex items-center p-2 text-base font-medium rounded-lg transition duration-75 {% if 'kanban' in request.path %}active{% endif %}">
+                            <svg class="w-6 h-6 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                              <path fill-rule="evenodd" d="M15 4H9v16h6V4Zm2 16h3a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3v16ZM4 4h3v16H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" clip-rule="evenodd"/>
+                            </svg>
                            <span class="ml-3">Kanban Board</span>
                         </a>
                     </li>

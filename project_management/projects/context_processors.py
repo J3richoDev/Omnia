@@ -3,8 +3,12 @@ from .forms import ProjectForm
 
 def user_projects(request):
     if request.user.is_authenticated:
-        projects = Project.objects.filter(owner=request.user)
-        return {'user_projects': projects}
+        if request.user.role == 'manager':
+            projects = Project.objects.filter(owner=request.user)
+            return {'user_projects': projects}
+        else:
+            projects = request.user.assigned_projects.all()
+            return {'user_projects': projects}
     return {}
 
 def global_forms(request):

@@ -14,6 +14,7 @@ urlpatterns = [
     path('add_member/', views.add_member, name='add_member'),
 
     path('tasks/', views.project_tasks, name='project_tasks'),
+    path('tasks/<int:task_id>/', views.task_detail, name='task_detail'),
     path('tasks/create/', views.create_task, name='create_task'),
     path('tasks/update-field/', views.update_task_field, name='update_task_field'),
     path('delete-task/', views.delete_task, name='delete_task'),
@@ -33,8 +34,11 @@ urlpatterns = [
 
 
     path('my-tasks/', views.my_tasks, name='my_tasks'),
-    path('tasks/<int:task_id>/', views.task_detail, name='task_detail'),
+    path('my_tasks/<int:task_id>/', views.my_task_detail, name='my_task_detail'),
     path('files/<int:file_id>/delete/', views.delete_file, name='delete_file'),
+
+    path('my-sprints/', views.my_project_sprints, name='my_project_sprints'),
+    path('update-bulk-task-status/', views.update_bulk_task_status, name='update_bulk_task_status'),
 
     path('kanban/', views.kanban_board, name='kanban_board'),
     path('my-kanban/', views.my_kanban_board, name='my_kanban'),

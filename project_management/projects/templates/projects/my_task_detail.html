@@ -1,10 +1,9 @@
 {% extends 'project_base.html' %}
 {% load crispy_forms_tags %}
 {% load widget_tweaks %}
-{% load custom_filters %}
 
 {% block title %}Task Detail: {{ task.name }}{% endblock %}
-{% block heading %}Task Detail{% endblock %}
+{% block heading %}Member Task Detail{% endblock %}
 
 {% block content %}
 <style>
@@ -22,21 +21,13 @@
         <div class="col-span-2">
             <div class="card w-full p-5 bg-base-100 border shadow-sm">
                 <h2
-                    class="text-2xl font-bold mb-4 editable"
-                    contenteditable="true"
-                    data-field="name"
-                    data-task-id="{{ task.id }}"
-                    onblur="updateTaskField(this)"
+                    class="text-2xl font-bold mb-4"
                 >
                     {{ task.name }}
                 </h2>
                 <p class="font-medium">Description</p>
                 <div
-                class="editable description-cell border min-h-32 p-2 rounded mb-4"
-                contenteditable="true"
-                data-field="description"
-                data-task-id="{{ task.id }}"
-                onblur="updateTaskField(this)"
+                class="border min-h-32 p-2 rounded mb-4"
             >
                   {{ task.description|default_if_none:"No description provided" }}
               </div>
@@ -45,8 +36,8 @@
                     <div class="grid grid-cols-3 gap-3">
                         {% for file in files %}
                             <div class="card bg-base-100 border shadow p-4 rounded mb-2">
-                                {% if file.file.name|is_image %}
-                                <div class="w-full max-h-[100px]">
+                                {% if file.file.name|slice:"-4:" == ".png" %}
+                                <div class="w-full h-full">
                                     <img src="{{ file.file.url }}" alt="Image" class="w-full h-full" />
                                 </div>
                                 {% else %}
@@ -91,7 +82,7 @@
                     <div class="mt-5">
                         <form method="POST" class="flex flex-col gap-4" enctype="multipart/form-data">
                             {% csrf_token %}
-                            {{ file_form.file|add_class:"file-input w-full max-w-xs" }}
+                            {{ my_file_form.file|add_class:"file-input w-full max-w-xs" }}
                             <button type="submit" name="file" class="btn btn-success w-2/12 text-white">Upload File</button>
                         </form>
                     </div>
@@ -121,114 +112,36 @@
               </div>
                 <p class="font-medium mt-2">Priority</p>
               <div>
-                 <select
-                    class="editable-select priority-{{ task.priority }} rounded-lg w-full py-3 text-center font-medium text-base-100"
-                    data-field="priority"
-                    data-task-id="{{ task.id }}"
-                    onchange="updateTaskField(this)"
+                 <div
+                    class="priority-{{ task.priority }} rounded-lg w-full py-3 text-center font-medium text-base-100"
                 >
-                    {% for key, value in task.PRIORITY_CHOICES %}
-                    <option
-                        value="{{ key }}"
-                        {% if task.priority == key %}selected{% endif %}
-                        class="py-2 font-medium bg-white text-gray-800"
-                    >
-                        {{ value }}
-                    </option>
-                    {% endfor %}
-                </select>
+                   {{ task.priority }}
+                </div>
               </div>
                 <p class="font-medium mt-2">Sprint</p>
-                    <div class="flex items-center gap-2">
-                        <select class="editable-select w-full py-3 text-center font-medium border border-gray-300 bg-base-200 rounded-lg"
-                                data-field="sprint"
-                                id="sprint-select-{{ task.id }}">
-                            <option value="" {% if not task.sprint %}selected{% endif %}>None</option>
-                            {% for sprint in sprints %}
-                            <option
-                                value="{{ sprint.id }}"
-                                {% if task.sprint and task.sprint.id == sprint.id %}selected{% endif %}
-                                class="{% if sprint.ended %}text-green-600{% else %}text-black{% endif %}">
-                                {{ sprint.name }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                        {% if task.sprint and task.sprint.ended %}
-                        <svg class="w-4 h-4 text-green-600 ml-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.5 11.5 11 14l4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-                        </svg>
-                        {% endif %}
+                    <div class=" w-full py-3 text-center font-medium border border-gray-300 bg-base-200 rounded-lg">
+                        {{task.sprint}}
                     </div>
 
                 <p class="font-medium mt-2">Assigned Members</p>
-                <div>
-                    <!-- Button to trigger the modal -->
-                    <label for="membersModal{{ task.id }}" class="cursor-pointer w-full text-center py-2 text-xl btn border border-gray-300">
-                        <span class=" rounded p-1 text-sm">
-                            {% if task.assigned_members.all %}
-                                {{ task.assigned_members.all|join:", " }}
-                            {% else %}
-                                None
-                            {% endif %}
-                        </span>
-                    </label>
-
-                    <!-- Modal -->
-                    <input type="checkbox" id="membersModal{{ task.id }}" class="modal-toggle" />
-                    <div class="modal">
-                        <div class="modal-box">
-                            <h3 class="font-bold text-lg">Assign Members for {{ task.name }}</h3>
-                            <form id="assignMembersForm{{ task.id }}">
-                                <div class="py-4">
-                                    {% for member in members %}
-                                    <div class="form-control">
-                                        <label class="label cursor-pointer">
-                                            <span class="label-text">{{ member.username }}</span>
-                                            <input
-                                                type="checkbox"
-                                                name="members"
-                                                value="{{ member.id }}"
-                                                class="checkbox"
-                                                {% if member in task.assigned_members.all %}checked{% endif %}
-                                            />
-                                        </label>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                                <div class="modal-action">
-                                    <label for="membersModal{{ task.id }}" class="btn btn-ghost">Cancel</label>
-                                    <button
-                                        type="button"
-                                        class="btn btn-primary"
-                                        onclick="submitMemberAssignment({{ task.id }})">
-                                        Save Changes
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+                <div class="w-full py-3 text-center font-medium border border-gray-300 bg-base-200 rounded-lg">
+                    {% if task.assigned_members.all %}
+                        {{ task.assigned_members.all|join:", " }}
+                    {% else %}
+                        None
+                    {% endif %}
                 </div>
                 <p class="font-medium mt-2">End Date</p>
                 <td>
-                <input
-                    type="date"
-                    class="editable-date border text-center text-lg py-2 rounded-lg p-1"
-                    data-field="end_date"
-                    data-task-id="{{ task.id }}"
-                    value="{{ task.end_date|date:'Y-m-d' }}"
-                    onchange="updateTaskField(this)"
-                />
-              </td>
+                    <div class="border text-center text-lg py-2 rounded-lg p-1">
+                        {{ task.end_date|date:'Y-m-d' }}
+                    </div>
+                </td>
                 <p class="font-medium mt-2">Start Date</p>
               <td>
-                <input
-                    type="date"
-                    class="editable-date border text-center text-lg py-2 rounded-lg p-1"
-                    data-field="start_date"
-                    data-task-id="{{ task.id }}"
-                    value="{{ task.start_date|date:'Y-m-d' }}"
-                    onchange="updateTaskField(this)"
-                />
+                  <div class="border text-center text-lg py-2 rounded-lg p-1">
+                      {{ task.start_date|date:'Y-m-d' }}
+                  </div>
               </td>
                 <p class="font-medium mt-2">Created at</p>
               <td><p class=" border border-gray-300 text-center text-lg py-2 rounded-lg p-1">
@@ -254,7 +167,7 @@
                             <form method="POST">
                             {% csrf_token %}
                             <div class="flex gap-5">
-                                {{ comment_form.content|add_class:"input input-bordered w-full p-2"|attr:"placeholder:Type your message" }}
+                                {{ my_comment_form.content|add_class:"input input-bordered w-full p-2"|attr:"placeholder:Type your message" }}
                                     <button type="submit" name="comment" class="btn btn-primary text-white transform rotate-90 flex items-center px-2 justify-center">
                                         <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                                           <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m12 18-7 3 7-18 7 18-7-3Zm0 0v-5"/>
@@ -308,78 +221,6 @@
         }
     }
 
-async function updateTaskSprint(taskId, sprintId) {
-    console.log(`Updating task ${taskId} with sprint ${sprintId}`);
-    try {
-        const response = await fetch("{% url 'update_task_sprint' %}", {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/json', // Ensure content type is JSON
-            },
-            body: JSON.stringify({
-                task_id: taskId,
-                new_sprint_id: sprintId, // Update parameter to match backend expected names
-            }),
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            // Optionally reload the page or update the UI
-            location.reload();  // Reload to reflect changes, or you can choose to update UI elements dynamically
-        } else {
-            console.error("Failed to update sprint:", result.error);
-            // Optionally show error notification
-        }
-    } catch (error) {
-        console.error("Error updating sprint:", error);
-    }
-}
-
-// Handle sprint selection change
-document.querySelectorAll('select[data-field="sprint"]').forEach(select => {
-    select.addEventListener('change', () => {
-        const taskId = select.id.split('-')[2]; // Corrected to split by the second part of the id
-        const sprintId = select.value;
-        console.log(`taskId: ${taskId}, sprintId: ${sprintId}`);  // Log to verify taskId extraction
-        updateTaskSprint(taskId, sprintId);
-    });
-});
-
-// Function to submit member assignment
-async function submitMemberAssignment(taskId) {
-    const form = document.getElementById(`assignMembersForm${taskId}`);
-    const selectedMembers = [...form.querySelectorAll('input[name="members"]:checked')]
-        .map(checkbox => checkbox.value);
-
-    if (selectedMembers.length === 0) {
-        console.log("No members selected.");
-        return;
-    }
-
-    try {
-        const response = await fetch(`/projects/tasks/${taskId}/assign-members/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ members: selectedMembers }),
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            console.log("Members assigned successfully!");
-            location.reload();  // Reload the page to reflect changes
-        } else {
-            console.error("Failed to assign members:", data.error);
-        }
-    } catch (err) {
-        console.error("Error assigning members:", err);
-    }
-}
 </script>
 
 {% endblock %}
