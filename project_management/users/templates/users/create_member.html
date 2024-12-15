@@ -57,7 +57,7 @@
        <div class="overflow-x-auto w-full">
         <table class="table w-full">
             <thead>
-                <tr>
+              <tr>
                     <th>Profile</th>
                     <th>Name</th>
                     <th>Email</th>
@@ -71,12 +71,13 @@
                 <tr>
                     <td>
                         <div class="w-10 rounded-full">
-                          <img src="{% if member.profile_picture %}/media/{{ member.profile_picture }}{% else %}{% static 'default-profile.png' %}{% endif %}" alt="Profile">
-                          </div>
+                           
+                           <img src="{% if member.profile_picture %}/media/{{ member.profile_picture }}{% else %}{% static 'default-profile.png' %}{% endif %}" alt="Profile">
+                        </div>
                     </td>
                     <td>{{ member.username }}</td>
                     <td>{{ member.email }}</td>
-                    <td class="badge badge-outline mt-2">{{ member.get_role_display }}</td>
+                    <td class="badge badge-outline mt-4">{{ member.get_role_display }}</td>
                     <td>{{ member.date_joined|date:"d M Y" }}</td>
                     <td>
                         <button class="btn btn-outline btn-sm"

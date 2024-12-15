@@ -1,10 +1,14 @@
-from django.urls import path
+from django.urls import include, path
 from . import views
+from django.conf import settings
+from django.conf.urls.static import static
+from users.views import members_list
 
 urlpatterns = [
     path('setup/', views.initial_setup, name='initial_setup'),
     path('create/', views.create_project, name='create_project'),
     path('dashboard/', views.dashboard, name='dashboard'),
+    
 
     path('set_project/<int:project_id>/', views.set_current_project, name='set_current_project'),
     path('projects/', views.project_list, name='projects'),
@@ -45,4 +49,10 @@ urlpatterns = [
     path('tasks/update_status/', views.update_task_status, name='update_task_status'),
 
     path('gantt/', views.gantt_chart, name='gantt_chart'),
-]
+    path('reports/', views.reports_view, name='reports'),
+    path('users/', include('users.urls')),
+
+
+
+    
+]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
