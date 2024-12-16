@@ -184,7 +184,52 @@ def dashboard(request):
         priority_percentages.get('low', 0),
     ]
 
+    project_id = request.session.get('current_project_id')
+    if not project_id:
+        return HttpResponseForbidden("No project selected.")
 
+    project = Project.objects.get(id=project_id, owner=request.user)
+    tasks = Task.objects.filter(project=project)
+
+    # Prepare data for Gantt chart
+    task_data = [
+        {
+            "id": task.id,
+            "name": task.name,
+            "start": task.start_date.isoformat(),
+            "end": task.end_date.isoformat(),
+            "status": task.status,
+            "priority": task.priority,
+            "description": task.description,
+        }
+        for task in tasks
+    ]
+
+ # Fetch all members and tasks
+    members = CustomUser.objects.filter(role=CustomUser.MEMBER)
+    
+    # Calculate  percentages
+    
+
+    # Define progress percentages for task statuses
+    status_weights = {
+        'todo': 25,
+        'in_progress': 50,
+        'review': 75,
+        'completed': 100,
+    }
+    members_data = []
+    for member in members:
+        member_tasks = tasks.filter(assigned_members=member)
+        task_count = member_tasks.count()
+        total_progress = sum(status_weights.get(task.status, 0) for task in member_tasks)
+        average_progress = round(total_progress / task_count, 2) if task_count > 0 else 0
+
+        members_data.append({
+            'member': member,
+            'task_count': task_count,
+            'average_progress': average_progress,
+        })
     return render(request, 'projects/dashboard.html', {'projects': user_projects, 
                                                        'pie_series': pie_series,  
                                                        'bar_labels': bar_labels,
@@ -192,6 +237,10 @@ def dashboard(request):
                                                        'todo_percentage':todo_percentage,
                                                        'in_progress': in_progress,
                                                        'to_review': to_review,
+                                                       'project': project,
+                                                       'json_task': task_data,
+                                                       'members_data': members_data,
+                                                       'member_count': members.count(),
                                                        'completeed':completeed})
 
 @login_required

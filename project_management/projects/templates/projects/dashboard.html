@@ -1,4 +1,5 @@
 {% extends 'project_base.html' %}
+{% load static %}
 
 {% block title %}Dashboard{% endblock %}
 {% block heading %}Dashboard{% endblock %}
@@ -83,57 +84,78 @@
       <div class="h-full w-full pb-6 bg-base-100">
    
         <div class="overflow-x-auto">
-          <table class="table w-full">
-             <thead>
-                <tr>
-                   <th></th>
-                   <th class="normal-case">Source</th>
-                   <th class="normal-case">No of Users</th>
-                   <th class="normal-case">Conversion</th>
+          <table class="table w-full" id="to-download">
+            <thead>
+               <tr>
+                  <th colspan="20"> 
+                     <strong>
+                        Total Members: {{ member_count }}
+                     </strong>
+                  </th>
+              </tr>
+              <tr>
+                    <th>Profile</th>
+                    <th >Username</th>
                 </tr>
-             </thead>
-             <tbody>
+            </thead>
+            <tbody>
+                {% for viewMem in members_data %}
                 <tr>
-                   <th>1</th>
-                   <td>Facebook Ads</td>
-                   <td>26,345</td>
-                   <td>10.2%</td>
+                    <td>
+                        <div class="w-10 rounded-full">
+                           
+                           <img src="{% if viewMem.member.profile_picture %}/media/{{ viewMem.member.profile_picture }}{% else %}{% static 'default-profile.png' %}{% endif %}" alt="Profile">
+                        </div>
+                     </td>
+                     <td><strong>{{ viewMem.member.username }}</strong></td>
                 </tr>
+                {% empty %}
                 <tr>
-                   <th>2</th>
-                   <td>Google Ads</td>
-                   <td>21,341</td>
-                   <td>11.7%</td>
+                    <td colspan="4" class="text-center">No members found</td>
                 </tr>
-                <tr>
-                   <th>3</th>
-                   <td>Instagram Ads</td>
-                   <td>34,379</td>
-                   <td>12.4%</td>
-                </tr>
-                <tr>
-                   <th>4</th>
-                   <td>Affiliates</td>
-                   <td>12,359</td>
-                   <td>20.9%</td>
-                </tr>
-                <tr>
-                   <th>5</th>
-                   <td>Organic</td>
-                   <td>10,345</td>
-                   <td>10.3%</td>
-                </tr>
-             </tbody>
-          </table>
+                {% endfor %}
+            </tbody>
+        </table>
        </div>
       </div>
    </div>
    <div class="card w-full p-6 bg-base-100 shadow-xl mt-6">
-      <div class="text-xl font-semibold ">Di ko rin alam</div>
+    <div class="flex justify-between">
+      <div class="text-xl font-semibold ">Gantt Chart</div>
+      <h1 class="text-2xl font-bold mb-4">{{ project.name }}</h1>
+    </div>
       <div class="divider mt-2"></div>
       <div class="h-full w-full pb-6 bg-base-100">
-         <div id="BarChartContainer" height="211" width="422" style="display: block; box-sizing: border-box; height: 211px; width: 422px;"></div>
+        <div class="container mx-auto">
+          <div class="flex flex-row items-center justify-between">
+         
+      
+              <div class="flex flex-row justify-end gap-3">
+              <!-- Filters -->
+                  <div class="mb-4">
+                      <label for="filterStatus" class="block text-sm font-medium">Filter by Status:</label>
+                      <select id="filterStatus" class="border rounded-md p-2">
+                          <option value="all">All</option>
+                          <option class="text-gray-600" value="todo">To Do</option>
+                          <option class="text-sky-600" value="in_progress">In Progress</option>
+                          <option class="text-amber-600" value="review">Review</option>
+                          <option class="text-green-600" value="completed">Completed</option>
+                      </select>
+                  </div>
+      
+                  <div class="mb-4">
+                      <label class="block text-sm font-medium">Filter by Time:</label>
+                      <button id="filterToday" class="bg-blue-500 text-white rounded mr-2">Today</button>
+                      <button id="filterWeek" class="bg-blue-500 text-white rounded mr-2">This Week</button>
+                      <button id="filterMonth" class="bg-blue-500 text-white rounded mr-2">This Month</button>
+                      <button id="filterQuarter" class="bg-blue-500 text-white rounded">This Quarter</button>
+                  </div>
+              </div>
+          </div>
+          <!-- Gantt Chart Container -->
+          <div id="ganttChartContainer" class="bg-white p-4 rounded-lg shadow-lg mb-5"></div>
       </div>
+            </div>
    </div>
 </div>
 
@@ -363,4 +385,138 @@
         });
     </script>
 
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const tasks = {{ json_task|safe }};
+
+        // Define colors for task statuses
+        const statusColors = {
+            todo: '#FF5733', // Red
+            in_progress: '#FFC300', // Yellow
+            review: '#3498DB', // Blue
+            completed: '#28B463', // Green
+        };
+
+        // Transform tasks into ApexCharts series format
+        const series = tasks.map(task => ({
+            name: task.name,
+            data: [
+                {
+                    x: task.name,
+                    y: [
+                        new Date(task.start).getTime(),
+                        new Date(task.end).getTime(),
+                    ],
+                    fillColor: statusColors[task.status], // Apply color by status
+                    description: task.description,
+                    priority: task.priority,
+                    status: task.status,
+                },
+            ],
+        }));
+
+        // ApexCharts options
+        const options = {
+            chart: {
+                height: 500,
+                type: 'rangeBar',
+                zoom: {
+                    enabled: true,
+                    type: 'x', // Enable horizontal zooming
+                },
+                toolbar: {
+                    tools: {
+                        zoom: true,
+                        zoomin: true,
+                        zoomout: true,
+                        pan: true,
+                        reset: true,
+                    },
+                },
+            },
+            plotOptions: {
+                bar: {
+                    distributed: true,
+                    horizontal: true,
+                    barHeight: '50%',
+                },
+            },
+            series: series,
+            xaxis: {
+                type: 'datetime',
+            },
+            tooltip: {
+                x: {
+                    format: 'dd MMM yyyy',
+                },
+            },
+        };
+
+        const chart = new ApexCharts(
+            document.querySelector("#ganttChartContainer"),
+            options
+        );
+
+        chart.render();
+
+        // Filter functionality
+        const filterStatus = document.getElementById("filterStatus");
+        filterStatus.addEventListener("change", (event) => {
+            const selectedStatus = event.target.value;
+
+            const filteredSeries = selectedStatus === "all"
+                ? series
+                : series.filter(task => task.data[0].status === selectedStatus);
+
+            chart.updateSeries(filteredSeries);
+        });
+
+         // Time Filtering Logic
+        const filterTasksByTime = (range) => {
+            const now = new Date();
+            const startOfRange = new Date();
+            let endOfRange = new Date();
+
+            switch (range) {
+                case "today":
+                    startOfRange.setHours(0, 0, 0, 0);
+                    endOfRange.setHours(23, 59, 59, 999);
+                    break;
+                case "week":
+                    const dayOfWeek = now.getDay();
+                    startOfRange.setDate(now.getDate() - dayOfWeek);
+                    endOfRange.setDate(now.getDate() + (6 - dayOfWeek));
+                    break;
+                case "month":
+                    startOfRange.setDate(1);
+                    endOfRange = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                    break;
+                case "quarter":
+                    const currentMonth = now.getMonth();
+                    const quarterStart = Math.floor(currentMonth / 3) * 3;
+                    startOfRange.setMonth(quarterStart, 1);
+                    endOfRange = new Date(now.getFullYear(), quarterStart + 3, 0);
+                    break;
+                default:
+                    return;
+            }
+
+            const filteredSeries = series.filter(task => {
+                const taskStart = new Date(task.data[0].y[0]);
+                const taskEnd = new Date(task.data[0].y[1]);
+                return taskEnd >= startOfRange && taskStart <= endOfRange;
+            });
+
+            chart.updateSeries(filteredSeries);
+        };
+
+        // Attach Event Listeners for Time Filters
+        document.getElementById("filterToday").addEventListener("click", () => filterTasksByTime("today"));
+        document.getElementById("filterWeek").addEventListener("click", () => filterTasksByTime("week"));
+        document.getElementById("filterMonth").addEventListener("click", () => filterTasksByTime("month"));
+        document.getElementById("filterQuarter").addEventListener("click", () => filterTasksByTime("quarter"));
+
+    });
+</script>
 {% endblock %}

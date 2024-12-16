@@ -52,8 +52,7 @@ urlpatterns = [
     path('reports/', views.reports_view, name='reports'),
     path('users/', include('users.urls')),
 
-    path('venue_pdf', views.venue_pdf, name='venue_pdf')
-
+    path('venue_pdf', views.venue_pdf, name='venue_pdf'),
 
     
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
