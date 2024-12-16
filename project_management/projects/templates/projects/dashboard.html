@@ -19,7 +19,7 @@
          </div>
          <div class="stat-title font-bold text-xl night:text-slate-300">Todo</div>
          <div class="stat-value night:text-slate-300 text-primary">{{todo_percentage}}%</div>
-         <div class="stat-desc  font-bold text-green-700 night:text-green-300">↗︎ 2300 (22%)</div>
+         <div class="stat-desc text-sm">total count: {{todo_total}}</div>
       </div>
    </div>
    <div class="stats shadow">
@@ -30,8 +30,8 @@
             </svg>
          </div>
          <div class="stat-title font-bold text-xl night:text-slate-300">In Progress</div>
-         <div class="stat-value night:text-slate-300 text-primary">{{in_progress}}%</div>
-         <div class="stat-desc  ">Current month</div>
+         <div class="stat-value night:text-slate-300 text-primary">{{in_progress_percentage}}%</div>
+         <div class="stat-desc  ">total count: {{in_progress_total}}</div>
       </div>
    </div>
    <div class="stats shadow">
@@ -42,8 +42,8 @@
             </svg>
          </div>
          <div class="stat-title font-bold text-xl night:text-slate-300">Under Review</div>
-         <div class="stat-value night:text-slate-300 text-primary">{{to_review}}%</div>
-         <div class="stat-desc  ">50 in hot leads</div>
+         <div class="stat-value night:text-slate-300 text-primary">{{to_review_percentage}}%</div>
+         <div class="stat-desc  ">total count: {{review_total}}</div>
       </div>
    </div>
    <div class="stats shadow">
@@ -54,8 +54,8 @@
             </svg>
          </div>
          <div class="stat-title font-bold text-xl night:text-slate-300">Completed</div>
-         <div class="stat-value night:text-slate-300 text-primary">{{completeed}}%</div>
-         <div class="stat-desc  font-bold text-rose-500 night:text-red-400">↙ 300 (18%)</div>
+         <div class="stat-value night:text-slate-300 text-primary">{{completed_percentage}}%</div>
+         <div class="stat-desc">total count: {{completed_total}}</div>
       </div>
    </div>
 </div>
@@ -77,87 +77,87 @@
    </div>
 </div>
 
-<div class="grid lg:grid-cols-2 mt-4 grid-cols-1 gap-6">
-   <div class="card w-full p-6 bg-base-100 shadow-xl mt-6">
-      <div class="text-xl font-semibold ">Task Completed</div>
-      <div class="divider mt-2"></div>
-      <div class="h-full w-full pb-6 bg-base-100">
-   
-        <div class="overflow-x-auto">
-          <table class="table w-full" id="to-download">
-            <thead>
-               <tr>
-                  <th colspan="20"> 
-                     <strong>
-                        Total Members: {{ member_count }}
-                     </strong>
-                  </th>
-              </tr>
-              <tr>
-                    <th>Profile</th>
-                    <th >Username</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for viewMem in members_data %}
-                <tr>
-                    <td>
-                        <div class="w-10 rounded-full">
-                           
-                           <img src="{% if viewMem.member.profile_picture %}/media/{{ viewMem.member.profile_picture }}{% else %}{% static 'default-profile.png' %}{% endif %}" alt="Profile">
-                        </div>
-                     </td>
-                     <td><strong>{{ viewMem.member.username }}</strong></td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4" class="text-center">No members found</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-       </div>
-      </div>
+<div class="card w-full p-6 bg-base-100 shadow-xl mt-6">
+  <div class="text-xl font-semibold ">Task Completed</div>
+  <div class="divider mt-2"></div>
+  <div class="h-full w-full pb-6 bg-base-100">
+
+    <div class="overflow-x-auto">
+      <table class="table w-full" id="to-download">
+        <thead>
+           <tr>
+              <th colspan="20"> 
+                 <strong>
+                    Total Members: {{ member_count }}
+                 </strong>
+              </th>
+          </tr>
+          <tr>
+                <th>Profile</th>
+                <th >Username</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for viewMem in members_data %}
+            <tr>
+                <td>
+                    <div class="w-10 rounded-full">
+                       
+                       <img src="{% if viewMem.member.profile_picture %}/media/{{ viewMem.member.profile_picture }}{% else %}{% static 'default-profile.png' %}{% endif %}" alt="Profile">
+                    </div>
+                 </td>
+                 <td><strong>{{ viewMem.member.username }}</strong></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center">No members found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
    </div>
-   <div class="card w-full p-6 bg-base-100 shadow-xl mt-6">
-    <div class="flex justify-between">
-      <div class="text-xl font-semibold ">Gantt Chart</div>
-      <h1 class="text-2xl font-bold mb-4">{{ project.name }}</h1>
-    </div>
-      <div class="divider mt-2"></div>
-      <div class="h-full w-full pb-6 bg-base-100">
-        <div class="container mx-auto">
-          <div class="flex flex-row items-center justify-between">
-         
-      
-              <div class="flex flex-row justify-end gap-3">
-              <!-- Filters -->
-                  <div class="mb-4">
-                      <label for="filterStatus" class="block text-sm font-medium">Filter by Status:</label>
-                      <select id="filterStatus" class="border rounded-md p-2">
-                          <option value="all">All</option>
-                          <option class="text-gray-600" value="todo">To Do</option>
-                          <option class="text-sky-600" value="in_progress">In Progress</option>
-                          <option class="text-amber-600" value="review">Review</option>
-                          <option class="text-green-600" value="completed">Completed</option>
-                      </select>
-                  </div>
-      
-                  <div class="mb-4">
-                      <label class="block text-sm font-medium">Filter by Time:</label>
-                      <button id="filterToday" class="bg-blue-500 text-white rounded mr-2">Today</button>
-                      <button id="filterWeek" class="bg-blue-500 text-white rounded mr-2">This Week</button>
-                      <button id="filterMonth" class="bg-blue-500 text-white rounded mr-2">This Month</button>
-                      <button id="filterQuarter" class="bg-blue-500 text-white rounded">This Quarter</button>
-                  </div>
-              </div>
-          </div>
-          <!-- Gantt Chart Container -->
-          <div id="ganttChartContainer" class="bg-white p-4 rounded-lg shadow-lg mb-5"></div>
-      </div>
-            </div>
-   </div>
+  </div>
 </div>
+
+
+<div class="card w-full p-6 bg-base-100 shadow-xl mt-6">
+  <div class="flex justify-between">
+    <div class="text-xl font-semibold ">Gantt Chart</div>
+    <h1 class="text-2xl font-bold mb-4">{{ project.name }}</h1>
+  </div>
+    <div class="divider mt-2"></div>
+    <div class="h-full w-full pb-6 bg-base-100">
+      <div class="container mx-auto">
+        <div class="flex flex-row items-center justify-between">
+       
+    
+            <div class="flex flex-row justify-end gap-3">
+            <!-- Filters -->
+                <div class="mb-4">
+                    <label for="filterStatus" class="block text-sm font-medium">Filter by Status:</label>
+                    <select id="filterStatus" class="border rounded-md p-2">
+                        <option value="all">All</option>
+                        <option class="text-gray-600" value="todo">To Do</option>
+                        <option class="text-sky-600" value="in_progress">In Progress</option>
+                        <option class="text-amber-600" value="review">Review</option>
+                        <option class="text-green-600" value="completed">Completed</option>
+                    </select>
+                </div>
+    
+                <div class="mb-4">
+                    <label class="block text-sm font-medium">Filter by Time:</label>
+                    <button id="filterToday" class="bg-blue-500 text-white rounded mr-2">Today</button>
+                    <button id="filterWeek" class="bg-blue-500 text-white rounded mr-2">This Week</button>
+                    <button id="filterMonth" class="bg-blue-500 text-white rounded mr-2">This Month</button>
+                    <button id="filterQuarter" class="bg-blue-500 text-white rounded">This Quarter</button>
+                </div>
+            </div>
+        </div>
+        <!-- Gantt Chart Container -->
+        <div id="ganttChartContainer" class="bg-white p-4 rounded-lg shadow-lg mb-5"></div>
+      </div>
+        </div>
+ </div>
 
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>

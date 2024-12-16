@@ -148,105 +148,87 @@ def dashboard(request):
     project_id = request.session.get('current_project_id')
     if not project_id:
         return HttpResponseForbidden("No project selected.")
-        
+
+    # Fetch user-specific projects
     user_projects = Project.objects.filter(owner=request.user) if request.user.role == 'manager' else []
 
+    # Filter tasks for the current project
     tasks = Task.objects.filter(project_id=project_id)
-
-    priority_data = tasks.values('priority').annotate(count=Count('priority')).order_by('priority')
     total_tasks = tasks.count()
-    priority_percentages = {
-    item['priority']: (item['count'] / total_tasks * 100 if total_tasks > 0 else 0)
-    for item in priority_data
-    }
 
+    # Aggregate counts per status
+    status_totals = tasks.values('status').annotate(count=Count('id'))
     global_progress = {
         'todo': 0,
         'in_progress': 0,
         'review': 0,
         'completed': 0,
     }
+    for status_data in status_totals:
+        status = status_data['status']
+        count = status_data['count']
+        if status in global_progress:
+            global_progress[status] = count
 
-    for task in Task.objects.filter(project_id=project_id):
-        if task.status in global_progress:
-            global_progress[task.status] += 1
+    # Totals per status
+    todo_total = global_progress['todo']
+    in_progress_total = global_progress['in_progress']
+    review_total = global_progress['review']
+    completed_total = global_progress['completed']
 
-    todo_percentage = round(global_progress['todo'] / total_tasks * 100, 2) if total_tasks > 0 else 0
-    in_progress = round(global_progress['in_progress'] / total_tasks * 100, 2) if total_tasks > 0 else 0
-    to_review = round(global_progress['review'] / total_tasks * 100, 2) if total_tasks > 0 else 0
-    completeed = round(global_progress['completed'] / total_tasks * 100, 2) if total_tasks > 0 else 0
+    # Percentages for pie chart
+    def calculate_percentage(count):
+        return round(count / total_tasks * 100, 2) if total_tasks > 0 else 0
 
+    todo_percentage = calculate_percentage(todo_total)
+    in_progress_percentage = calculate_percentage(in_progress_total)
+    review_percentage = calculate_percentage(review_total)
+    completed_percentage = calculate_percentage(completed_total)
+
+    # Priority breakdown
+    priority_data = tasks.values('priority').annotate(count=Count('priority')).order_by('priority')
+    priority_percentages = {
+        item['priority']: calculate_percentage(item['count'])
+        for item in priority_data
+    }
+
+    # Data for charts
     pie_series = [
-        global_progress['todo'],
-        global_progress['in_progress'],
-        global_progress['review'],
-        global_progress['completed']
+        todo_total,
+        in_progress_total,
+        review_total,
+        completed_total,
     ]
-
     bar_labels = ['High', 'Medium', 'Low']
     bar_series = [
         priority_percentages.get(priority, 0) for priority in ['high', 'medium', 'low']
     ]
+
+    # Ensure project exists and user has access
     try:
         project = Project.objects.get(id=project_id, owner=request.user)
     except Project.DoesNotExist:
         return HttpResponseForbidden("The selected project does not exist or you do not have permission to access it.")
 
-
-
-
-    # Prepare data for Gantt chart
-    task_data = [
-        {
-            "id": task.id,
-            "name": task.name,
-            "start": task.start_date.isoformat(),
-            "end": task.end_date.isoformat(),
-            "status": task.status,
-            "priority": task.priority,
-            "description": task.description,
-        }
-        for task in tasks
-    ]
-
-    #member specific proj
-    members = CustomUser.objects.filter(role=CustomUser.MEMBER, tasks__project=project).distinct()
-    
-    # Calculate  percentages
-    
-
-    # Define progress percentages for task statuses
-    status_weights = {
-        'todo': 25,
-        'in_progress': 50,
-        'review': 75,
-        'completed': 100,
+    # Context data
+    context = {
+        'user_projects': user_projects,
+        'project': project,
+        'total_tasks': total_tasks,
+        'todo_total': todo_total,
+        'in_progress_total': in_progress_total,
+        'review_total': review_total,
+        'completed_total': completed_total,
+        'pie_series': pie_series,
+        'bar_labels': bar_labels,
+        'bar_series': bar_series,
+        'todo_percentage': todo_percentage,
+        'in_progress_percentage': in_progress_percentage,
+        'review_percentage': review_percentage,
+        'completed_percentage': completed_percentage,
     }
-    members_data = []
-    for member in members:
-        member_tasks = Task.objects.filter(project_id=project_id, assigned_members=member)
-        task_count = member_tasks.count()
-        total_progress = sum(status_weights.get(task.status, 0) for task in member_tasks)
-        average_progress = round(total_progress / task_count, 2) if task_count > 0 else 0
 
-        members_data.append({
-            'member': member,
-            'task_count': task_count,
-            'average_progress': average_progress,
-        })
-    return render(request, 'projects/dashboard.html', {'projects': user_projects, 
-                                                       'pie_series': pie_series,  
-                                                       'bar_labels': bar_labels,
-                                                       'bar_series': bar_series,
-                                                       'todo_percentage':todo_percentage,
-                                                       'in_progress': in_progress,
-                                                       'to_review': to_review,
-                                                       'project': project,
-                                                       'json_task': task_data,
-                                                       'members_data': members_data,
-                                                       'project_id': project_id, 
-                                                       'member_count': members.count(),
-                                                       'completeed':completeed})
+    return render(request, 'projects/dashboard.html', context)
 
 @login_required
 def project_list(request):
@@ -1152,6 +1134,38 @@ def reports_view(request):
     # Fetch all members and tasks
     members = CustomUser.objects.filter(role=CustomUser.MEMBER, tasks__project=project).distinct()
     tasks = Task.objects.filter(project=project)
+    
+    tasks = Task.objects.filter(project_id=project_id)
+    total_tasks = tasks.count()
+
+    # Aggregate counts per status
+    status_totals = tasks.values('status').annotate(count=Count('id'))
+    global_progress = {
+        'todo': 0,
+        'in_progress': 0,
+        'review': 0,
+        'completed': 0,
+    }
+    for status_data in status_totals:
+        status = status_data['status']
+        count = status_data['count']
+        if status in global_progress:
+            global_progress[status] = count
+
+    # Totals per status
+    todo_total = global_progress['todo']
+    in_progress_total = global_progress['in_progress']
+    review_total = global_progress['review']
+    completed_total = global_progress['completed']
+
+    # Percentages for pie chart
+    def calculate_percentage(count):
+        return round(count / total_tasks * 100, 2) if total_tasks > 0 else 0
+
+    todo_percentage = calculate_percentage(todo_total)
+    in_progress_percentage = calculate_percentage(in_progress_total)
+    review_percentage = calculate_percentage(review_total)
+    completed_percentage = calculate_percentage(completed_total)
 
     # Calculate  percentages
     total_tasks = tasks.count()
@@ -1199,6 +1213,14 @@ def reports_view(request):
 
     # Context data for the template
     context = {
+        'todo_total': todo_total,
+        'in_progress_total': in_progress_total,
+        'review_total': review_total,
+        'completed_total': completed_total,
+        'todo_percentage': todo_percentage,
+        'in_progress_percentage': in_progress_percentage,
+        'review_percentage': review_percentage,
+        'completed_percentage': completed_percentage,
         'members_data': members_data,
         'member_count': members.count(),
         'pie_series': pie_series,
