@@ -143,7 +143,7 @@
   </div>
 </dialog>
 
-<div class="card w-full p-6 bg-base-100 shadow-xl mt-2 max-h-[600px] overflow-y-auto min-h-[500px]">
+<div class="card w-full p-6 bg-base-100 shadow-xl mt-2 max-h-[600px] overflow-y-auto min-h-[300px]">
 
   <div class="flex items-center justify-between mb-4">
       <h1 class="text-2xl font-bold mb-4">{{ project.name }}</h1>
@@ -162,7 +162,7 @@
             <tr>
               <th class="flex flex-row items-center gap-3">
                 <label>
-                  <input type="checkbox" class="checkbox" />
+                    <input type="checkbox" class="checkbox select-all" />
                 </label>
                 Name
               </th>
@@ -183,7 +183,7 @@
                 data-task-id="{{ task.id }}">
               <th class="flex flex-row items-center gap-3">
                 <label>
-                  <input type="checkbox" class="checkbox" />
+                    <input type="checkbox" class="checkbox task-checkbox" />
                 </label>
                   <a href="{% url 'task_detail' task.id %}" class="p-2">
                     {{ task.name }}
@@ -323,8 +323,27 @@
         </table>
       </div>
   {% else %}
-      <p>No tasks found for this project.</p>
+      <p class="text-center">No tasks found for this project.</p>
   {% endif %}
+</div>
+
+<!-- Sticky div for status update -->
+<div id="sticky-update-bar" class="fixed flex justify-center w-7/12 bottom-0 right-32 bg-indigo-900 text-white p-4 mb-7 rounded-lg shadow border hidden">
+    <div class="flex justify-between items-center w-full px-10">
+        <div>
+            <span id="selected-count">0 tasks selected</span>
+        </div>
+        <div>
+            <select id="bulk-status-select" class="bg-gray-600 text-white py-1 px-2 mr-3 rounded">
+                <option value="">Select Status</option>
+                <option value="todo">Todo</option>
+                <option value="in_progress">In Progress</option>
+                <option value="review">Review</option>
+                <option value="completed">Completed</option>
+            </select>
+            <button id="update-status-btn" class="bg-blue-600 p-2 rounded">Update Status</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -333,6 +352,14 @@
         const deleteModal = document.getElementById('confirm_delete_modal');
         const modalDeleteButton = deleteModal.querySelector('.btn-error');
         const modalTaskName = deleteModal.querySelector('p');
+
+        const selectAllCheckbox = document.querySelector('.select-all');
+        const taskCheckboxes = document.querySelectorAll('.task-checkbox');
+        const stickyBar = document.getElementById('sticky-update-bar');
+        const selectedCountLabel = document.getElementById('selected-count');
+        const bulkStatusSelect = document.getElementById('bulk-status-select');
+        const updateStatusBtn = document.getElementById('update-status-btn');
+        let selectedTasks = [];
 
         // Function to send an update request to the server
         async function updateTaskField(taskId, field, value) {
@@ -532,7 +559,71 @@
         });
 
 
+        // Update the selected tasks array and sticky bar
+        function updateSelectedTasks() {
+            selectedTasks = [];
+            taskCheckboxes.forEach((checkbox) => {
+                if (checkbox.checked) {
+                    selectedTasks.push(checkbox.closest('tr').dataset.taskId);
+                }
+            });
+            selectedCountLabel.textContent = `${selectedTasks.length} task(s) selected`;
 
+            // Show or hide the sticky bar based on selection
+            if (selectedTasks.length > 0) {
+                stickyBar.classList.remove('hidden');
+            } else {
+                stickyBar.classList.add('hidden');
+            }
+        }
+
+        // Handle "Select All" checkbox behavior
+        selectAllCheckbox.addEventListener('change', () => {
+            taskCheckboxes.forEach((checkbox) => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+            updateSelectedTasks();
+        });
+
+        // Handle individual task checkbox selection
+        taskCheckboxes.forEach((checkbox) => {
+            checkbox.addEventListener('change', () => {
+                updateSelectedTasks();
+            });
+        });
+
+        // Handle bulk status update
+        updateStatusBtn.addEventListener('click', async () => {
+            const newStatus = bulkStatusSelect.value;
+            if (selectedTasks.length > 0 && newStatus) {
+                // Send a request to update all selected tasks
+                try {
+                    const response = await fetch("{% url 'update_bulk_task_status' %}", {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            task_ids: selectedTasks,
+                            status: newStatus,
+                        }),
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        location.reload();
+                    } else {
+                        alert('Failed to update tasks');
+                    }
+                } catch (error) {
+                    alert('An error occurred while updating tasks');
+                }
+            }
+        });
+
+        // Initialize the selected tasks
+        updateSelectedTasks();
 
     });
 

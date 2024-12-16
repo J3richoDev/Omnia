@@ -177,6 +177,7 @@ def upload_photo(request):
         print("MEDIA_ROOT:", settings.MEDIA_ROOT)
         print("Saved file path:", user.profile_picture.path)
         print("File URL:", user.profile_picture.url)
+        messages.success(request,"Profile Picture changed successfully!",extra_tags="alert-success")
         return JsonResponse({'new_photo_url': user.profile_picture.url})
     else:
         return JsonResponse({'error': 'Invalid request'}, status=400)

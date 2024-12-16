@@ -8,10 +8,6 @@ class FirstTimeLoginMiddleware:
 
     def __call__(self, request):
         if request.user.is_authenticated:
-            if request.user.role == 'member' and not request.user.first_name:
-                if not request.path.startswith('/users/my-profile/'):
-                    messages.error(request, "Complete Profile to continue.", extra_tags='alert-info')
-                    return redirect('my_profile')
             if request.user.role == 'manager' and request.user.is_first_login:
                 if not request.path.startswith('/projects/setup/'):
                     return redirect('initial_setup')

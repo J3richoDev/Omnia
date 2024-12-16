@@ -1,6 +1,7 @@
 {% extends 'project_base.html' %}
 {% load crispy_forms_tags %}
 {% load widget_tweaks %}
+{% load custom_filters %}
 
 {% block title %}Task Detail: {{ task.name }}{% endblock %}
 {% block heading %}Member Task Detail{% endblock %}
@@ -36,8 +37,8 @@
                     <div class="grid grid-cols-3 gap-3">
                         {% for file in files %}
                             <div class="card bg-base-100 border shadow p-4 rounded mb-2">
-                                {% if file.file.name|slice:"-4:" == ".png" %}
-                                <div class="w-full h-full">
+                                {% if file.file.name|is_image %}
+                                <div class="w-full max-h-[100px]">
                                     <img src="{{ file.file.url }}" alt="Image" class="w-full h-full" />
                                 </div>
                                 {% else %}
