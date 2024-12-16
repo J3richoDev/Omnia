@@ -145,14 +145,19 @@ def add_member(request):
 
 @login_required
 def dashboard(request):
+    project_id = request.session.get('current_project_id')
+    if not project_id:
+        return HttpResponseForbidden("No project selected.")
+        
     user_projects = Project.objects.filter(owner=request.user) if request.user.role == 'manager' else []
-    tasks = Task.objects.all()
 
-    priority_data = Task.objects.values('priority').annotate(count=Count('priority')).order_by('priority')
+    tasks = Task.objects.filter(project_id=project_id)
+
+    priority_data = tasks.values('priority').annotate(count=Count('priority')).order_by('priority')
     total_tasks = tasks.count()
     priority_percentages = {
-        item['priority']: (item['count'] / total_tasks * 100 if total_tasks > 0 else 0)
-        for item in priority_data
+    item['priority']: (item['count'] / total_tasks * 100 if total_tasks > 0 else 0)
+    for item in priority_data
     }
 
     global_progress = {
@@ -162,14 +167,14 @@ def dashboard(request):
         'completed': 0,
     }
 
-    for task in Task.objects.all():
+    for task in Task.objects.filter(project_id=project_id):
         if task.status in global_progress:
             global_progress[task.status] += 1
 
-    todo_percentage = round(global_progress['todo'] / total_tasks * 100,2) if total_tasks > 0 else 0
-    in_progress = round(global_progress['in_progress'] / total_tasks * 100,2) if total_tasks > 0 else 0
-    to_review = round(global_progress['review'] / total_tasks * 100,2) if total_tasks > 0 else 0
-    completeed = round(global_progress['completed'] / total_tasks * 100,2) if total_tasks > 0 else 0
+    todo_percentage = round(global_progress['todo'] / total_tasks * 100, 2) if total_tasks > 0 else 0
+    in_progress = round(global_progress['in_progress'] / total_tasks * 100, 2) if total_tasks > 0 else 0
+    to_review = round(global_progress['review'] / total_tasks * 100, 2) if total_tasks > 0 else 0
+    completeed = round(global_progress['completed'] / total_tasks * 100, 2) if total_tasks > 0 else 0
 
     pie_series = [
         global_progress['todo'],
@@ -177,19 +182,18 @@ def dashboard(request):
         global_progress['review'],
         global_progress['completed']
     ]
+
     bar_labels = ['High', 'Medium', 'Low']
     bar_series = [
-        priority_percentages.get('high', 0),
-        priority_percentages.get('medium', 0),
-        priority_percentages.get('low', 0),
+        priority_percentages.get(priority, 0) for priority in ['high', 'medium', 'low']
     ]
+    try:
+        project = Project.objects.get(id=project_id, owner=request.user)
+    except Project.DoesNotExist:
+        return HttpResponseForbidden("The selected project does not exist or you do not have permission to access it.")
 
-    project_id = request.session.get('current_project_id')
-    if not project_id:
-        return HttpResponseForbidden("No project selected.")
 
-    project = Project.objects.get(id=project_id, owner=request.user)
-    tasks = Task.objects.filter(project=project)
+
 
     # Prepare data for Gantt chart
     task_data = [
@@ -205,8 +209,8 @@ def dashboard(request):
         for task in tasks
     ]
 
- # Fetch all members and tasks
-    members = CustomUser.objects.filter(role=CustomUser.MEMBER)
+    #member specific proj
+    members = CustomUser.objects.filter(role=CustomUser.MEMBER, tasks__project=project).distinct()
     
     # Calculate  percentages
     
@@ -220,7 +224,7 @@ def dashboard(request):
     }
     members_data = []
     for member in members:
-        member_tasks = tasks.filter(assigned_members=member)
+        member_tasks = Task.objects.filter(project_id=project_id, assigned_members=member)
         task_count = member_tasks.count()
         total_progress = sum(status_weights.get(task.status, 0) for task in member_tasks)
         average_progress = round(total_progress / task_count, 2) if task_count > 0 else 0
@@ -240,6 +244,7 @@ def dashboard(request):
                                                        'project': project,
                                                        'json_task': task_data,
                                                        'members_data': members_data,
+                                                       'project_id': project_id, 
                                                        'member_count': members.count(),
                                                        'completeed':completeed})
 
@@ -976,15 +981,28 @@ def project_members(request):
     project_id = request.session.get('current_project_id')
     if not project_id:
         return HttpResponseForbidden("No project selected.")
-
+    
     project = Project.objects.get(id=project_id, owner=request.user)
-    return render(request, 'projects/members.html', {'project': project})
+    members = CustomUser.objects.filter(role=CustomUser.MEMBER, tasks__project=project).distinct()
+    
+    project = Project.objects.get(id=project_id, owner=request.user)
+    return render(request, 'projects/members.html', {'project': project, 'members': members})
 
 @login_required
 def reports_view(request):
+    project_id = request.session.get('current_project_id')
+    if not project_id:
+        return HttpResponseForbidden("No project selected.")
+
+
+    try:
+        project = Project.objects.get(id=project_id, owner=request.user)
+    except Project.DoesNotExist:
+        return HttpResponseForbidden("You do not have access to this project.")
+
     # Fetch all members and tasks
-    members = CustomUser.objects.filter(role=CustomUser.MEMBER)
-    tasks = Task.objects.all()
+    members = CustomUser.objects.filter(role=CustomUser.MEMBER, tasks__project=project).distinct()
+    tasks = Task.objects.filter(project=project)
 
     # Calculate  percentages
     total_tasks = tasks.count()
@@ -1040,23 +1058,24 @@ def reports_view(request):
     }
 
     return render(request, 'projects/reports.html', context)
-
-
 @login_required
 def venue_pdf(request):
+    project_id = request.session.get('current_project_id')
+    if not project_id:
+        return HttpResponseForbidden("No project selected.")
+
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=letter)
     header = ["Profile", "Username", "Member Progress", "Tasks", "Joined On"]
     members = CustomUser.objects.filter(role=CustomUser.MEMBER)
 
-    table_data = [header]  
-
+    table_data = [header]
 
     for member in members:
-        tasks = Task.objects.filter(assigned_members=member)
+        tasks = Task.objects.filter(project_id=project_id, assigned_members=member)
         task_count = tasks.count()
         total_progress = 0
-        
+
         for task in tasks:
             if task.status == 'todo':
                 total_progress += 25
@@ -1066,17 +1085,17 @@ def venue_pdf(request):
                 total_progress += 75
             elif task.status == 'completed':
                 total_progress += 100
-        
+
         average_progress = total_progress / task_count if task_count > 0 else 0
         profile_image = member.profile_picture if member.profile_picture else 'default-profile.png'
 
         # Add data row
         row = [
             f"{profile_image}", 
-            member.username,                                        
-            f"{average_progress:.1f}%",                                    
-            f"{task_count} tasks",                                        
-            member.date_joined.strftime('%d %b %Y')                  
+            member.username,
+            f"{average_progress:.1f}%",
+            f"{task_count} tasks",
+            member.date_joined.strftime('%d %b %Y')
         ]
         table_data.append(row)
 
@@ -1085,20 +1104,19 @@ def venue_pdf(request):
     # Styling the table
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.lightseagreen),           # Header background color
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),                    # Header text color
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),                           # Center alignment for all cells
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),                   # Header text color
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),                          # Center alignment for all cells
         ('BOTTOMPADDING', (0, 0), (-1, 0), 12),                          # Padding for header row
-        ('BORDER', (0, 0), (-1, -1), 1, colors.black),                   # Table border
-        ('BACKGROUND', (0, 1), (-1, -1), colors.white),                  # Body background color
+        ('BORDER', (0, 0), (-1, -1), 1, colors.black),                  # Table border
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),                 # Body background color
         ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
     ]))
     
     styles = getSampleStyleSheet()
     if 'Title' not in styles:
         styles.add(ParagraphStyle(name='Title', fontSize=16, alignment=1))
-    # Include an empty space for the title and the table below it
-    elements = [Paragraph("Omnia - Project Management", styles["Title"]), table]
 
+    elements = [Paragraph("Omnia - Project Management", styles["Title"]), table]
     footer = Paragraph("Generated by Project Manager", styles["Normal"])
     elements.append(Spacer(1, 470))
     elements.append(footer)
