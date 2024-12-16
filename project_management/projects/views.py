@@ -166,10 +166,10 @@ def dashboard(request):
         if task.status in global_progress:
             global_progress[task.status] += 1
 
-    todo_percentage = (global_progress['todo'] / total_tasks * 100) if total_tasks > 0 else 0
-    in_progress = (global_progress['in_progress'] / total_tasks * 100) if total_tasks > 0 else 0
-    to_review = (global_progress['review'] / total_tasks * 100) if total_tasks > 0 else 0
-    completeed = (global_progress['completed'] / total_tasks * 100) if total_tasks > 0 else 0
+    todo_percentage = round(global_progress['todo'] / total_tasks * 100,2) if total_tasks > 0 else 0
+    in_progress = round(global_progress['in_progress'] / total_tasks * 100,2) if total_tasks > 0 else 0
+    to_review = round(global_progress['review'] / total_tasks * 100,2) if total_tasks > 0 else 0
+    completeed = round(global_progress['completed'] / total_tasks * 100,2) if total_tasks > 0 else 0
 
     pie_series = [
         global_progress['todo'],
