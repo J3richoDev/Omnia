@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, FileResponse, HttpResponse, HttpResponseRedirect
 from django.utils.timezone import now
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -15,6 +15,15 @@ from django.apps import apps
 from .forms import MemberCreationForm
 from django.db import IntegrityError
 from users.models import CustomUser
+from django.db.models import Count
+import io
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
+from reportlab.lib.pagesizes import letter
+from django.http import FileResponse
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 
 @login_required
@@ -136,8 +145,108 @@ def add_member(request):
 
 @login_required
 def dashboard(request):
+    project_id = request.session.get('current_project_id')
+    if not project_id:
+        return HttpResponseForbidden("No project selected.")
+        
     user_projects = Project.objects.filter(owner=request.user) if request.user.role == 'manager' else []
-    return render(request, 'projects/dashboard.html', {'projects': user_projects})
+
+    tasks = Task.objects.filter(project_id=project_id)
+
+    priority_data = tasks.values('priority').annotate(count=Count('priority')).order_by('priority')
+    total_tasks = tasks.count()
+    priority_percentages = {
+    item['priority']: (item['count'] / total_tasks * 100 if total_tasks > 0 else 0)
+    for item in priority_data
+    }
+
+    global_progress = {
+        'todo': 0,
+        'in_progress': 0,
+        'review': 0,
+        'completed': 0,
+    }
+
+    for task in Task.objects.filter(project_id=project_id):
+        if task.status in global_progress:
+            global_progress[task.status] += 1
+
+    todo_percentage = round(global_progress['todo'] / total_tasks * 100, 2) if total_tasks > 0 else 0
+    in_progress = round(global_progress['in_progress'] / total_tasks * 100, 2) if total_tasks > 0 else 0
+    to_review = round(global_progress['review'] / total_tasks * 100, 2) if total_tasks > 0 else 0
+    completeed = round(global_progress['completed'] / total_tasks * 100, 2) if total_tasks > 0 else 0
+
+    pie_series = [
+        global_progress['todo'],
+        global_progress['in_progress'],
+        global_progress['review'],
+        global_progress['completed']
+    ]
+
+    bar_labels = ['High', 'Medium', 'Low']
+    bar_series = [
+        priority_percentages.get(priority, 0) for priority in ['high', 'medium', 'low']
+    ]
+    try:
+        project = Project.objects.get(id=project_id, owner=request.user)
+    except Project.DoesNotExist:
+        return HttpResponseForbidden("The selected project does not exist or you do not have permission to access it.")
+
+
+
+
+    # Prepare data for Gantt chart
+    task_data = [
+        {
+            "id": task.id,
+            "name": task.name,
+            "start": task.start_date.isoformat(),
+            "end": task.end_date.isoformat(),
+            "status": task.status,
+            "priority": task.priority,
+            "description": task.description,
+        }
+        for task in tasks
+    ]
+
+    #member specific proj
+    members = CustomUser.objects.filter(role=CustomUser.MEMBER, tasks__project=project).distinct()
+    
+    # Calculate  percentages
+    
+
+    # Define progress percentages for task statuses
+    status_weights = {
+        'todo': 25,
+        'in_progress': 50,
+        'review': 75,
+        'completed': 100,
+    }
+    members_data = []
+    for member in members:
+        member_tasks = Task.objects.filter(project_id=project_id, assigned_members=member)
+        task_count = member_tasks.count()
+        total_progress = sum(status_weights.get(task.status, 0) for task in member_tasks)
+        average_progress = round(total_progress / task_count, 2) if task_count > 0 else 0
+
+        members_data.append({
+            'member': member,
+            'task_count': task_count,
+            'average_progress': average_progress,
+        })
+    return render(request, 'projects/dashboard.html', {'projects': user_projects, 
+                                                       'pie_series': pie_series,  
+                                                       'bar_labels': bar_labels,
+                                                       'bar_series': bar_series,
+                                                       'todo_percentage':todo_percentage,
+                                                       'in_progress': in_progress,
+                                                       'to_review': to_review,
+                                                       'project': project,
+                                                       'json_task': task_data,
+                                                       'members_data': members_data,
+                                                       'project_id': project_id, 
+                                                       'member_count': members.count(),
+                                                       'completeed':completeed})
 
 @login_required
 def project_list(request):
@@ -994,9 +1103,12 @@ def project_members(request):
     project_id = request.session.get('current_project_id')
     if not project_id:
         return HttpResponseForbidden("No project selected.")
-
+    
     project = Project.objects.get(id=project_id, owner=request.user)
-    return render(request, 'projects/members.html', {'project': project})
+    members = CustomUser.objects.filter(role=CustomUser.MEMBER, tasks__project=project).distinct()
+    
+    project = Project.objects.get(id=project_id, owner=request.user)
+    return render(request, 'projects/members.html', {'project': project, 'members': members})
 
 @login_required
 def notifications(request):
@@ -1027,10 +1139,139 @@ def read_and_redirect(request, notification_id):
 
 @login_required
 def reports_view(request):
-    members = CustomUser.objects.filter(role=CustomUser.MEMBER)
-    context = {
-        'members': members,
-        'member_count': members.count(), 
-    }
-    return render(request, 'projects/reports.html', context)
+    project_id = request.session.get('current_project_id')
+    if not project_id:
+        return HttpResponseForbidden("No project selected.")
 
+
+    try:
+        project = Project.objects.get(id=project_id, owner=request.user)
+    except Project.DoesNotExist:
+        return HttpResponseForbidden("You do not have access to this project.")
+
+    # Fetch all members and tasks
+    members = CustomUser.objects.filter(role=CustomUser.MEMBER, tasks__project=project).distinct()
+    tasks = Task.objects.filter(project=project)
+
+    # Calculate  percentages
+    total_tasks = tasks.count()
+    priority_data = tasks.values('priority').annotate(count=Count('priority')).order_by('priority')
+    priority_percentages = {
+        item['priority']: (item['count'] / total_tasks * 100) if total_tasks > 0 else 0
+        for item in priority_data
+    }
+
+    # Define progress percentages for task statuses
+    status_weights = {
+        'todo': 25,
+        'in_progress': 50,
+        'review': 75,
+        'completed': 100,
+    }
+
+    # Calculate task progress for each member
+    members_data = []
+    for member in members:
+        member_tasks = tasks.filter(assigned_members=member)
+        task_count = member_tasks.count()
+        total_progress = sum(status_weights.get(task.status, 0) for task in member_tasks)
+        average_progress = round(total_progress / task_count, 2) if task_count > 0 else 0
+
+        members_data.append({
+            'member': member,
+            'task_count': task_count,
+            'average_progress': average_progress,
+        })
+
+    
+    # Calculate global progress for pie chart
+    global_progress = tasks.values('status').annotate(count=Count('status'))
+    pie_series = [
+        next((item['count'] for item in global_progress if item['status'] == status), 0)
+        for status in ['todo', 'in_progress', 'review', 'completed']
+    ]
+
+    # Bar chart data
+    bar_labels = ['High', 'Medium', 'Low']
+    bar_series = [
+        priority_percentages.get(priority, 0) for priority in ['high', 'medium', 'low']
+    ]
+
+    # Context data for the template
+    context = {
+        'members_data': members_data,
+        'member_count': members.count(),
+        'pie_series': pie_series,
+        'bar_labels': bar_labels,
+        'bar_series': bar_series,
+    }
+
+    return render(request, 'projects/reports.html', context)
+@login_required
+def venue_pdf(request):
+    project_id = request.session.get('current_project_id')
+    if not project_id:
+        return HttpResponseForbidden("No project selected.")
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=letter)
+    header = ["Profile", "Username", "Member Progress", "Tasks", "Joined On"]
+    members = CustomUser.objects.filter(role=CustomUser.MEMBER)
+
+    table_data = [header]
+
+    for member in members:
+        tasks = Task.objects.filter(project_id=project_id, assigned_members=member)
+        task_count = tasks.count()
+        total_progress = 0
+
+        for task in tasks:
+            if task.status == 'todo':
+                total_progress += 25
+            elif task.status == 'in_progress':
+                total_progress += 50
+            elif task.status == 'review':
+                total_progress += 75
+            elif task.status == 'completed':
+                total_progress += 100
+
+        average_progress = total_progress / task_count if task_count > 0 else 0
+        profile_image = member.profile_picture if member.profile_picture else 'default-profile.png'
+
+        # Add data row
+        row = [
+            f"{profile_image}", 
+            member.username,
+            f"{average_progress:.1f}%",
+            f"{task_count} tasks",
+            member.date_joined.strftime('%d %b %Y')
+        ]
+        table_data.append(row)
+
+    table = Table(table_data)
+
+    # Styling the table
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.lightseagreen),           # Header background color
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),                   # Header text color
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),                          # Center alignment for all cells
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),                          # Padding for header row
+        ('BORDER', (0, 0), (-1, -1), 1, colors.black),                  # Table border
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),                 # Body background color
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+    ]))
+    
+    styles = getSampleStyleSheet()
+    if 'Title' not in styles:
+        styles.add(ParagraphStyle(name='Title', fontSize=16, alignment=1))
+
+    elements = [Paragraph("Omnia - Project Management", styles["Title"]), table]
+    footer = Paragraph("Generated by Project Manager", styles["Normal"])
+    elements.append(Spacer(1, 470))
+    elements.append(footer)
+
+    doc.build(elements)
+
+    buf.seek(0)
+
+    return FileResponse(buf, as_attachment=True, filename='venue.pdf')

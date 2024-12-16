@@ -1,13 +1,32 @@
 {% extends 'project_base.html' %}
 {% load static %}
-{% block title %}Dashboard{% endblock %}
-{% block heading %}Dashboard{% endblock %}
+{% block title %}Reports{% endblock %}
+{% block heading %}Reports{% endblock %}
 
 {% block content %}
-<div class="flex justify-between mb-4">
-    <h1 class="text-2xl font-bold mb-4">Welcome, {{ request.user.first_name }}!</h1>
-</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/dist/dom-to-image.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/src/dom-to-image.min.js"></script>
 
+<style>
+   .progress-bar {
+       width: 100%;
+       background-color: #f3f3f3;
+       border: 1px solid #ccc;
+       border-radius: 4px;
+       overflow: hidden;
+       margin-bottom: 10px;
+   }
+   .progress-bar-fill {
+       height: 25px;
+       background-color: #4CAF50;
+       text-align: center;
+       color: white;
+       line-height: 25px;
+   }
+</style>
 <div class="grid lg:grid-cols-4 mt-2 md:grid-cols-2 grid-cols-1 gap-6">
    <div class="stats shadow">
       <div class="stat">
@@ -62,53 +81,83 @@
 
 <div class="grid lg:grid-cols-2 mt-4 grid-cols-1 gap-6">
    <div class="card w-full p-6 bg-base-100 shadow-xl mt-6">
-      <div class="text-xl font-semibold ">Task Completed</div>
+      <div class="text-xl font-semibold ">Project Progress</div>
       <div class="divider mt-2"></div>
-      <div class="h-full w-full pb-6 bg-base-100">
-         <div id="LineChartContainer" height="211" width="422" style="display: block; box-sizing: border-box; height: 211px; width: 422px;"></div>
-      </div>
+      <div class="h-full w-full bg-base-100">
+         <div id="PieChartContainer" height="422" width="422" style="display: block; box-sizing: border-box; height: 422px; width: 422px;"></div>
+         <!--<ul>
+               {% for data in members_data %}
+                  <li>
+                     <strong>{{ data.member.username }}</strong> 
+                     <div class="progress-bar">
+                           <div class="progress-bar-fill" style="width: {{ data.average_progress }}%">
+                              {{ data.average_progress }}%
+                           </div>
+                  </li>
+               {% endfor %}
+         </ul>-->
+            </div>
    </div>
    <div class="card w-full p-6 bg-base-100 shadow-xl mt-6">
-      <div class="text-xl font-semibold ">Di ko rin alam</div>
+      <div class="text-xl font-semibold ">Task Priority</div>
       <div class="divider mt-2"></div>
       <div class="h-full w-full pb-6 bg-base-100">
-         <div id="BarChartContainer" height="211" width="422" style="display: block; box-sizing: border-box; height: 211px; width: 422px;"></div>
+         <canvas id="priorityBarChart"></canvas>
       </div>
    </div>
 </div>
    
 
-   <div class="card w-full p-6 bg-base-100 shadow-xl mt-6">
-      <div class="text-xl font-semibold ">Task to be done</div>
+   <div class="card w-full p-6 bg-base-100 shadow-xl mt-6 mb-5">
+      <div class="flex justify-between items-center">
+         <div class="text-xl font-semibold">Task to be done</div>
+         <div class="flex space-x-2">
+            <a href="{% url 'venue_pdf' %}" class="btn btn-outline btn-sm">Download PDF</a>
+            <button id="download-svg" class="btn btn-outline btn-sm">Download SVG</button>
+            <button id="download-csv" class="btn btn-outline btn-sm">Download CSV</button>
+         </div>
+     </div>
+     
       <div class="divider mt-2"></div>
       <div class="h-full w-full pb-6 bg-base-100">
          <div class="overflow-x-auto">
-            <table class="table w-full">
+         <div class="table-container">
+            <table class="table w-full" id="to-download">
                   <thead>
                      <tr>
-                        <th colspan="10">Total Members: {{ member_count }}</th>
+                        <th colspan="20"> 
+                           <strong>
+                              Total Members: {{ member_count }}
+                           </strong>
+                        </th>
                     </tr>
                     <tr>
                           <th>Profile</th>
-                          <th>Name</th>
-                          <th>Email</th>
-                          <th>Role</th>
+                          <th >Username</th>
+                          <th><div class="me-12">Member Progress</div></th>
+                          <th><div class="ms-10">Tasks</div></th>
                           <th>Joined On</th>
                       </tr>
                   </thead>
                   <tbody>
-                      {% for member in members %}
+                      {% for viewMem in members_data %}
                       <tr>
                           <td>
                               <div class="w-10 rounded-full">
                                  
-                                 <img src="{% if member.profile_picture %}/media/{{ member.profile_picture }}{% else %}{% static 'default-profile.png' %}{% endif %}" alt="Profile">
+                                 <img src="{% if viewMem.member.profile_picture %}/media/{{ viewMem.member.profile_picture }}{% else %}{% static 'default-profile.png' %}{% endif %}" alt="Profile">
                               </div>
-                          </td>
-                          <td>{{ member.username }}</td>
-                          <td>{{ member.email }}</td>
-                          <td class="badge badge-outline mt-4">{{ member.get_role_display }}</td>
-                          <td>{{ member.date_joined|date:"d M Y" }}</td>
+                           </td>
+                           <td><strong>{{ viewMem.member.username }}</strong></td>
+                           <td>
+                              <div class="progress-bar">
+                                 <div class="progress-bar-fill me-5" style="width: {{ viewMem.average_progress }}%;">
+                                    {{ viewMem.average_progress }}%
+                                 </div>
+                              </div>
+                           </td>
+                          <td class="badge badge-outline mt-4 ms-10 px-8">{{ viewMem.task_count }} tasks</td>
+                          <td>{{ viewMem.member.date_joined|date:"d M Y" }}</td>
                       </tr>
                       {% empty %}
                       <tr>
@@ -118,10 +167,132 @@
                   </tbody>
               </table>
          </div>
+         </div>
       </div>
       
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+<script>
+   var pieSeriesData = {{ pie_series|safe }};
+
+   var pie_options = {
+        series: pieSeriesData, // Use the data from Django here
+        chart: {
+            type: 'donut',
+        },
+        labels: ['To Do', 'In Progress', 'Review', 'Completed'], // Ensure labels match statuses
+        responsive: [{
+            breakpoint: 480,
+            options: {
+                chart: {
+                    width: 200
+                },
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }]
+    };
+
+    const PieChart = new ApexCharts(
+        document.querySelector("#PieChartContainer"),
+        pie_options
+    );
+
+    PieChart.render();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+        var ctxBar = document.getElementById('priorityBarChart').getContext('2d');
+        var barLabels = {{ bar_labels|safe }}; // Priority labels: High, Medium, Low
+        var barData = {{ bar_series|safe }};   // Priority percentages
+
+        var barChart = new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: barLabels,
+                datasets: [{
+                    label: 'Task Priority (%)',
+                    data: barData,
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+                    borderColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                return tooltipItem.raw.toFixed(2) + '%';
+                            }
+                        }
+                    },
+                    datalabels: {
+                        display: true,
+                        color: '#000',
+                        align: 'end',
+                        anchor: 'end',
+                        formatter: function(value) {
+                            return value.toFixed(2) + '%';
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+</script>
+
+<script>
+   document.getElementById("download-csv").addEventListener("click", function () {
+      const rows = document.querySelectorAll("table tr");
+      let csvContent = "";
+    
+   rows.forEach(row => {
+        const cells = row.querySelectorAll("th, td");
+        const rowContent = Array.from(cells).map(cell => `"${cell.innerText.trim()}"`).join(",");
+        csvContent += rowContent + "\n";
+   });
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "task-to-be-done.csv";
+    link.click();
+   });
+
+      
+
+      // Function to download SVG
+      document.getElementById('download-svg').addEventListener('click', function () {
+         const tableContainer = document.querySelector('#to-download');
+         const svg = `
+               <svg xmlns="http://www.w3.org/2000/svg" width="${tableContainer.offsetWidth}" height="${tableContainer.offsetHeight}">
+                  <foreignObject width="100%" height="100%">
+                     ${new XMLSerializer().serializeToString(tableContainer)}
+                  </foreignObject>
+               </svg>`;
+         
+         const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+         const link = document.createElement('a');
+         link.download = 'table.svg';
+         link.href = URL.createObjectURL(svgBlob);
+         link.click();
+      });
+
+</script>
 
 
 {% endblock %}

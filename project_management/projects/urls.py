@@ -50,9 +50,11 @@ urlpatterns = [
 
     path('gantt/', views.gantt_chart, name='gantt_chart'),
     path('reports/', views.reports_view, name='reports'),
-
+  
     path('notifications/', views.notifications, name='notifications'),
     path('notifications/mark-all-read/', views.mark_all_as_read, name='mark_all_as_read'),
     path('notifications/read/<int:notification_id>/', views.read_and_redirect,name='read_and_redirect'),
+
+    path('venue_pdf', views.venue_pdf, name='venue_pdf'),
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
