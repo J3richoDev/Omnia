@@ -52,6 +52,7 @@ urlpatterns = [
     path('reports/', views.reports_view, name='reports'),
     path('users/', include('users.urls')),
 
+    path('venue_pdf', views.venue_pdf, name='venue_pdf')
 
 
     

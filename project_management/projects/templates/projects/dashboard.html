@@ -17,7 +17,7 @@
             </svg>
          </div>
          <div class="stat-title font-bold text-xl night:text-slate-300">Todo</div>
-         <div class="stat-value night:text-slate-300 text-primary">34.7k</div>
+         <div class="stat-value night:text-slate-300 text-primary">{{todo_percentage}}%</div>
          <div class="stat-desc  font-bold text-green-700 night:text-green-300">↗︎ 2300 (22%)</div>
       </div>
    </div>
@@ -29,7 +29,7 @@
             </svg>
          </div>
          <div class="stat-title font-bold text-xl night:text-slate-300">In Progress</div>
-         <div class="stat-value night:text-slate-300 text-primary">$34,545</div>
+         <div class="stat-value night:text-slate-300 text-primary">{{in_progress}}%</div>
          <div class="stat-desc  ">Current month</div>
       </div>
    </div>
@@ -41,7 +41,7 @@
             </svg>
          </div>
          <div class="stat-title font-bold text-xl night:text-slate-300">Under Review</div>
-         <div class="stat-value night:text-slate-300 text-primary">450</div>
+         <div class="stat-value night:text-slate-300 text-primary">{{to_review}}%</div>
          <div class="stat-desc  ">50 in hot leads</div>
       </div>
    </div>
@@ -53,7 +53,7 @@
             </svg>
          </div>
          <div class="stat-title font-bold text-xl night:text-slate-300">Completed</div>
-         <div class="stat-value night:text-slate-300 text-primary">5.6k</div>
+         <div class="stat-value night:text-slate-300 text-primary">{{completeed}}%</div>
          <div class="stat-desc  font-bold text-rose-500 night:text-red-400">↙ 300 (18%)</div>
       </div>
    </div>
@@ -64,57 +64,14 @@
       <div class="text-xl font-semibold ">Task to be done</div>
       <div class="divider mt-2"></div>
       <div class="h-full w-full pb-6 bg-base-100">
-         <div class="overflow-x-auto">
-            <table class="table w-full">
-               <thead>
-                  <tr>
-                     <th></th>
-                     <th class="normal-case">Source</th>
-                     <th class="normal-case">No of Users</th>
-                     <th class="normal-case">Conversion</th>
-                  </tr>
-               </thead>
-               <tbody>
-                  <tr>
-                     <th>1</th>
-                     <td>Facebook Ads</td>
-                     <td>26,345</td>
-                     <td>10.2%</td>
-                  </tr>
-                  <tr>
-                     <th>2</th>
-                     <td>Google Ads</td>
-                     <td>21,341</td>
-                     <td>11.7%</td>
-                  </tr>
-                  <tr>
-                     <th>3</th>
-                     <td>Instagram Ads</td>
-                     <td>34,379</td>
-                     <td>12.4%</td>
-                  </tr>
-                  <tr>
-                     <th>4</th>
-                     <td>Affiliates</td>
-                     <td>12,359</td>
-                     <td>20.9%</td>
-                  </tr>
-                  <tr>
-                     <th>5</th>
-                     <td>Organic</td>
-                     <td>10,345</td>
-                     <td>10.3%</td>
-                  </tr>
-               </tbody>
-            </table>
-         </div>
+        <canvas id="priorityBarChart"></canvas>
       </div>
    </div>
    <div class="card w-full p-6 bg-base-100 shadow-xl mt-6">
       <div class="text-xl font-semibold ">Project Progress</div>
       <div class="divider mt-2"></div>
       <div class="h-full w-full pb-6 bg-base-100">
-         <div id="PieChartContainer" height="422" width="422" style="display: block; box-sizing: border-box; height: 422px; width: 422px;"></div>
+        <div id="PieChartContainer" height="422" width="422" style="display: block; box-sizing: border-box; height: 422px; width: 422px;"></div>
       </div>
    </div>
 </div>
@@ -124,7 +81,51 @@
       <div class="text-xl font-semibold ">Task Completed</div>
       <div class="divider mt-2"></div>
       <div class="h-full w-full pb-6 bg-base-100">
-         <div id="LineChartContainer" height="211" width="422" style="display: block; box-sizing: border-box; height: 211px; width: 422px;"></div>
+   
+        <div class="overflow-x-auto">
+          <table class="table w-full">
+             <thead>
+                <tr>
+                   <th></th>
+                   <th class="normal-case">Source</th>
+                   <th class="normal-case">No of Users</th>
+                   <th class="normal-case">Conversion</th>
+                </tr>
+             </thead>
+             <tbody>
+                <tr>
+                   <th>1</th>
+                   <td>Facebook Ads</td>
+                   <td>26,345</td>
+                   <td>10.2%</td>
+                </tr>
+                <tr>
+                   <th>2</th>
+                   <td>Google Ads</td>
+                   <td>21,341</td>
+                   <td>11.7%</td>
+                </tr>
+                <tr>
+                   <th>3</th>
+                   <td>Instagram Ads</td>
+                   <td>34,379</td>
+                   <td>12.4%</td>
+                </tr>
+                <tr>
+                   <th>4</th>
+                   <td>Affiliates</td>
+                   <td>12,359</td>
+                   <td>20.9%</td>
+                </tr>
+                <tr>
+                   <th>5</th>
+                   <td>Organic</td>
+                   <td>10,345</td>
+                   <td>10.3%</td>
+                </tr>
+             </tbody>
+          </table>
+       </div>
       </div>
    </div>
    <div class="card w-full p-6 bg-base-100 shadow-xl mt-6">
@@ -139,27 +140,71 @@
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-
-        var pie_options = {
-          series: [44, 55, 41, 17, 15],
+        var bar_options = {
+          series: [{
+          name: 'Net Profit',
+          data: [44, 55, 57, 56, 61, 58, 63, 60, 66]
+        }, {
+          name: 'Revenue',
+          data: [76, 85, 101, 98, 87, 105, 91, 114, 94]
+        }, {
+          name: 'Free Cash Flow',
+          data: [35, 41, 36, 26, 45, 48, 52, 53, 41]
+        }],
           chart: {
-          type: 'donut',
+          type: 'bar',
+          height: 350
         },
-        responsive: [{
-          breakpoint: 480,
-          options: {
-            chart: {
-              width: 200
-            },
-            legend: {
-              position: 'bottom'
+        plotOptions: {
+          bar: {
+            horizontal: false,
+            columnWidth: '55%',
+            borderRadius: 5,
+            borderRadiusApplication: 'end'
+          },
+        },
+        dataLabels: {
+          enabled: false
+        },
+        stroke: {
+          show: true,
+          width: 2,
+          colors: ['transparent']
+        },
+        xaxis: {
+          categories: ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+        },
+        yaxis: {
+          title: {
+            text: '$ (thousands)'
+          }
+        },
+        fill: {
+          opacity: 1
+        },
+        tooltip: {
+          y: {
+            formatter: function (val) {
+              return "$ " + val + " thousands"
             }
           }
-        }]
+        }
         };
+        const BarChart = new ApexCharts(
+            document.querySelector("#BarChartContainer"),
+            bar_options
+        );
+        BarChart.render();
 
-        var line_options = {
-          series: [{
+    });
+</script>
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+
+      var line_options = {
+        series: [{
           name: 'XYZ MOTORS',
           data: [
             [Date.parse('2020-01-01'), 10],
@@ -167,9 +212,9 @@
             [Date.parse('2020-03-01'), 6],
             [Date.parse('2020-04-01'), 12],
             [Date.parse('2020-05-01'), 4],
-        ]
+          ]
         }],
-          chart: {
+        chart: {
           type: 'area',
           stacked: false,
           height: 350,
@@ -223,80 +268,99 @@
             }
           }
         }
-        };
+      };
 
-        var bar_options = {
-          series: [{
-          name: 'Net Profit',
-          data: [44, 55, 57, 56, 61, 58, 63, 60, 66]
-        }, {
-          name: 'Revenue',
-          data: [76, 85, 101, 98, 87, 105, 91, 114, 94]
-        }, {
-          name: 'Free Cash Flow',
-          data: [35, 41, 36, 26, 45, 48, 52, 53, 41]
-        }],
-          chart: {
-          type: 'bar',
-          height: 350
-        },
-        plotOptions: {
-          bar: {
-            horizontal: false,
-            columnWidth: '55%',
-            borderRadius: 5,
-            borderRadiusApplication: 'end'
-          },
-        },
-        dataLabels: {
-          enabled: false
-        },
-        stroke: {
-          show: true,
-          width: 2,
-          colors: ['transparent']
-        },
-        xaxis: {
-          categories: ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
-        },
-        yaxis: {
-          title: {
-            text: '$ (thousands)'
-          }
-        },
-        fill: {
-          opacity: 1
-        },
-        tooltip: {
-          y: {
-            formatter: function (val) {
-              return "$ " + val + " thousands"
-            }
-          }
-        }
-        };
+      const LineChart = new ApexCharts(
+          document.querySelector("#LineChartContainer"),
+          line_options
+      );
 
-        const PieChart = new ApexCharts(
-            document.querySelector("#PieChartContainer"),
-            pie_options
-        );
+      LineChart.render();
 
-        const LineChart = new ApexCharts(
-            document.querySelector("#LineChartContainer"),
-            line_options
-        );
-
-        const BarChart = new ApexCharts(
-            document.querySelector("#BarChartContainer"),
-            bar_options
-        );
-
-        PieChart.render();
-        LineChart.render();
-        BarChart.render();
-
-    });
+  });
 </script>
 
+
+
+<script>
+  var pieSeriesData = {{ pie_series|safe }};
+
+  var pie_options = {
+       series: pieSeriesData, // Use the data from Django here
+       chart: {
+           type: 'donut',
+       },
+       labels: ['To Do', 'In Progress', 'Review', 'Completed'], // Ensure labels match statuses
+       responsive: [{
+           breakpoint: 480,
+           options: {
+               chart: {
+                   width: 200
+               },
+               legend: {
+                   position: 'bottom'
+               }
+           }
+       }]
+   };
+
+   const PieChart = new ApexCharts(
+       document.querySelector("#PieChartContainer"),
+       pie_options
+   );
+
+   PieChart.render();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+ <script>
+        // Bar Chart
+        var ctxBar = document.getElementById('priorityBarChart').getContext('2d');
+        var barLabels = {{ bar_labels|safe }}; // Priority labels: High, Medium, Low
+        var barData = {{ bar_series|safe }};   // Priority percentages
+
+        var barChart = new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: barLabels,
+                datasets: [{
+                    label: 'Task Priority (%)',
+                    data: barData,
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+                    borderColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                return tooltipItem.raw.toFixed(2) + '%';
+                            }
+                        }
+                    },
+                    datalabels: {
+                        display: true,
+                        color: '#000',
+                        align: 'end',
+                        anchor: 'end',
+                        formatter: function(value) {
+                            return value.toFixed(2) + '%';
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
 
 {% endblock %}
