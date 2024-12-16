@@ -22,42 +22,42 @@
         <label class="label">
           <span class="label-text">Project Name</span>
         </label>
-        <input type="text" id="edit_project_name" name="project_name" class="input input-bordered" required />
+        <input type="text" id="edit_project_name" name="edit_project_name" class="input input-bordered" required />
       </div>
       <div class="form-control">
         <label class="label">
           <span class="label-text">Description</span>
         </label>
-        <textarea id="edit_project_description" name="description" class="textarea textarea-bordered" required></textarea>
+        <textarea id="edit_project_description" name="edit_description" class="textarea textarea-bordered"></textarea>
       </div>
       <div class="form-control">
         <label class="label">
           <span class="label-text">Select Color</span>
         </label>
           <div class="flex flex-row mb-2 gap-2">
-              {% for color in colors %}
-                <button type="button" class="w-8 h-8 rounded-full border-2 focus:ring-2 focus:ring-offset-2 bg-{{ color }}-500"
-                        data-color="{{ color }}" onclick="selectColor(this)"></button>
+              {% for color_edit in colors %}
+                <button type="button" class="w-8 h-8 rounded-full border-2 focus:ring-2 focus:ring-offset-2 bg-{{ color_edit }}-500"
+                        data-color-edit="{{ color_edit }}" onclick="selectColor_edit(this)"></button>
               {% endfor %}
           </div>
-        <input type="hidden" id="edit_project_color" name="color" />
+        <input type="hidden" id="edit_project_color" name="edit_color" />
       </div>
       <div class="form-control">
         <label class="label">
           <span class="label-text">Select Icon</span>
         </label>
         <div id="icon-picker" class="grid grid-cols-7 gap-4 mt-3 max-h-[250px] overflow-y-auto p-4 border rounded-lg">
-          {% for icon in icons %}
+          {% for icon_edit in icons %}
           <button
             type="button"
             class="flex items-center justify-center p-2 rounded-lg border border-gray-300 hover:bg-gray-100"
-            data-icon="{{ icon }}"
-            onclick="selectIcon(this)">
-            <i class="fas {{ icon }} text-xl"></i>
+            data-icon-edit="{{ icon_edit }}"
+            onclick="selectIcon_edit(this)">
+            <i class="fas {{ icon_edit }} text-xl"></i>
           </button>
           {% endfor %}
         </div>
-        <input type="hidden" id="edit_project_icon" name="emoji_icon" />
+        <input type="hidden" id="edit_project_icon" name="edit_emoji_icon" />
       </div>
       <div class="modal-action">
         <button class="btn" type="button" onclick="editProjectModal.close()">Cancel</button>
@@ -117,8 +117,8 @@
 {% endif %}
 
 <script>
-        let selectedColorButton = null;  // To track the currently selected color button
-    let selectedIconButton = null;   // To track the currently selected icon button
+        let selectedColorButton_edit = null;  // To track the currently selected color button
+    let selectedIconButton_edit = null;   // To track the currently selected icon button
 
     // Function to populate the Edit Project modal
     function populateEditProjectModal(button) {
@@ -136,30 +136,30 @@
         document.getElementById('edit_project_color').value = projectColor;
 
         // Select the correct color button
-        if (selectedColorButton) {
-            selectedColorButton.classList.remove('ring', 'ring-offset-1', 'ring-blue-500');
+        if (selectedColorButton_edit) {
+            selectedColorButton_edit.classList.remove('ring', 'ring-offset-1', 'ring-blue-500');
         }
 
-        const colorButton = document.querySelector(`button[data-color="${projectColor}"]`);
-        if (colorButton) {
-            colorButton.classList.add('ring', 'ring-offset-1', 'ring-blue-500');
-            selectedColorButton = colorButton;
+        const colorButton_edit = document.querySelector(`button[data-color-edit="${projectColor}"]`);
+        if (colorButton_edit) {
+            colorButton_edit.classList.add('ring', 'ring-offset-1', 'ring-blue-500');
+            selectedColorButton_edit = colorButton_edit;
         }
 
         // Set the icon for the project
         const iconField = document.querySelector('input[name="emoji_icon"]');
         iconField.value = projectIcon;
 
-        if (selectedIconButton) {
-            selectedIconButton.style.backgroundColor = '';
-            selectedIconButton.querySelector('i').classList.remove('text-white');
+        if (selectedIconButton_edit) {
+            selectedIconButton_edit.style.backgroundColor = '';
+            selectedIconButton_edit.querySelector('i').classList.remove('text-white');
         }
 
-        const iconButton = document.querySelector(`button[data-icon="${projectIcon}"]`);
-        if (iconButton) {
-            iconButton.style.backgroundColor = projectColor; // Use the project color
-            iconButton.querySelector('i').classList.add('text-white');
-            selectedIconButton = iconButton;
+        const iconButton_edit = document.querySelector(`button[data-icon-edit="${projectIcon}"]`);
+        if (iconButton_edit) {
+            iconButton_edit.style.backgroundColor = projectColor; // Use the project color
+            iconButton_edit.querySelector('i').classList.add('text-white');
+            selectedIconButton_edit = iconButton_edit;
         }
 
         // Save the project ID to use during form submission
@@ -170,45 +170,46 @@
     }
 
     // Reuse the existing selectColor function to manage color selection
-    function selectColor(colorButton) {
-        const color = colorButton.dataset.color;  // Correct way to access the color data from the button
+    function selectColor_edit(colorButton_edit) {
+        const color_edit = colorButton_edit.dataset.colorEdit;  // Correct way to access the color data from the button
 
         // Update the form's color input field with the selected color
         const colorInput = document.getElementById('edit_project_color');
-        colorInput.value = color;  // Set color in text input
+        colorInput.value = color_edit;  // Set color in text input
 
         // Add focus ring to the selected color button
-        if (selectedColorButton) {
-            selectedColorButton.classList.remove('ring', 'ring-offset-1', 'ring-blue-500');
+        if (selectedColorButton_edit) {
+            selectedColorButton_edit.classList.remove('ring', 'ring-offset-1', 'ring-blue-500');
         }
 
         // Set active state for the newly selected color
-        colorButton.classList.add('ring', 'ring-offset-1', 'ring-blue-500');
-        selectedColorButton = colorButton;
+        colorButton_edit.classList.add('ring', 'ring-offset-1', 'ring-blue-500');
+        selectedColorButton_edit = colorButton_edit;
 
         // Update the background color of the selected icon (if any)
-        if (selectedIconButton) {
-            selectedIconButton.style.backgroundColor = color;  // Update icon background color to the selected color
+        if (selectedIconButton_edit) {
+            selectedIconButton_edit.style.backgroundColor = color_edit;  // Update icon background color to the selected color
         }
     }
 
-    function selectIcon(button) {
+    function selectIcon_edit(button) {
+        const editIconField = document.getElementById('edit_project_icon'); // Scoped to the Edit Project modal
+
         // Remove styling from the previously selected icon
-        if (selectedIconButton) {
-            selectedIconButton.style.backgroundColor = '';
-            selectedIconButton.querySelector('i').classList.remove('text-white');
+        if (selectedIconButton_edit) {
+            selectedIconButton_edit.style.backgroundColor = '';
+            selectedIconButton_edit.querySelector('i').classList.remove('text-white');
         }
 
         // Highlight the newly selected icon
-        button.style.backgroundColor = selectedColorButton ? selectedColorButton.dataset.color : '';  // Update icon background color to the selected color
+        button.style.backgroundColor = selectedColorButton_edit ? selectedColorButton_edit.dataset.colorEdit : '';
         button.querySelector('i').classList.add('text-white');
 
         // Update the currently selected button
-        selectedIconButton = button;
+        selectedIconButton_edit = button;
 
-        // Update the hidden input field with the selected icon
-        const iconField = document.querySelector('input[name="emoji_icon"]');
-        iconField.value = button.dataset.icon;
+        // Update the hidden input field for the Edit Project modal
+        editIconField.value = button.getAttribute('data-icon-edit'); // Correctly scoped to Edit Project
     }
 
     // Handle edit project form submission

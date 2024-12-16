@@ -18,7 +18,7 @@
     .priority-low { background-color: rgb(59 130 246); }      /* Lime */
 </style>
 
-<div class="card w-full p-5 bg-base-100 shadow-xl mt-2 max-h-screen min-h-[500px]">
+<div class="card w-full p-5 bg-base-100 shadow-xl mt-2 max-h-[600px] min-h-[300px]">
 
 <div class="flex justify-between items-center mb-4">
     <div class="flex flex-col items-center justify-between">
@@ -158,6 +158,101 @@
         const bulkStatusSelect = document.getElementById('bulk-status-select');
         const updateStatusBtn = document.getElementById('update-status-btn');
         let selectedTasks = [];
+
+        // Function to send an update request to the server
+        async function updateTaskField(taskId, field, value) {
+            const csrfToken = "{{ csrf_token }}";
+
+            try {
+                const response = await fetch("{% url 'update_task_field' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        task_id: taskId,
+                        field: field,
+                        value: value,
+                    }),
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    addToast("success", `${field} updated successfully!`);
+                } else {
+                    addToast("error", `Failed to update task: ${result.error || "Unknown error"}`);
+                }
+            } catch (error) {
+                console.error("Error updating task:", error);
+                addToast("error", "An error occurred while updating the task.");
+            }
+        }
+
+        // Function to dynamically add a toast message
+        function addToast(type, message) {
+          const toastContainer = document.querySelector(".toast.messages");
+          const alertDiv = document.createElement("div");
+          alertDiv.setAttribute("role", "alert");
+          alertDiv.className = `alert ${type}`;
+          alertDiv.innerHTML = `
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>${message}</span>
+          `;
+          toastContainer.appendChild(alertDiv);
+
+          // Automatically remove the toast after 3 seconds
+          setTimeout(() => {
+              toastContainer.removeChild(alertDiv);
+          }, 3000);
+      }
+
+        // Handle inline editing for text fields
+        document.querySelectorAll('.editable').forEach((cell) => {
+            cell.addEventListener('blur', () => {
+                const taskId = cell.closest('tr').dataset.taskId;
+                const field = cell.dataset.field;
+                const value = cell.textContent.trim();
+
+                updateTaskField(taskId, field, value);
+            });
+        });
+
+        function updateSelectClass(select, field, value) {
+            // Remove existing status or priority-related classes
+            select.classList.remove('status-todo', 'status-in_progress', 'status-review', 'status-completed');
+            select.classList.remove('priority-high', 'priority-medium', 'priority-low');
+
+            // Add the new class based on the selected value
+            if (field === 'status') {
+                select.classList.add(`status-${value}`);
+            } else if (field === 'priority') {
+                select.classList.add(`priority-${value}`);
+            }
+        }
+
+        // Handle inline editing for dropdown fields
+        document.querySelectorAll('.editable-select').forEach((select) => {
+            select.addEventListener('change', () => {
+                const taskId = select.closest('tr').dataset.taskId;
+                const field = select.dataset.field;
+                const value = select.value;
+
+                // Update the select's class dynamically
+                updateSelectClass(select, field, value);
+
+                // Update the task field on the server
+                updateTaskField(taskId, field, value);
+            });
+
+            // Initialize the correct class on page load
+            const field = select.dataset.field;
+            const value = select.value;
+            updateSelectClass(select, field, value);
+        });
 
         // Update the selected tasks array and sticky bar
         function updateSelectedTasks() {

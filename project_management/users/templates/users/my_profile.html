@@ -1,48 +1,47 @@
 {% extends 'project_base.html' %}
-{% block content %}
 
-{% block title %}My Profile{% endblock %}
 {% block heading %}My Profile{% endblock %}
+
+{% block content %}
 
 <div class="flex">
 
     <!-- Profile Header -->
     <div class="w-2/3 p-4">
-        <div class="h-full bg-white shadow-lg rounded-md flex items-center justify-center flex-col">
-            <img
-                src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% else %}/static/default-profile.png{% endif %}"
-                alt="Profile Picture"
-                class="w-36 h-36 rounded-full mr-5"
-                id="profile-picture-preview">
-            <div>
-                <h2 class="text-2xl flex items-center justify-center font-bold my-2">{{ user.first_name }} {{ user.last_name }}</h2>
-                <button
-                    type="button"
-                    onclick="document.getElementById('profile_picture').click()"
-                    class="btn btn-outline">
-                    Change Photo
-                </button>
-                <input type="file" id="profile_picture" name="profile_picture" class="hidden" onchange="uploadPhoto(this)">
+        <div class="h-full card bg-base-100 shadow-sm border flex items-center justify-between flex-col">
+            <div class="flex flex-col justify-center items-center flex-grow">
+                <img
+                    src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% else %}/static/default-profile.png{% endif %}"
+                    alt="Profile Picture"
+                    class="w-36 h-36 rounded-full"
+                    id="profile-picture-preview">
+                    <h2 class="text-2xl flex items-center justify-center font-bold my-2">{{ user.first_name }} {{ user.last_name }}</h2>
+                    <button
+                        type="button"
+                        onclick="document.getElementById('profile_picture').click()"
+                        class="btn btn-outline">
+                        Change Photo
+                    </button>
+                    <input type="file" id="profile_picture" name="profile_picture" class="hidden" onchange="uploadPhoto(this)">
             </div>
-            
-            <div class="flex mt-5">
-             
+
+            <div class="mb-5">
                 <button
                     type="button"
                     onclick="deleteUser()"
-                    class="btn btn-error text-white">
+                    class="btn btn-error btn-sm text-white">
                     Deactivate Account
                 </button>
             </div>
         </div>
-       
+
     </div>
 
 
     <div class="w-full flex flex-col">
     <!-- Profile Form -->
     <div class="flex-1 p-4">
-        <div class="h-full py-10 bg-white shadow-lg rounded-lg flex items-center justify-center">
+        <div class="h-full py-10 card bg-base-100 shadow-sm border flex items-center justify-center">
     <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <input type="hidden" name="action" id="form-action" value="update_profile">
@@ -54,8 +53,8 @@
             <button type="button" onclick="toggleEdit()" class="bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md w-20 h-8 shadow-md">Edit</button>
         </div>
             <hr class="my-2">
-            
-            
+
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label for="username" class="text-sm font-semibold mb-1 block">Username:</label>
@@ -114,19 +113,19 @@
                 Cancel
             </button>
         </div>
-    </div>    
+    </div>
     </div>
 
         <!-- Change Password -->
         <div class="flex-1 p-4">
-            <div class="h-full py-10 bg-white shadow-lg rounded-lg flex items-center justify-center">
+            <div class="h-full py-10 card bg-base-100 shadow-sm border flex items-center justify-center">
         <div class="mb-8">
             <div class="flex justify-between">
                 <h3 class="text-lg font-semibold">CHANGE PASSWORD</h3><hr class="my-2">
                 <button type="button" onclick="toggleEdit_pass()" class="bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md w-20 h-8 shadow-md">Edit</button>
             </div>
             <hr class="my-2">
-            
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label for="old_password" class="text-sm font-semibold mb-1 block">Old Password:</label>
@@ -180,12 +179,12 @@
                     Cancel
                 </button>
             </div>
-        </div>    
-   
-            
+        </div>
+
+
     </div>
 
-</div>   
+</div>
 
         <!-- Save and Cancel Buttons -->
         
@@ -196,6 +195,7 @@
 <script>
     var isEditing = false;
     var initialValues = {};
+    var csrfToken = "{{csrf_token}}"
 
     document.querySelector('form').addEventListener('submit', function () {
         document.getElementById('hidden_old_password').value = document.getElementById('old_password').value;
@@ -218,7 +218,7 @@
             method: 'POST',
             body: formData,
             headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                'X-CSRFToken': csrfToken
             }
         })
         .then(response => {
@@ -334,7 +334,7 @@
     function deleteUser() {
     if (confirm("Are you sure you want to permanently delete your account? This action cannot be undone.")) {
         // Assuming you have CSRF protection, we need to include the CSRF token in our POST request
-        var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
         fetch('/users/delete-user/', {
     method: 'POST',
     headers: {

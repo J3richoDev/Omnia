@@ -10,7 +10,7 @@ from django.urls import reverse
 from .forms import CustomUserCreationForm, MemberCreationForm, MemberProfileForm, UserUpdateForm, PasswordChangeForm, \
     CustomAuthenticationForm, ForgotPasswordForm, ResetPasswordForm, AssignProjectsForm
 from .models import CustomUser
-from projects.models import Project, ProjectMember
+from projects.models import Project, ProjectMember, Notification
 from django.core.mail import send_mail
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
@@ -87,6 +87,14 @@ def create_member(request):
                 try:
                     member.save()
                     ProjectMember.objects.create(project=project, user=member)
+
+                    Notification.objects.create(
+                        user=member,
+                        actor=request.user,
+                        message=f"{request.user.get_full_name()} added you to the project '{project.name}'."
+                    )
+
+
                     messages.success(request, "Member created successfully!", extra_tags="alert-success")
                     return redirect('create_member')
                 except IntegrityError:
@@ -101,7 +109,23 @@ def create_member(request):
                 user_id = request.POST.get('user_id')  # Retrieve user ID from the hidden input
                 member = get_object_or_404(CustomUser, id=user_id)
                 projects = assign_form.cleaned_data['assigned_projects']
+                # Get the current assigned projects
+                current_projects = set(member.assigned_projects.all())
+
+                # Find newly added projects
+                new_projects = set(projects) - current_projects
+
+                # Update the assigned projects
                 member.assigned_projects.set(projects)
+
+                # Notify only for newly added projects
+                for project in new_projects:
+                    Notification.objects.create(
+                        user=member,
+                        actor=request.user,
+                        message=f"{request.user.get_full_name()} has assigned you to the project '{project.name}'."
+                    )
+
                 messages.success(request, f"Projects assigned to {member.username} successfully!",
                                  extra_tags="alert-success")
                 return redirect('create_member')
@@ -153,6 +177,7 @@ def upload_photo(request):
         print("MEDIA_ROOT:", settings.MEDIA_ROOT)
         print("Saved file path:", user.profile_picture.path)
         print("File URL:", user.profile_picture.url)
+        messages.success(request,"Profile Picture changed successfully!",extra_tags="alert-success")
         return JsonResponse({'new_photo_url': user.profile_picture.url})
     else:
         return JsonResponse({'error': 'Invalid request'}, status=400)
