@@ -1,10 +1,8 @@
-from django.db.models.signals import post_save
-from django.core.mail import send_mail
+from django.db.models.signals import post_save, m2m_changed
 from django.dispatch import receiver
-from django.core.serializers import serialize
-from .models import Task
 from django.contrib.auth.signals import user_logged_in
-from .models import Project
+from .models import Task, Project, Notification
+from users.models import CustomUser
 
 @receiver(user_logged_in)
 def set_current_project(sender, request, user, **kwargs):
@@ -17,3 +15,5 @@ def set_current_project(sender, request, user, **kwargs):
     else:
         # Set the first project the member is involved in
         request.session['current_project_id'] = None
+
+

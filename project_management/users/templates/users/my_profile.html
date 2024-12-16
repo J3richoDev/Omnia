@@ -1,14 +1,14 @@
 {% extends 'project_base.html' %}
-{% block content %}
 
-{% block title %}My Profile{% endblock %}
 {% block heading %}My Profile{% endblock %}
+
+{% block content %}
 
 <div class="flex">
 
     <!-- Profile Header -->
     <div class="w-2/3 p-4">
-        <div class="h-full bg-white shadow-lg rounded-md flex items-center justify-center flex-col">
+        <div class="h-full card bg-base-100 shadow-sm border flex items-center justify-center flex-col">
             <img
                 src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% else %}/static/default-profile.png{% endif %}"
                 alt="Profile Picture"
@@ -24,9 +24,9 @@
                 </button>
                 <input type="file" id="profile_picture" name="profile_picture" class="hidden" onchange="uploadPhoto(this)">
             </div>
-            
+
             <div class="flex mt-5">
-             
+
                 <button
                     type="button"
                     onclick="deleteUser()"
@@ -35,14 +35,14 @@
                 </button>
             </div>
         </div>
-       
+
     </div>
 
 
     <div class="w-full flex flex-col">
     <!-- Profile Form -->
     <div class="flex-1 p-4">
-        <div class="h-full py-10 bg-white shadow-lg rounded-lg flex items-center justify-center">
+        <div class="h-full py-10 card bg-base-100 shadow-sm border flex items-center justify-center">
     <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <input type="hidden" name="action" id="form-action" value="update_profile">
@@ -54,8 +54,8 @@
             <button type="button" onclick="toggleEdit()" class="bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md w-20 h-8 shadow-md">Edit</button>
         </div>
             <hr class="my-2">
-            
-            
+
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label for="username" class="text-sm font-semibold mb-1 block">Username:</label>
@@ -114,19 +114,19 @@
                 Cancel
             </button>
         </div>
-    </div>    
+    </div>
     </div>
 
         <!-- Change Password -->
         <div class="flex-1 p-4">
-            <div class="h-full py-10 bg-white shadow-lg rounded-lg flex items-center justify-center">
+            <div class="h-full py-10 card bg-base-100 shadow-sm border flex items-center justify-center">
         <div class="mb-8">
             <div class="flex justify-between">
                 <h3 class="text-lg font-semibold">CHANGE PASSWORD</h3><hr class="my-2">
                 <button type="button" onclick="toggleEdit_pass()" class="bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md w-20 h-8 shadow-md">Edit</button>
             </div>
             <hr class="my-2">
-            
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label for="old_password" class="text-sm font-semibold mb-1 block">Old Password:</label>
@@ -180,12 +180,12 @@
                     Cancel
                 </button>
             </div>
-        </div>    
-   
-            
+        </div>
+
+
     </div>
 
-</div>   
+</div>
 
         <!-- Save and Cancel Buttons -->
         

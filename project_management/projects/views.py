@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import json
 from datetime import timedelta, datetime
-from .models import Project, Task, TaskFile, TaskComment, ProjectMember, Sprint
+from .models import Project, Task, TaskFile, TaskComment, ProjectMember, Sprint, Notification
 from .forms import ProjectForm, TaskForm, TaskCommentForm, TaskFileForm, AddMemberForm, SprintForm
 from django.apps import apps
 from .forms import MemberCreationForm
@@ -197,6 +197,14 @@ def create_task(request):
             task.save()
             try:
                 form.save_m2m()
+                for member in task.assigned_members.all():
+                    Notification.objects.create(
+                        user=member,
+                        actor=request.user,
+                        message=f"{request.user.get_full_name()} assigned you to the task '{task.name}' in the project '{project.name}'.",
+                        task=task,
+                        project=project
+                    )
                 messages.success(request, f"Task '{task.name}' created successfully!" ,extra_tags="alert-success")
             except Exception as e:
                 messages.error(request, f"Failed to save task relationships: {str(e)}" ,extra_tags="alert-error")
@@ -229,6 +237,14 @@ def update_task_field(request):
                     setattr(task, field, None)  # Clear the sprint if no value
             else:
                 setattr(task, field, value)  # For other fields, directly assign the value
+
+            if value == "review":
+                Notification.objects.create(
+                    user=task.project.owner,
+                    message=f"The task '{task.name}' is now in 'Review' status and ready for completion.",
+                    task=task,
+                    project=task.project
+                )
 
             task.save()
 
@@ -309,15 +325,25 @@ def assign_members(request, task_id):
             data = json.loads(request.body)
             member_ids = data.get('members', [])
 
-            # Debug: Log incoming data
-            print(f"Received task_id: {task_id}, member_ids: {member_ids}")
-
             # Get the task
             task = get_object_or_404(Task, id=task_id)
+            project = task.project
+
+            current_members = set(task.assigned_members.all())
 
             # Assign members to the task
             task.assigned_members.set(member_ids)  # Only valid user IDs will be set
             task.save()
+
+            newly_assigned_members = set(task.assigned_members.all()) - current_members
+            for member in newly_assigned_members:
+                Notification.objects.create(
+                    user=member,
+                    actor=request.user,
+                    message=f"{request.user.get_full_name()} has assigned you to the task '{task.name}'.",
+                    task = task,
+                    project = project
+                )
 
             messages.success(request, f"Members assigned to task {task.name} successfully!")
 
@@ -411,7 +437,24 @@ def task_detail(request, task_id):
                 comment.task = task
                 comment.author = request.user
                 comment.save()
-                return redirect('task_detail', task_id=task_id)
+
+                ten_minutes_ago = now() - timedelta(minutes=20)
+                recent_notifications = Notification.objects.filter(
+                    user__in=task.assigned_members.all(),
+                    task=task,
+                    created_at__gte=ten_minutes_ago,
+                    message__icontains=f"{request.user.username} commented"
+                )
+                if not recent_notifications.exists():
+                    for member in task.assigned_members.all():
+                        Notification.objects.create(
+                            user=member,
+                            actor=request.user,
+                            message=f"{request.user.username} commented on the task '{task.name}'.",
+                            task=task,
+                            project=project
+                        )
+                return redirect('my_task_detail', task_id=task_id)
 
         if 'file' in request.FILES:
             file_form = TaskFileForm(request.POST, request.FILES)
@@ -420,6 +463,15 @@ def task_detail(request, task_id):
                 task_file.task = task
                 task_file.uploaded_by = request.user
                 task_file.save()
+
+                Notification.objects.create(
+                    user=project.owner,
+                    actor=request.user,
+                    message=f"{request.user.username} uploaded a file to the task '{task.name}'.",
+                    task=task,
+                    project=project
+                )
+
                 return redirect('task_detail', task_id=task_id)
             else:
                 messages.error(request,
@@ -452,6 +504,7 @@ def my_task_detail(request, task_id):
     project = Project.objects.get(id=project_id)
 
     task = Task.objects.get(id=task_id)
+    project_manager = project.owner
     comments = task.comments.all()
     files = task.files.all()
 
@@ -466,7 +519,44 @@ def my_task_detail(request, task_id):
                 comment.task = task
                 comment.author = request.user
                 comment.save()
+
+                if request.user != project_manager:
+                    ten_minutes_ago_manager = now() - timedelta(minutes=10)
+                    recent_notifications_manager = Notification.objects.filter(
+                        user=project_manager,
+                        task=task,
+                        created_at__gte=ten_minutes_ago_manager,
+                        message__icontains=f"{request.user.username} commented"
+                    )
+                    if not recent_notifications_manager.exists():
+                        Notification.objects.create(
+                            user=project_manager,
+                            actor=request.user,
+                            message=f"{request.user.username} commented on the task '{task.name}'.",
+                            task=task,
+                            project=project
+                        )
+
+                    # Notify Assigned Members (10-minute window, excluding the comment author)
+                ten_minutes_ago_members = now() - timedelta(minutes=10)
+                for member in task.assigned_members.exclude(id=request.user.id):
+                    recent_notifications_member = Notification.objects.filter(
+                        user=member,
+                        task=task,
+                        created_at__gte=ten_minutes_ago_members,
+                        message__icontains=f"{request.user.username} commented"
+                    )
+                    if not recent_notifications_member.exists():
+                        Notification.objects.create(
+                            user=member,
+                            actor=request.user,
+                            message=f"{request.user.username} commented on the task '{task.name}'.",
+                            task=task,
+                            project=project
+                        )
+
                 return redirect('my_task_detail', task_id=task_id)
+
 
         if 'file' in request.FILES:
             file_form = TaskFileForm(request.POST, request.FILES)
@@ -475,6 +565,27 @@ def my_task_detail(request, task_id):
                 task_file.task = task
                 task_file.uploaded_by = request.user
                 task_file.save()
+
+                if request.user == project_manager:
+                    # Notify assigned members
+                    for member in task.assigned_members.all():
+                        Notification.objects.create(
+                            user=member,
+                            actor=request.user,
+                            message=f"A file has been uploaded to the task '{task.name}' by the project manager.",
+                            task=task,
+                            project=project
+                        )
+                else:
+                    # Notify project manager
+                    Notification.objects.create(
+                        user=project_manager,
+                        actor=request.user,
+                        message=f"{request.user.username} uploaded a file to the task '{task.name}'.",
+                        task=task,
+                        project=project
+                    )
+
                 return redirect('my_task_detail', task_id=task_id)
             else:
                 messages.error(request,
@@ -831,6 +942,16 @@ def update_task_status(request):
         new_status = request.POST.get('new_status')
         try:
             task = Task.objects.get(id=task_id)
+            project_manager = task.project.owner
+
+            if new_status == "review":
+                Notification.objects.create(
+                    user=project_manager,
+                    message=f"The task '{task.name}' is now in 'Review' status and ready for completion.",
+                    task=task,
+                    project=task.project
+                )
+
             task.status = new_status
             task.save()
             return JsonResponse({'success': True})
@@ -875,6 +996,33 @@ def project_members(request):
 
     project = Project.objects.get(id=project_id, owner=request.user)
     return render(request, 'projects/members.html', {'project': project})
+
+@login_required
+def notifications(request):
+    user_notifications = request.user.notifications.all().order_by('-created_at')
+
+    return render(request, 'projects/notifications.html', {'notifications': user_notifications})
+
+@login_required
+def mark_all_as_read(request):
+    Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+    return redirect('notifications')
+
+
+@login_required
+def read_and_redirect(request, notification_id):
+    notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+    notification.is_read = True
+    notification.save()
+
+    # Redirect based on notification context
+    if notification.task:
+        # Set project ID in session if available
+        if notification.project:
+            request.session['current_project_id'] = notification.project.id
+        return redirect('my_task_detail', task_id=notification.task.id)
+
+    return redirect('notifications')
 
 @login_required
 def reports_view(request):

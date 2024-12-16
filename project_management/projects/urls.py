@@ -52,7 +52,8 @@ urlpatterns = [
     path('reports/', views.reports_view, name='reports'),
     path('users/', include('users.urls')),
 
+    path('notifications/', views.notifications, name='notifications'),
+    path('notifications/mark-all-read/', views.mark_all_as_read, name='mark_all_as_read'),
+    path('notifications/read/<int:notification_id>/', views.read_and_redirect,name='read_and_redirect'),
 
-
-    
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

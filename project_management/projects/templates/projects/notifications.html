@@ -1,0 +1,26 @@
+{% extends 'project_base.html' %}
+{% load custom_filters %}
+
+{% block title %}Notifications{% endblock %}
+{% block heading %}Notifications{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-5">
+  <h2 class="text-xl font-bold mb-4">All Notifications</h2>
+  <ul class="space-y-2">
+    {% for notif in notifications %}
+      <a href="{% url 'read_and_redirect' notif.id %}"
+         class="flex items-center gap-3 p-3 bg-base-100 rounded-lg shadow hover:bg-base-200">
+        <img src="{{ notif.actor.profile_picture.url|default:'/static/default-avatar.png' }}"
+             class="size-9 bg-base-content/10 mask mask-circle" alt="">
+        <div>
+          <p class="text-sm {% if not notif.is_read %}font-bold{% endif %}">{{ notif.message }}</p>
+          <p class="text-xs text-base-content/60">{{ notif.created_at|timesince }} ago</p>
+        </div>
+      </a>
+    {% empty %}
+      <p>No notifications to display.</p>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

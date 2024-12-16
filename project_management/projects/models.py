@@ -93,3 +93,26 @@ class TaskComment(models.Model):
 
     def __str__(self):
         return f"Comment by {self.author.username} on {self.task.name}"
+
+class Notification(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notifications'
+    )
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='actor_notifications',
+        null=True,
+        blank=True
+    )
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    task = models.ForeignKey(Task, null=True, blank=True, on_delete=models.SET_NULL, related_name='notifications')
+    project = models.ForeignKey(Project, null=True, blank=True, on_delete=models.SET_NULL, related_name='notifications')
+
+    def __str__(self):
+        actor_info = f" by {self.actor.username}" if self.actor else ""
+        return f"Notification for {self.user.username}{actor_info} - {self.message[:30]}"
