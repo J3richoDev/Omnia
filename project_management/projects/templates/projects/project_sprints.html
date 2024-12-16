@@ -236,7 +236,7 @@
                                             <li class="group dropdown-left">
                                                 <button role="button" tabindex="0" class="move-task" data-task-id="{{ task.id }}">Move to</button>
                                                 <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow group-hover:block hidden">
-                                                    {% for sprint in available_sprints %}
+                                                    {% for sprint in active_sprints %}
                                                     {% if sprint.id != task.sprint.id %}
                                                     <li>
                                                         <a href="#" class="move-to-sprint" data-task-id="{{ task.id }}" data-sprint-id="{{ sprint.id }}">{{ sprint }}</a>
@@ -272,7 +272,7 @@
 {% endfor %}
 
 {% if backlog_tasks  %}
-<div class="card w-full p-5 bg-base-100 shadow-sm border mt-2" data-sprint-id="">
+<div class="card w-full p-5 bg-base-100 shadow-sm border min-h-56 mt-2 mb-7" data-sprint-id="">
     <div>
         <div class="flex flex-row justify-between">
             <div class="flex flex-row justify-center items-center gap-4 mb-2">
@@ -321,10 +321,10 @@
                                         </svg>
                                     </div>
                                     <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
-                                        <li class="group dropdown-left">
+                                        <li class="group dropdown-top">
                                             <button role="button" tabindex="0" class="move-task" data-task-id="{{ task.id }}">Move to</button>
                                             <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow group-hover:block hidden">
-                                                {% for sprint in available_sprints %}
+                                                {% for sprint in active_sprints %}
                                                 {% if sprint.id != task.sprint.id %}
                                                 <li>
                                                     <a href="#" class="move-to-sprint" data-task-id="{{ task.id }}" data-sprint-id="{{ sprint.id }}">{{ sprint }}</a>
@@ -765,54 +765,64 @@
             });
         });
 
-        sprintColumns.forEach(column => {
-            column.addEventListener('dragover', (event) => {
-                event.preventDefault();
-                column.classList.add('bg-blue-100'); // Highlight column during drag
+       sprintColumns.forEach(column => {
+    column.addEventListener('dragover', (event) => {
+        event.preventDefault();  // Allow dropping by preventing the default behavior
+        column.classList.add('bg-blue-100');  // Highlight the column during drag
+    });
+
+    column.addEventListener('dragleave', () => {
+        column.classList.remove('bg-blue-100');  // Remove highlight when drag leaves
+    });
+
+    column.addEventListener('drop', async (event) => {
+        event.preventDefault();  // Prevent default behavior to handle the drop
+        column.classList.remove('bg-blue-100');  // Remove column highlight after drop
+
+        const taskId = event.dataTransfer.getData('task-id');
+        const newSprintId = column.dataset.sprintId || '';  // Get the sprint ID or '' for backlog
+
+        // Log task ID and sprint ID for debugging
+        console.log('Task ID:', taskId);
+        console.log('New Sprint ID:', newSprintId);
+
+        if (taskId && newSprintId) {
+            // Perform the update via fetch request
+            const response = await fetch("{% url 'move_task' %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+                body: new URLSearchParams({
+                    'task_id': taskId,
+                    'sprint_id': newSprintId,
+                }),
             });
 
-            column.addEventListener('dragleave', () => {
-                column.classList.remove('bg-blue-100'); // Remove highlight
-            });
+            const result = await response.json();
 
-            column.addEventListener('drop', async (event) => {
-                event.preventDefault();
-                column.classList.remove('bg-blue-100');
+            if (result.success) {
+                // If successful, reload the page to reflect the changes
+                location.reload();
+            } else {
+                // Log failure
+                alert('Failed to update task sprint');
+            }
+        } else {
+            alert('Invalid task or sprint');
+        }
+    });
+});
 
-                const taskId = event.dataTransfer.getData('task-id');
-                const newSprintId = column.dataset.sprintId || ''; // Null for backlog
+// Make tasks draggable
+const sprintTasks = document.querySelectorAll('tr[data-task-id]');
+sprintTasks.forEach(task => {
+    task.draggable = true;  // Enable dragging for each task
 
-                if (taskId) {
-                    const response = await fetch("{% url 'update_task_sprint' %}", {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRFToken': '{{ csrf_token }}',
-                        },
-                        body: new URLSearchParams({
-                            'task_id': taskId,
-                            'new_sprint_id': newSprintId,
-                        }),
-                    });
-
-                    const result = await response.json();
-                    if (result.success) {
-                        location.reload(); // Reload page to reflect the update
-                    } else {
-                        alert('Failed to update task sprint');
-                    }
-                }
-            });
-        });
-
-        // Make tasks draggable
-        const sprintTasks = document.querySelectorAll('tr[data-task-id]');
-        sprintTasks.forEach(task => {
-            task.draggable = true;
-
-            task.addEventListener('dragstart', (event) => {
-                event.dataTransfer.setData('task-id', task.dataset.taskId);
-            });
-        });
+    task.addEventListener('dragstart', (event) => {
+        event.dataTransfer.setData('task-id', task.dataset.taskId);  // Store task ID in the data transfer object
+    });
+});
 
     });
 </script>

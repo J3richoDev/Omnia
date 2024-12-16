@@ -1,8 +1,10 @@
 {% extends 'project_base.html' %}
 {% load crispy_forms_tags %}
 {% load static %}
-{% block content %}
+
+
 {% block title %}Members for {{ project.name }}{% endblock %}
+{% block content %}
 
 
 <dialog id="createNewModal" class="modal">
@@ -31,8 +33,26 @@
         {% csrf_token %}
         <!-- Hidden Input for Member ID -->
         <input type="hidden" id="member_id" name="user_id">
-        <div class="mb-2 px-3 text-xl">
-            {{ assign_form|crispy }}
+        <div class="max-h-56 overflow-y-auto">
+            <div class="flex flex-col justify-start mb-2 px-3 text-xl">
+            {% for checkbox in assign_form.assigned_projects %}
+                {% with checkbox.choice_label as current_project_name %}
+                    <div class="flex flex-row items-center">
+                        {% for project in projects %}
+                            {% if project.name == current_project_name %}
+                        <div class="px-2 py-3 w-full flex flex-row shadow my-1 rounded-lg hover:bg-base-300 text-left">
+                            <span class="mr-2">{{ checkbox.tag }}</span>
+                            <span>
+                                    <i class="fas {{ project.emoji_icon }} text-lg text-gray-100 bg-{{ project.color }}-500 w-8 h-8 flex items-center justify-center rounded-md mr-2"></i>
+                            </span>
+                                {{ checkbox.choice_label }}
+                        </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endwith %}
+            {% endfor %}
+        </div>
         </div>
         <div class="flex justify-end">
             <button type="submit" name="btnform2" class="btn btn-primary text-white">Assign Projects</button>
@@ -59,6 +79,7 @@
             <thead>
               <tr>
                     <th>Profile</th>
+                    <th>Username</th>
                     <th>Name</th>
                     <th>Email</th>
                     <th>Role</th>
@@ -76,6 +97,7 @@
                         </div>
                     </td>
                     <td>{{ member.username }}</td>
+                    <td>{{ member.first_name|default:"Not Set" }} {{ member.last_name }}</td>
                     <td>{{ member.email }}</td>
                     <td class="badge badge-outline mt-4">{{ member.get_role_display }}</td>
                     <td>{{ member.date_joined|date:"d M Y" }}</td>

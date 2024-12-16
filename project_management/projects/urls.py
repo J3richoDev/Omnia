@@ -50,7 +50,6 @@ urlpatterns = [
 
     path('gantt/', views.gantt_chart, name='gantt_chart'),
     path('reports/', views.reports_view, name='reports'),
-    path('users/', include('users.urls')),
 
     path('notifications/', views.notifications, name='notifications'),
     path('notifications/mark-all-read/', views.mark_all_as_read, name='mark_all_as_read'),

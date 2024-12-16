@@ -71,10 +71,10 @@ def create_project(request):
 def edit_project(request):
     if request.method == "POST":
         project_id = request.POST.get('project_id')
-        name = request.POST.get('project_name')
-        description = request.POST.get('description')
-        color = request.POST.get('color')
-        emoji_icon = request.POST.get('emoji_icon')
+        name = request.POST.get('edit_project_name')
+        description = request.POST.get('edit_description')
+        color = request.POST.get('edit_color')
+        emoji_icon = request.POST.get('edit_emoji_icon')
 
         try:
             project = Project.objects.get(id=project_id)
@@ -292,7 +292,7 @@ def update_task_sprint(request):
     if request.method == "POST":
         data = json.loads(request.body)
         task_id = data.get("task_id")
-        sprint_id = data.get("sprint_id")
+        sprint_id = data.get("new_sprint_id")
 
         print(f"Received task_id: {task_id}, sprint_id: {sprint_id}")
 
@@ -652,6 +652,7 @@ def project_sprints(request):
         'today':today,
         'existing_start_dates': json.dumps(existing_start_dates),
         'sprints_with_tasks': sprints_with_tasks,
+        'active_sprints': active_sprints,
         'sprint_count' : sprint_count,
         'available_sprints': sprints,
         'backlog_tasks': backlog_tasks,

@@ -297,14 +297,14 @@
                   type="date"
                   class="editable-date border border-gray-300 rounded p-1"
                   data-field="end_date"
-                  value="{{ task.end_date|date:'M d, Y' }}" />
+                  value="{{ task.end_date|date:'Y-m-d' }}" />
               </td>
               <td>
                 <input
                   type="date"
                   class="editable-date border border-gray-300 rounded p-1"
                   data-field="start_date"
-                  value="{{ task.start_date|date:'M d, Y' }}" />
+                  value="{{ task.start_date|date:'Y-m-d' }}" />
               </td>
               <td>{{ task.created_at }}</td>
               {% if request.user.role == 'manager' %}
@@ -479,14 +479,14 @@
             }
         }
 
-    // Handle sprint selection change
-    document.querySelectorAll('select[data-field="sprint"]').forEach(select => {
-        select.addEventListener('change', () => {
-            const taskId = select.id.split('-')[1]; // Assuming id format like sprint-select-<task_id>
-            const sprintId = select.value;
-            updateTaskSprint(taskId, sprintId);
+        // Handle sprint selection change
+        document.querySelectorAll('select[data-field="sprint"]').forEach(select => {
+            select.addEventListener('change', () => {
+                const taskId = select.id.split('-')[1]; // Assuming id format like sprint-select-<task_id>
+                const sprintId = select.value;
+                updateTaskSprint(taskId, sprintId);
+            });
         });
-    });
 
         // Add event listeners to all delete buttons
         document.querySelectorAll('.delete-task').forEach(button => {
