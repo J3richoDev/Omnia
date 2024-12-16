@@ -76,25 +76,39 @@
                   {% endif %}
             </div>
             <div class="mb-5">
-                <label class="input input-bordered flex items-center gap-2" for="password">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 16 16"
-                    fill="currentColor"
-                    class="text-primary  h-5 w-5 opacity-70">
-                    <path
-                      fill-rule="evenodd"
-                      d="M14 6a4 4 0 0 1-4.899 3.899l-1.955 1.955a.5.5 0 0 1-.353.146H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2.293a.5.5 0 0 1 .146-.353l3.955-3.955A4 4 0 1 1 14 6Zm-4-2a.75.75 0 0 0 0 1.5.5.5 0 0 1 .5.5.75.75 0 0 0 1.5 0 2 2 0 0 0-2-2Z"
-                      clip-rule="evenodd" />
-                  </svg>
-                  {{ form.password|add_class:"grow"|attr:"placeholder:••••••••" }}
-                  </label>
-                  {% if form.password.errors %}
-                      <p class="text-sm text-red-500 mt-1">
-                          {{ form.password.errors|striptags }}
-                      </p>
-                  {% endif %}
-            </div>
+    <label class="input input-bordered flex items-center gap-2" for="password">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="text-primary h-5 w-5 opacity-70">
+            <path fill-rule="evenodd" d="M14 6a4 4 0 0 1-4.899 3.899l-1.955 1.955a.5.5 0 0 1-.353.146H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2.293a.5.5 0 0 1 .146-.353l3.955-3.955A4 4 0 1 1 14 6Zm-4-2a.75.75 0 0 0 0 1.5.5.5 0 0 1 .5.5.75.75 0 0 0 1.5 0 2 2 0 0 0-2-2Z" clip-rule="evenodd" />
+        </svg>
+        <div class="relative grow">
+            <!-- Password input field with a specific id -->
+            <input type="password" id="password" name="password" class="grow" placeholder="••••••••" />
+            <!-- Toggle icon -->
+            <i class="fa fa-eye-slash absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer" onclick="toggleVisibility('password')"></i>
+        </div>
+    </label>
+    {% if form.password.errors %}
+        <p class="text-sm text-red-500 mt-1">{{ form.password.errors|striptags }}</p>
+    {% endif %}
+</div>
+
+<script>
+  // Function to toggle the password visibility
+  function toggleVisibility(fieldId) {
+    const input = document.getElementById(fieldId);
+    const icon = input.nextElementSibling.querySelector('i');  // More specific targeting of the icon
+
+    if (input.type === "password") {
+      input.type = "text";  // Change type to 'text' to show the password
+      icon.classList.remove('fa-eye-slash');  // Change icon to eye
+      icon.classList.add('fa-eye');
+    } else {
+      input.type = "password";  // Change type to 'password' to hide the password
+      icon.classList.remove('fa-eye');  // Change icon to eye-slash
+      icon.classList.add('fa-eye-slash');
+    }
+  }
+</script>
             {% if form.errors %}
                 <p class="text-sm text-red-500 mt-1">
                     {{ form.non_field_errors|striptags }}
