@@ -24,10 +24,7 @@
               Welcome to Omnia!
             </h1>
             <p class="py-2 mt-4">
-                Start managing your project faster and better
-            </p>
-            <p class="py-2">
-                Start managing your project faster and better
+              Take control of your project with speed and precision.
             </p>
           </div>
           <div>
@@ -180,7 +177,21 @@
               {% endif %}
         </div>
       </div>
-      <button type="submit" class="btn btn-primary w-full mt-5">Sign up</button>
+      {% if form.errors %}
+            <p class="text-sm text-red-500 mt-1">
+                {{ form.non_field_errors|striptags }}
+            </p>
+        {% endif %}
+        <button type="submit" class="btn btn-primary w-full mt-5">Sign up</button>
+      <div class="text-center mt-4">
+        Already have an account?
+        <a href="/users/login">
+          <span class="  inline-block  hover:text-primary hover:underline hover:cursor-pointer transition duration-200">
+             Login
+          </span>
+        </a>
+      </div>
+      
       </form>
     </div>
   </div>

@@ -145,9 +145,13 @@ def add_member(request):
 
 @login_required
 def dashboard(request):
-    project_id = request.session.get('current_project_id')
-    if not project_id:
-        return HttpResponseForbidden("No project selected.")
+    if request.user.role =='manager':
+        project_id = request.session.get('current_project_id')
+    else:
+        assigned_projects = request.user.assigned_projects.first()
+        project_id = assigned_projects.id
+        
+    project = Project.objects.filter(id=project_id)
 
     # Fetch user-specific projects
     user_projects = Project.objects.filter(owner=request.user) if request.user.role == 'manager' else []
@@ -205,10 +209,6 @@ def dashboard(request):
     ]
 
     # Ensure project exists and user has access
-    try:
-        project = Project.objects.get(id=project_id, owner=request.user)
-    except Project.DoesNotExist:
-        return HttpResponseForbidden("The selected project does not exist or you do not have permission to access it.")
 
     # Context data
     context = {

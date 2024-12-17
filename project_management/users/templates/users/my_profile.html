@@ -1,61 +1,51 @@
 {% extends 'project_base.html' %}
-
-{% block heading %}My Profile{% endblock %}
-
 {% block content %}
-
-<div class="flex">
+<div class="max-w-full mx-0 my-4 p-5 font-roboto bg-white shadow-md rounded-lg">
 
     <!-- Profile Header -->
-    <div class="w-2/3 p-4">
-        <div class="h-full card bg-base-100 shadow-sm border flex items-center justify-between flex-col">
-            <div class="flex flex-col justify-center items-center flex-grow">
-                <img
-                    src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% else %}/static/default-profile.png{% endif %}"
-                    alt="Profile Picture"
-                    class="w-36 h-36 rounded-full"
-                    id="profile-picture-preview">
-                    <h2 class="text-2xl flex items-center justify-center font-bold my-2">{{ user.first_name }} {{ user.last_name }}</h2>
-                    <button
-                        type="button"
-                        onclick="document.getElementById('profile_picture').click()"
-                        class="btn btn-outline">
-                        Change Photo
-                    </button>
-                    <input type="file" id="profile_picture" name="profile_picture" class="hidden" onchange="uploadPhoto(this)">
-            </div>
-
-            <div class="mb-5">
+    <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center">
+            <img
+                src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% else %}/static/default-profile.png{% endif %}"
+                alt="Profile Picture"
+                class="w-24 h-24 rounded-full mr-5"
+                id="profile-picture-preview">
+            <div>
+                <h2 class="text-2xl font-bold mb-2">{{ user.first_name }} {{ user.last_name }}</h2>
                 <button
                     type="button"
-                    onclick="deleteUser()"
-                    class="btn btn-error btn-sm text-white">
-                    Deactivate Account
+                    onclick="document.getElementById('profile_picture').click()"
+                    class="btn btn-outline">
+                    Change Photo
                 </button>
+                <input type="file" id="profile_picture" name="profile_picture" class="hidden" onchange="uploadPhoto(this)">
             </div>
         </div>
-
+        <div>
+            <button
+                type="button"
+                onclick="toggleEdit()"
+                class="btn btn-primary text-white mr-3">
+                Edit
+            </button>
+            <button
+                type="button"
+                onclick="deleteUser()"
+                class="btn btn-error text-white">
+                Delete
+            </button>
+        </div>
     </div>
 
-
-    <div class="w-full flex flex-col">
     <!-- Profile Form -->
-    <div class="flex-1 p-4">
-        <div class="h-full py-10 card bg-base-100 shadow-sm border flex items-center justify-center">
     <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <input type="hidden" name="action" id="form-action" value="update_profile">
 
         <!-- User Information -->
         <div class="mb-8">
-            <div class="flex justify-between">
-            <h3 class="text-lg font-semibold">General information</h3>
-            <button type="button" onclick="toggleEdit()" class="bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md w-20 h-8 shadow-md">Edit</button>
-        </div>
-            <hr class="my-2">
-
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <h3 class="text-lg font-semibold mb-4">General information</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label for="username" class="text-sm font-semibold mb-1 block">Username:</label>
                     <input
@@ -99,7 +89,53 @@
                         class="editable w-full p-2 border border-gray-300 rounded-md bg-gray-100 opacity-70">
                 </div>
             </div>
-        </div><div class="text-right hidden" id="edit-buttons">
+        </div>
+
+        <!-- Change Password -->
+        <div class="mb-8">
+            <h3 class="text-lg font-semibold mb-4">CHANGE PASSWORD</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="old_password" class="text-sm font-semibold mb-1 block">Old Password:</label>
+                    <div class="relative">
+                        <input
+                            type="password"
+                            id="old_password"
+                            name="old_password"
+                            disabled
+                            class="editable w-full p-2 border border-gray-300 rounded-md bg-gray-100">
+                        <i class="fa fa-eye-slash absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer" onclick="toggleVisibility('old_password')"></i>
+                    </div>
+                </div>
+                <div>
+                    <label for="new_password" class="text-sm font-semibold mb-1 block">New Password:</label>
+                    <div class="relative">
+                        <input
+                            type="password"
+                            id="new_password"
+                            name="new_password"
+                            disabled
+                            class="editable w-full p-2 border border-gray-300 rounded-md bg-gray-100">
+                        <i class="fa fa-eye-slash absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer" onclick="toggleVisibility('new_password')"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="relative">
+                <label for="confirm_password" class="text-sm font-semibold mb-1 block">Confirm Password:</label>
+                <div class="relative">
+                    <input
+                        type="password"
+                        id="confirm_password"
+                        name="confirm_password"
+                        disabled
+                        class="editable w-full p-2 border border-gray-300 rounded-md bg-gray-100">
+                    <i class="fa fa-eye-slash absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer" onclick="toggleVisibility('confirm_password')"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save and Cancel Buttons -->
+        <div class="text-right hidden" id="edit-buttons">
             <button
                 type="submit"
                 name="save_changes"
@@ -113,89 +149,12 @@
                 Cancel
             </button>
         </div>
-    </div>
-    </div>
-
-        <!-- Change Password -->
-        <div class="flex-1 p-4">
-            <div class="h-full py-10 card bg-base-100 shadow-sm border flex items-center justify-center">
-        <div class="mb-8">
-            <div class="flex justify-between">
-                <h3 class="text-lg font-semibold">CHANGE PASSWORD</h3><hr class="my-2">
-                <button type="button" onclick="toggleEdit_pass()" class="bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md w-20 h-8 shadow-md">Edit</button>
-            </div>
-            <hr class="my-2">
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label for="old_password" class="text-sm font-semibold mb-1 block">Old Password:</label>
-                    <div class="relative">
-                        <input
-                            type="password"
-                            id="old_password"
-                            name="old_password"
-                            disabled
-                            class="editable_pass w-full p-2 border border-gray-300 rounded-md bg-gray-100">
-                        <i class="fa fa-eye-slash absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer" onclick="toggleVisibility('old_password')"></i>
-                    </div>
-                </div>
-                <div>
-                    <label for="new_password" class="text-sm font-semibold mb-1 block">New Password:</label>
-                    <div class="relative">
-                        <input
-                            type="password"
-                            id="new_password"
-                            name="new_password"
-                            disabled
-                            class="editable_pass w-full p-2 border border-gray-300 rounded-md bg-gray-100">
-                        <i class="fa fa-eye-slash absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer" onclick="toggleVisibility('new_password')"></i>
-                    </div>
-                </div>
-            </div>
-            <div class="relative">
-                <label for="confirm_password" class="text-sm font-semibold mb-1 block">Confirm Password:</label>
-                <div class="relative">
-                    <input
-                        type="password"
-                        id="confirm_password"
-                        name="confirm_password"
-                        disabled
-                        class="editable_pass w-full p-2 border border-gray-300  rounded-md bg-gray-100">
-                    <i class="fa fa-eye-slash absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer" onclick="toggleVisibility('confirm_password')"></i>
-                </div>
-            </div>
-
-            <div class="text-right hidden mt-5" id="edit-buttons-password">
-                <button
-                    type="submit"
-                    name="save_changes"
-                    class="bg-green-500 text-white px-5 py-2 rounded-md hover:bg-green-600 mr-3">
-                    Save Changes
-                </button>
-                <button
-                    type="button"
-                    onclick="cancelEdit()"
-                    class="bg-gray-500 text-white px-5 py-2 rounded-md hover:bg-gray-600">
-                    Cancel
-                </button>
-            </div>
-        </div>
-
-
-    </div>
-
-</div>
-
-        <!-- Save and Cancel Buttons -->
-        
     </form>
-</div>
 </div>
 
 <script>
     var isEditing = false;
     var initialValues = {};
-    var csrfToken = "{{csrf_token}}"
 
     document.querySelector('form').addEventListener('submit', function () {
         document.getElementById('hidden_old_password').value = document.getElementById('old_password').value;
@@ -218,7 +177,7 @@
             method: 'POST',
             body: formData,
             headers: {
-                'X-CSRFToken': csrfToken
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
             }
         })
         .then(response => {
@@ -243,7 +202,6 @@
         });
     }
 }
-
 
     function toggleVisibility(fieldId) {
     var input = document.getElementById(fieldId);
@@ -282,31 +240,6 @@
         }
     }
 
-    function toggleEdit_pass() {
-        if (!isEditing) {
-            document.querySelectorAll('.editable').forEach(function(field) {
-                field.disabled = false;
-                field.style.opacity = '1';
-                field.style.backgroundColor = '#ffffff';
-            });
-            document.getElementById('edit-buttons-password').style.display = 'block';
-            isEditing = true;
-        } else {
-            // Disable editing and revert changes
-            document.querySelectorAll('.editable').forEach(function(field) {
-                field.value = initialValues[field.id]; // Revert to initial value
-                field.disabled = true;
-                field.style.opacity = '0.7';
-                field.style.backgroundColor = '#f9f9f9';
-            });
-            document.getElementById('edit-buttons-password').style.display = 'none';
-            isEditing = false;
-        }
-    }
-
-
-
-
     function cancelEdit() {
         if (confirm("Are you sure you want to discard changes?")) {
             toggleEdit();
@@ -334,7 +267,7 @@
     function deleteUser() {
     if (confirm("Are you sure you want to permanently delete your account? This action cannot be undone.")) {
         // Assuming you have CSRF protection, we need to include the CSRF token in our POST request
-        
+        var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
         fetch('/users/delete-user/', {
     method: 'POST',
     headers: {
