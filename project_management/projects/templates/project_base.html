@@ -69,8 +69,12 @@
                         {% for notif in global_notifications %}
                           <a href="{% url 'read_and_redirect' notif.id %}" class="my-1 border-b flex cursor-pointer items-center gap-3 rounded-md p-1.5 transition-all hover:bg-base-content/5 active:scale-[.98]">
                             {% if notif.actor %}
-                              <img src="{{ notif.actor.profile_picture.url|default:'/media/profile_pictures/default-avatar.png'  }}"
-                                 class="size-9 bg-base-content/10 p-0.5 mask mask-circle" alt="">
+                            <img src="{% if notif.actor.profile_picture and notif.actor.profile_picture.url %}
+                                    {{ notif.actor.profile_picture.url }}
+                                {% else %}
+                                    /media/profile_pictures/default-avatar.png
+                                {% endif %}"
+                            class="size-9 bg-base-content/10 p-0.5 mask mask-circle" alt="">
                               {% endif %}
                             <div class="grow">
                               <p class="text-md">{{ notif.message }}</p>
