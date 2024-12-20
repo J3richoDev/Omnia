@@ -5,6 +5,24 @@
 {% block heading %}Dashboard{% endblock %}
 
 {% block content %}
+
+<style>
+  .progress-bar {
+      width: 100%;
+      background-color: #f3f3f3;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 10px;
+  }
+  .progress-bar-fill {
+      height: 25px;
+      background-color: #4CAF50;
+      text-align: center;
+      color: white;
+      line-height: 25px;
+  }
+</style>
 <div class="flex justify-between mb-4">
     <h1 class="text-2xl font-bold mb-4">Welcome, {{ request.user.first_name }}!</h1>
 </div>
@@ -42,8 +60,8 @@
             </svg>
          </div>
          <div class="stat-title font-bold text-xl night:text-slate-300">Under Review</div>
-         <div class="stat-value night:text-slate-300 text-primary">{{to_review_percentage}}%</div>
-         <div class="stat-desc  ">total count: {{review_total}}</div>
+         <div class="stat-value night:text-slate-300 text-primary">{{review_percentage}}%</div>
+         <div class="stat-desc  ">total count: {{review_percentage}}</div>
       </div>
    </div>
    <div class="stats shadow">
@@ -78,49 +96,6 @@
 </div>
 
 <div class="card w-full p-6 bg-base-100 shadow-xl mt-6">
-  <div class="text-xl font-semibold ">Task Completed</div>
-  <div class="divider mt-2"></div>
-  <div class="h-full w-full pb-6 bg-base-100">
-
-    <div class="overflow-x-auto">
-      <table class="table w-full" id="to-download">
-        <thead>
-           <tr>
-              <th colspan="20"> 
-                 <strong>
-                    Total Members: {{ member_count }}
-                 </strong>
-              </th>
-          </tr>
-          <tr>
-                <th>Profile</th>
-                <th >Username</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for viewMem in members_data %}
-            <tr>
-                <td>
-                    <div class="w-10 rounded-full">
-                       
-                       <img src="{% if viewMem.member.profile_picture %}/media/{{ viewMem.member.profile_picture }}{% else %}{% static 'default-profile.png' %}{% endif %}" alt="Profile">
-                    </div>
-                 </td>
-                 <td><strong>{{ viewMem.member.username }}</strong></td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="4" class="text-center">No members found</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-   </div>
-  </div>
-</div>
-
-
-<div class="card w-full p-6 bg-base-100 shadow-xl mt-6">
   <div class="flex justify-between">
     <div class="text-xl font-semibold ">Gantt Chart</div>
     <h1 class="text-2xl font-bold mb-4">{{ project.name }}</h1>
@@ -146,16 +121,15 @@
     
                 <div class="mb-4">
                     <label class="block text-sm font-medium">Filter by Time:</label>
-                    <button id="filterToday" class="bg-blue-500 text-white rounded mr-2">Today</button>
-                    <button id="filterWeek" class="bg-blue-500 text-white rounded mr-2">This Week</button>
-                    <button id="filterMonth" class="bg-blue-500 text-white rounded mr-2">This Month</button>
-                    <button id="filterQuarter" class="bg-blue-500 text-white rounded">This Quarter</button>
+                    <button id="filterToday" class="bg-blue-500 text-white rounded p-2 mr-2">Today</button>
+                    <button id="filterWeek" class="bg-blue-500 text-white rounded p-2  mr-2">This Week</button>
+                    <button id="filterMonth" class="bg-blue-500 text-white rounded p-2  mr-2">This Month</button>
+                    <button id="filterQuarter" class="bg-blue-500 text-white  p-2 rounded">This Quarter</button>
                 </div>
             </div>
         </div>
         <!-- Gantt Chart Container -->
-        <div id="ganttChartContainer" class="bg-white p-4 rounded-lg shadow-lg mb-5"></div>
-      </div>
+        <div id="ganttChartContainer" class="bg-white p-4 rounded-lg shadow-lg mb-5"></div>      </div>
         </div>
  </div>
 
@@ -387,136 +361,137 @@
 
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const tasks = {{ json_task|safe }};
+  document.addEventListener("DOMContentLoaded", () => {
+      const tasks = {{ tasks_json|safe }};
 
-        // Define colors for task statuses
-        const statusColors = {
-            todo: '#FF5733', // Red
-            in_progress: '#FFC300', // Yellow
-            review: '#3498DB', // Blue
-            completed: '#28B463', // Green
-        };
+      // Define colors for task statuses
+      const statusColors = {
+          todo: '#FF5733', // Red
+          in_progress: '#FFC300', // Yellow
+          review: '#3498DB', // Blue
+          completed: '#28B463', // Green
+      };
 
-        // Transform tasks into ApexCharts series format
-        const series = tasks.map(task => ({
-            name: task.name,
-            data: [
-                {
-                    x: task.name,
-                    y: [
-                        new Date(task.start).getTime(),
-                        new Date(task.end).getTime(),
-                    ],
-                    fillColor: statusColors[task.status], // Apply color by status
-                    description: task.description,
-                    priority: task.priority,
-                    status: task.status,
-                },
-            ],
-        }));
+      // Transform tasks into ApexCharts series format
+      const series = tasks.map(task => ({
+          name: task.name,
+          data: [
+              {
+                  x: task.name,
+                  y: [
+                      new Date(task.start).getTime(),
+                      new Date(task.end).getTime(),
+                  ],
+                  fillColor: statusColors[task.status], // Apply color by status
+                  description: task.description,
+                  priority: task.priority,
+                  status: task.status,
+              },
+          ],
+      }));
 
-        // ApexCharts options
-        const options = {
-            chart: {
-                height: 500,
-                type: 'rangeBar',
-                zoom: {
-                    enabled: true,
-                    type: 'x', // Enable horizontal zooming
-                },
-                toolbar: {
-                    tools: {
-                        zoom: true,
-                        zoomin: true,
-                        zoomout: true,
-                        pan: true,
-                        reset: true,
-                    },
-                },
-            },
-            plotOptions: {
-                bar: {
-                    distributed: true,
-                    horizontal: true,
-                    barHeight: '50%',
-                },
-            },
-            series: series,
-            xaxis: {
-                type: 'datetime',
-            },
-            tooltip: {
-                x: {
-                    format: 'dd MMM yyyy',
-                },
-            },
-        };
+      // ApexCharts options
+      const options = {
+          chart: {
+              height: 500,
+              type: 'rangeBar',
+              zoom: {
+                  enabled: true,
+                  type: 'x', // Enable horizontal zooming
+              },
+              toolbar: {
+                  tools: {
+                      zoom: true,
+                      zoomin: true,
+                      zoomout: true,
+                      pan: true,
+                      reset: true,
+                  },
+              },
+          },
+          plotOptions: {
+              bar: {
+                  distributed: true,
+                  horizontal: true,
+                  barHeight: '50%',
+              },
+          },
+          series: series,
+          xaxis: {
+              type: 'datetime',
+          },
+          tooltip: {
+              x: {
+                  format: 'dd MMM yyyy',
+              },
+          },
+      };
 
-        const chart = new ApexCharts(
-            document.querySelector("#ganttChartContainer"),
-            options
-        );
+      const chart = new ApexCharts(
+          document.querySelector("#ganttChartContainer"),
+          options
+      );
 
-        chart.render();
+      chart.render();
 
-        // Filter functionality
-        const filterStatus = document.getElementById("filterStatus");
-        filterStatus.addEventListener("change", (event) => {
-            const selectedStatus = event.target.value;
+      // Filter functionality
+      const filterStatus = document.getElementById("filterStatus");
+      filterStatus.addEventListener("change", (event) => {
+          const selectedStatus = event.target.value;
 
-            const filteredSeries = selectedStatus === "all"
-                ? series
-                : series.filter(task => task.data[0].status === selectedStatus);
+          const filteredSeries = selectedStatus === "all"
+              ? series
+              : series.filter(task => task.data[0].status === selectedStatus);
 
-            chart.updateSeries(filteredSeries);
-        });
+          chart.updateSeries(filteredSeries);
+      });
 
-         // Time Filtering Logic
-        const filterTasksByTime = (range) => {
-            const now = new Date();
-            const startOfRange = new Date();
-            let endOfRange = new Date();
+       // Time Filtering Logic
+      const filterTasksByTime = (range) => {
+          const now = new Date();
+          const startOfRange = new Date();
+          let endOfRange = new Date();
 
-            switch (range) {
-                case "today":
-                    startOfRange.setHours(0, 0, 0, 0);
-                    endOfRange.setHours(23, 59, 59, 999);
-                    break;
-                case "week":
-                    const dayOfWeek = now.getDay();
-                    startOfRange.setDate(now.getDate() - dayOfWeek);
-                    endOfRange.setDate(now.getDate() + (6 - dayOfWeek));
-                    break;
-                case "month":
-                    startOfRange.setDate(1);
-                    endOfRange = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-                    break;
-                case "quarter":
-                    const currentMonth = now.getMonth();
-                    const quarterStart = Math.floor(currentMonth / 3) * 3;
-                    startOfRange.setMonth(quarterStart, 1);
-                    endOfRange = new Date(now.getFullYear(), quarterStart + 3, 0);
-                    break;
-                default:
-                    return;
-            }
+          switch (range) {
+              case "today":
+                  startOfRange.setHours(0, 0, 0, 0);
+                  endOfRange.setHours(23, 59, 59, 999);
+                  break;
+              case "week":
+                  const dayOfWeek = now.getDay();
+                  startOfRange.setDate(now.getDate() - dayOfWeek);
+                  endOfRange.setDate(now.getDate() + (6 - dayOfWeek));
+                  break;
+              case "month":
+                  startOfRange.setDate(1);
+                  endOfRange = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                  break;
+              case "quarter":
+                  const currentMonth = now.getMonth();
+                  const quarterStart = Math.floor(currentMonth / 3) * 3;
+                  startOfRange.setMonth(quarterStart, 1);
+                  endOfRange = new Date(now.getFullYear(), quarterStart + 3, 0);
+                  break;
+              default:
+                  return;
+          }
 
-            const filteredSeries = series.filter(task => {
-                const taskStart = new Date(task.data[0].y[0]);
-                const taskEnd = new Date(task.data[0].y[1]);
-                return taskEnd >= startOfRange && taskStart <= endOfRange;
-            });
+          const filteredSeries = series.filter(task => {
+              const taskStart = new Date(task.data[0].y[0]);
+              const taskEnd = new Date(task.data[0].y[1]);
+              return taskEnd >= startOfRange && taskStart <= endOfRange;
+          });
 
-            chart.updateSeries(filteredSeries);
-        };
+          chart.updateSeries(filteredSeries);
+      };
 
-        // Attach Event Listeners for Time Filters
-        document.getElementById("filterToday").addEventListener("click", () => filterTasksByTime("today"));
-        document.getElementById("filterWeek").addEventListener("click", () => filterTasksByTime("week"));
-        document.getElementById("filterMonth").addEventListener("click", () => filterTasksByTime("month"));
-        document.getElementById("filterQuarter").addEventListener("click", () => filterTasksByTime("quarter"));
+      // Attach Event Listeners for Time Filters
+      document.getElementById("filterToday").addEventListener("click", () => filterTasksByTime("today"));
+      document.getElementById("filterWeek").addEventListener("click", () => filterTasksByTime("week"));
+      document.getElementById("filterMonth").addEventListener("click", () => filterTasksByTime("month"));
+      document.getElementById("filterQuarter").addEventListener("click", () => filterTasksByTime("quarter"));
 
-    });
+  });
+
 </script>
 {% endblock %}

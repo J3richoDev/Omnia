@@ -80,7 +80,6 @@
               <tr>
                     <th>Profile</th>
                     <th>Username</th>
-                    <th>Name</th>
                     <th>Email</th>
                     <th>Role</th>
                     <th>Joined On</th>
@@ -97,7 +96,6 @@
                         </div>
                     </td>
                     <td>{{ member.username }}</td>
-                    <td>{{ member.first_name|default:"Not Set" }} {{ member.last_name }}</td>
                     <td>{{ member.email }}</td>
                     <td class="badge badge-outline mt-4">{{ member.get_role_display }}</td>
                     <td>{{ member.date_joined|date:"d M Y" }}</td>

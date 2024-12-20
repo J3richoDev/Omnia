@@ -55,30 +55,30 @@ def project_list(request):
     user_projects = Project.objects.filter(owner=request.user) if request.user.role == 'manager' else []
     return render(request, 'projects/project_list.html', {'projects': user_projects})
 
-
 @login_required
 def create_member(request):
-    # Restrict access to project managers
+    # Ensure the user is a project manager
     if request.user.role != CustomUser.MANAGER:
         return redirect('dashboard')
 
+    # Fetch the current project
     project_id = request.session.get('current_project_id')
     if not project_id:
         return HttpResponseForbidden("No project selected.")
 
-    # Retrieve the selected project
     try:
         project = get_object_or_404(Project, id=project_id, owner=request.user)
     except ValueError:
         messages.error(request, "Invalid project ID.", extra_tags="alert-error")
         return redirect('dashboard')
 
+    # Initialize forms
     member_form = MemberCreationForm()
     assign_form = AssignProjectsForm()
 
+    # Process POST requests
     if request.method == 'POST':
-        # Handle Member Creation Form
-        if 'btnform1' in request.POST:
+        if 'btnform1' in request.POST:  # Member Creation Form
             member_form = MemberCreationForm(request.POST, request.FILES)
             if member_form.is_valid():
                 member = member_form.save(commit=False)
@@ -93,8 +93,6 @@ def create_member(request):
                         actor=request.user,
                         message=f"{request.user.get_full_name()} added you to the project '{project.name}'."
                     )
-
-
                     messages.success(request, "Member created successfully!", extra_tags="alert-success")
                     return redirect('create_member')
                 except IntegrityError:
@@ -102,46 +100,40 @@ def create_member(request):
             else:
                 messages.error(request, "Failed to create the member. Please check the form.", extra_tags="alert-error")
 
-        # Handle Assign Projects Form
-        elif 'btnform2' in request.POST:
+        elif 'btnform2' in request.POST:  # Assign Projects Form
             assign_form = AssignProjectsForm(request.POST)
             if assign_form.is_valid():
-                user_id = request.POST.get('user_id')  # Retrieve user ID from the hidden input
+                user_id = request.POST.get('user_id')
                 member = get_object_or_404(CustomUser, id=user_id)
                 projects = assign_form.cleaned_data['assigned_projects']
-                # Get the current assigned projects
                 current_projects = set(member.assigned_projects.all())
-
-                # Find newly added projects
                 new_projects = set(projects) - current_projects
-
-                # Update the assigned projects
                 member.assigned_projects.set(projects)
 
-                # Notify only for newly added projects
                 for project in new_projects:
                     Notification.objects.create(
                         user=member,
                         actor=request.user,
                         message=f"{request.user.get_full_name()} has assigned you to the project '{project.name}'."
                     )
-
                 messages.success(request, f"Projects assigned to {member.username} successfully!",
                                  extra_tags="alert-success")
                 return redirect('create_member')
             else:
                 messages.error(request, "Failed to assign projects. Please check the form.", extra_tags="alert-error")
 
-    # Retrieve existing members for display
-    members = CustomUser.objects.filter(role=CustomUser.MEMBER)
-    user_projects = Project.objects.filter(owner=request.user) if request.user.role == 'manager' else []
+    # Fetch existing members and projects
+    members = CustomUser.objects.filter(role=CustomUser.MEMBER, tasks__project=project).distinct()
+    user_projects = Project.objects.filter(owner=request.user) if request.user.role == CustomUser.MANAGER else []
 
+    # Render the page with forms and context
     return render(request, 'users/create_member.html', {
         'member_form': member_form,
         'assign_form': assign_form,
         'members': members,
         'projects': user_projects,
     })
+
 
 @login_required
 def get_member_projects(request, member_id):
