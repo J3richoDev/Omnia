@@ -285,6 +285,7 @@
                     </li>
                     {% endif %}
                 {% else %}
+                {% if user_projects %}
                 <h2 class="text-sm font-bold mt-4 mb-2">Assigned Projects</h2>
                     <li tabindex="0" role="button" class="dropdown dropdown-bottom z-50">
                         <span class="flex items-center text-base font-medium rounded-lg transition duration-75 border">
@@ -375,6 +376,9 @@
                            <span class="ml-3">Kanban Board</span>
                         </a>
                     </li>
+                    {% else %}
+                    <h2 class="text-sm text-center font-bold mt-4 mb-2">No Assigned Project</h2>
+                {% endif %}
                 {% endif %}
             </ul>
         </div>

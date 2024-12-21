@@ -145,16 +145,13 @@ def add_member(request):
 
 @login_required
 def dashboard(request):
-    if request.user.role =='manager':
+    project_id = request.session.get('current_project_id')
+    if project_id:
         project_id = request.session.get('current_project_id')
     else:
-        assigned_projects = request.user.assigned_projects.first()
-        project_id = assigned_projects.id
+        return redirect('my_profile')
         
     project = Project.objects.filter(id=project_id)
-
-    # Fetch user-specific projects
-    user_projects = Project.objects.filter(owner=request.user) if request.user.role == 'manager' else []
 
     # Filter tasks for the current project
     tasks = Task.objects.filter(project_id=project_id)
@@ -226,7 +223,6 @@ def dashboard(request):
 
     # Context data
     context = {
-        'user_projects': user_projects,
         'project': project,
         'total_tasks': total_tasks,
         'todo_total': todo_total,
